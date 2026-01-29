@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { usePrismStore } from '../store/usePrismStore';
 
@@ -16,136 +15,149 @@ export const PropertySidebar: React.FC = () => {
         });
     };
 
-    const props = track?.props;
-    const type = track?.type;
-
     return (
-        <div className="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto text-white flex flex-col gap-6">
-            <div>
-                <h2 className="text-lg font-bold mb-2">Inspector</h2>
-                <label className="block text-xs uppercase text-gray-400 mb-1">Active Track</label>
-                <select
-                    value={selectedTrackId || ''}
-                    onChange={(e) => setSelectedTrackId(e.target.value || null)}
-                    className="w-full bg-gray-700 rounded p-2 text-sm text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-                >
-                    <option value="">-- Select Track --</option>
-                    {project.tracks.map(t => (
-                        <option key={t.id} value={t.id}>
-                            {t.type.toUpperCase()} - {t.id}
-                        </option>
-                    ))}
-                </select>
+        <div className="w-80 h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-20 shadow-xl overflow-hidden">
+            {/* Sidebar Header */}
+            <div className="h-14 flex items-center px-4 border-b border-zinc-800 glass">
+                <span className="font-semibold text-sm tracking-wide text-zinc-300">Inspector</span>
             </div>
 
-            {!track || !props ? (
-                <div className="text-gray-500 text-sm text-center mt-10">
-                    Select a track to view properties
-                </div>
-            ) : (
-                <>
-                    <div className="border-b border-gray-600 pb-2">
-                        <h3 className="font-bold text-gray-300">Properties</h3>
-                        <div className="text-xs text-gray-500 font-mono mt-1">{track.id}</div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+
+                {/* Track Selector */}
+                <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Active Track</label>
+                    <div className="relative">
+                        <select
+                            value={selectedTrackId || ''}
+                            onChange={(e) => setSelectedTrackId(e.target.value || null)}
+                            className="w-full appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded-md px-3 py-2 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                        >
+                            <option value="">Select a track...</option>
+                            {project.tracks.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.type.toUpperCase()} - {t.id}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
+                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
                     </div>
+                </div>
 
-                    <div className="space-y-4">
-                        <div className="mb-4">
-                            <label className="block text-xs uppercase text-gray-400 mb-1">Type</label>
-                            <div className="bg-gray-700 p-2 rounded text-sm">{type}</div>
+                {!track ? (
+                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                        <div className="text-zinc-600 text-sm">No track selected</div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Track Info */}
+                        <div className="p-3 bg-zinc-900/50 rounded border border-zinc-800/50">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-zinc-500">ID</span>
+                                <span className="font-mono text-zinc-400 truncate max-w-[120px]">{track.id}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs mt-1">
+                                <span className="text-zinc-500">Type</span>
+                                <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-medium uppercase text-[10px]">{track.type}</span>
+                            </div>
                         </div>
 
-                        {/* Opacity */}
-                        <div>
-                            <label className="block text-xs uppercase text-gray-400 mb-1">Opacity</label>
-                            <input
-                                type="range"
-                                min="0" max="1" step="0.01"
-                                value={props.opacity}
-                                onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
-                                className="w-full"
-                            />
-                        </div>
-
-                        {/* Position (Visual Only) */}
-                        {type !== 'audio' && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block text-xs uppercase text-gray-400 mb-1">X</label>
-                                    <input
-                                        type="number"
-                                        value={props.x}
-                                        onChange={(e) => handleChange('x', parseInt(e.target.value))}
-                                        className="w-full bg-gray-700 rounded p-1 text-sm"
-                                    />
+                        {/* Transform Group */}
+                        {track.type !== 'audio' && (
+                            <div>
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Transform</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-zinc-400">X</span>
+                                        <input
+                                            type="number"
+                                            value={track.props.x}
+                                            onChange={(e) => handleChange('x', parseInt(e.target.value))}
+                                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-zinc-400">Y</span>
+                                        <input
+                                            type="number"
+                                            value={track.props.y}
+                                            onChange={(e) => handleChange('y', parseInt(e.target.value))}
+                                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div className="col-span-2 space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Opacity</span>
+                                            <span className="text-xs text-zinc-500">{Math.round(track.props.opacity * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="1" step="0.01"
+                                            value={track.props.opacity}
+                                            onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs uppercase text-gray-400 mb-1">Y</label>
+                            </div>
+                        )}
+
+                        {/* Appearance Group (Text) */}
+                        {track.type === 'text' && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Text Appearance</label>
+                                <div className="space-y-3">
+                                    <textarea
+                                        value={track.props.content}
+                                        onChange={(e) => handleChange('content', e.target.value)}
+                                        className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-zinc-200 focus:border-indigo-500 outline-none resize-y min-h-[60px]"
+                                        placeholder="Enter text..."
+                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="color"
+                                            value={track.props.color || '#ffffff'}
+                                            onChange={(e) => handleChange('color', e.target.value)}
+                                            className="h-8 w-8 rounded bg-transparent cursor-pointer border-none"
+                                        />
+                                        <div className="flex-1 space-y-1">
+                                            <span className="text-xs text-zinc-400 block">Size (px)</span>
+                                            <input
+                                                type="number"
+                                                value={track.props.fontSize}
+                                                onChange={(e) => handleChange('fontSize', parseInt(e.target.value))}
+                                                className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Audio Group */}
+                        {track.type === 'audio' && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Audio Mixer</label>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-xs text-zinc-400">Volume</span>
+                                        <span className="text-xs text-zinc-500">{((track.props.volume || 1) * 100).toFixed(0)}%</span>
+                                    </div>
                                     <input
-                                        type="number"
-                                        value={props.y}
-                                        onChange={(e) => handleChange('y', parseInt(e.target.value))}
-                                        className="w-full bg-gray-700 rounded p-1 text-sm"
+                                        type="range" min="0" max="1" step="0.05"
+                                        value={track.props.volume ?? 1}
+                                        onChange={(e) => handleChange('volume', parseFloat(e.target.value))}
+                                        className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                                     />
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Text Specific */}
-                    {type === 'text' && (
-                        <div className="mt-6 border-t border-gray-600 pt-4 space-y-4">
-                            <h3 className="font-semibold text-sm">Text Style</h3>
+                    </>
+                )}
 
-                            <div>
-                                <label className="block text-xs uppercase text-gray-400 mb-1">Content</label>
-                                <textarea
-                                    value={props.content}
-                                    onChange={(e) => handleChange('content', e.target.value)}
-                                    className="w-full bg-gray-700 rounded p-2 text-sm text-white"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-gray-400 mb-1">Color</label>
-                                <input
-                                    type="color"
-                                    value={props.color || '#000000'}
-                                    onChange={(e) => handleChange('color', e.target.value)}
-                                    className="w-full h-10 rounded cursor-pointer"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-gray-400 mb-1">Font Size</label>
-                                <input
-                                    type="number"
-                                    value={props.fontSize}
-                                    onChange={(e) => handleChange('fontSize', parseInt(e.target.value))}
-                                    className="w-full bg-gray-700 rounded p-1 text-sm"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Audio Specific */}
-                    {type === 'audio' && (
-                        <div className="mt-6 border-t border-gray-600 pt-4 space-y-4">
-                            <div>
-                                <label className="block text-xs uppercase text-gray-400 mb-1">Volume</label>
-                                <input
-                                    type="range"
-                                    min="0" max="1" step="0.1"
-                                    value={props.volume ?? 1}
-                                    onChange={(e) => handleChange('volume', parseFloat(e.target.value))}
-                                    className="w-full"
-                                />
-                                <div className="text-right text-xs text-gray-400">{props.volume ?? 1}</div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
+            </div>
         </div>
     );
 };

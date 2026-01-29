@@ -32,12 +32,16 @@
     "@types/web": "0.0.166",
     "@typescript-eslint/eslint-plugin": "8.46.0",
     "@typescript-eslint/parser": "8.46.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "dotenv": "16.0.3",
+    "electron": "^40.1.0",
     "eslint": "9.19.0",
     "eslint-config-next": "15.1.6",
     "prettier": "3.6.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.0"
+    "typescript-eslint": "8.46.0",
+    "wait-on": "^9.0.3"
   },
   "scripts": {
     "dev": "next dev",
@@ -46,6 +50,9 @@
     "lint": "eslint .",
     "remotion": "remotion studio",
     "render": "remotion render",
-    "deploy": "node deploy.mjs"
-  }
+    "deploy": "node deploy.mjs",
+    "electron:build": "tsc -p tsconfig.electron.json",
+    "electron:dev": "concurrently -k \"BROWSER=none npm run dev\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\""
+  },
+  "main": "dist-electron/main.js"
 }

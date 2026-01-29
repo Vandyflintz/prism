@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --foreground-rgb: 240, 240, 240;
+    --background-start-rgb: 9, 9, 11;
+    --background-end-rgb: 9, 9, 11;
+}
+
+body {
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-start-rgb));
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    /* App-like feel */
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #18181b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+}
+
+/* Dotted Grid Background for Canvas Area */
+.bg-grid-dots {
+    background-image: radial-gradient(#3f3f46 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+    background: rgba(24, 24, 27, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Timeline Overrides */
+.timeline-editor-engine {
+    background-color: #09090b !important;
+}
+
+.timeline-editor-action {
+    border-radius: 4px !important;
+    opacity: 0.9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-editor-time-area {
+    background-color: #09090b !important;
+    border-bottom: 1px solid #27272a !important;
+}
+
+.timeline-editor-row-area {
+    border-right: 1px solid #27272a !important;
+}
+
+.timeline-editor-row {
+    border-bottom: 1px solid #18181b !important;
+}
