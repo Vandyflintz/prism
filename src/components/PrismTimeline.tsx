@@ -6,7 +6,7 @@ import { usePrismStore } from '../store/usePrismStore';
 import { TimelineActionItem } from './TimelineActionItem';
 
 export const PrismTimeline: React.FC = () => {
-    const { project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying } = usePrismStore();
+    const { project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks } = usePrismStore();
     const timelineRef = React.useRef<TimelineState>(null);
 
     // Sync Timeline Cursor (Store -> Timeline)
@@ -126,6 +126,7 @@ export const PrismTimeline: React.FC = () => {
                     scaleWidth={scaleWidth}
                     startLeft={20}
                     autoScroll={true}
+                    enableRowDrag={true}
 
                     // Sync Props
                     onClickTimeArea={(time: number) => {
@@ -181,6 +182,10 @@ export const PrismTimeline: React.FC = () => {
                         const startFrame = Math.round(action.start * fps);
                         const durationInFrames = Math.round((action.end - action.start) * fps);
                         updateTrack(action.id, { startFrame, durationInFrames });
+                    }}
+                    onRowDragEnd={(params: any) => {
+                        const newOrderIds = params.editorData.map((row: any) => row.id);
+                        reorderTracks(newOrderIds);
                     }}
 
                 />

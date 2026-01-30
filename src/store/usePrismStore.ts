@@ -11,6 +11,7 @@ interface PrismState {
     setCurrentTime: (time: number) => void;
     setIsPlaying: (playing: boolean) => void;
     updateTrack: (trackId: string, updates: Partial<PrismTrack>) => void;
+    reorderTracks: (orderedTrackIds: string[]) => void;
 }
 
 export const usePrismStore = create<PrismState>((set) => ({
@@ -30,8 +31,14 @@ export const usePrismStore = create<PrismState>((set) => ({
         const tracks = state.project.tracks.map(t =>
             t.id === trackId ? { ...t, ...updates } : t
         );
-        // Important: Maintain bottom-to-top order if needed, or sort?
-        // Schema says tracks are ordered.
+        return { project: { ...state.project, tracks } };
+    }),
+
+    reorderTracks: (orderedTrackIds: string[]) => set((state) => {
+        console.log('reorderTracks called with:', orderedTrackIds);
+        if (!state.project) return state;
+        const trackMap = new Map(state.project.tracks.map(t => [t.id, t]));
+        const tracks = orderedTrackIds.map(id => trackMap.get(id)).filter((t): t is PrismTrack => !!t);
         return { project: { ...state.project, tracks } };
     }),
 }));

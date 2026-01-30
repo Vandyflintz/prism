@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { PrismComposition } from './PrismComposition';
 import { PrismTimeline } from './PrismTimeline';
