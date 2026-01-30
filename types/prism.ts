@@ -78,11 +78,28 @@ export interface LayerProps {
     fontSize?: number; // px
     color?: string; // Hex code or rgba
     textAlign?: 'left' | 'center' | 'right';
+    textStrokeWidth?: number;
+    textStrokeColor?: string;
+    textShadow?: string;
 
     // Specific to 'image' (or shape referencing an asset)
     assetId?: string; // Reference to `project.assets`
+    borderWidth?: number;
+    borderColor?: string;
 
     // Specific to 'shape'
     backgroundColor?: string;
     borderRadius?: number;
+
+    // Raster fallback for text
+    isRasterized?: boolean;
+
+    // Clipping Mask Props
+    mask?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        radius?: number;
+    };
 }

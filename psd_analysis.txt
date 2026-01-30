@@ -1,0 +1,2748 @@
+PSD Loaded: 1080x1350
+- [Layer 0] (Type: Layer)
+- [COLOR FILL] (Type: Layer)
+- [Group 26] (Type: Layer)
+  - [Color Fill 1] (Type: Layer)
+    -> HAS PIXEL MASK
+  - [Shape 2] (Type: Layer)
+    -> HAS PIXEL MASK
+    -> HAS VECTOR MASK (Radius/Shape)
+- [Layer 1] (Type: Layer)
+- [Group 2] (Type: Layer)
+  - [New Eats  Just a tap away ] (Type: Text)
+  - [CRAVE EXPRESS now on the  Night Market App. Crave it. Order it.] (Type: Text)
+- [Group 25] (Type: Layer)
+  - [Rectangle 1] (Type: Layer)
+    -> HAS VECTOR MASK (Radius/Shape)
+  - [Group 23] (Type: Layer)
+    - [Group 1] (Type: Layer)
+      -> ACTIVE EFFECTS: Stroke (6px inside)
+      -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 65.99899291992188,
+        "g": 0,
+        "b": 1.999969482421875
+      },
+      "opacity": 0.3,
+      "useGlobalLight": false,
+      "angle": 129,
+      "distance": {
+        "value": 10,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 8,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Линейный",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 6,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 15,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Линейный",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 89.99862670898438,
+      "g": 53.003082275390625,
+      "b": 133.99795532226562
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 15,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 75,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 224.000001847744,
+      "g": 96.46692842245102,
+      "b": 47.435795813798904
+    },
+    "opacity": 0.17,
+    "technique": "softer",
+    "choke": {
+      "value": 19,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 12,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "highlightOpacity": 0.5,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.5,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 2.2,
+    "size": {
+      "value": 3,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 1,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 250.00000029802322,
+        "g": 248.0389103293419,
+        "b": 248.0389103293419
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Custom",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 255,
+              "g": 222.12840467691422,
+              "b": 1.0077821603044868
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 220.00000208616257,
+              "g": 164.66925591230392,
+              "b": 15.533074401319027
+            },
+            "location": 1,
+            "midpoint": 0.49
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": -90,
+      "type": "linear",
+      "reverse": true,
+      "dither": true,
+      "interpolationMethod": "classic",
+      "align": true,
+      "scale": 1.5,
+      "offset": {
+        "x": -0.04201292509835991,
+        "y": -0.14250836843227366
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "multiply",
+    "color": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.5,
+    "angle": 90,
+    "distance": {
+      "value": 108,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 174,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": true,
+      "position": "inside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 0.4,
+      "size": {
+        "value": 6,
+        "units": "Pixels"
+      },
+      "present": true,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 255,
+        "g": 223.00048828125,
+        "b": 0
+      }
+    }
+  ]
+}
+      - [Rectangle 2] (Type: Layer)
+        -> HAS VECTOR MASK (Radius/Shape)
+      - [download (60)] (Type: Layer)
+        -> CLIPPING MASK (Clips layer below)
+    - [Group 1] (Type: Layer)
+      - [phone] (Type: Layer)
+        - [phone] (Type: Layer)
+          -> ACTIVE EFFECTS: Stroke (5px inside)
+          -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.67,
+      "useGlobalLight": false,
+      "angle": 101,
+      "distance": {
+        "value": 82,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 86,
+        "units": "Pixels"
+      },
+      "noise": 0.02,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.27,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 7,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 14,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    },
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.45,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 27,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    },
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.65,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 24,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 27,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 254.9996656179428,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 19,
+      "units": "Pixels"
+    },
+    "noise": 0.35,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 234.594304561615,
+      "g": 241.43407434225082,
+      "b": 244.4668436050415
+    },
+    "opacity": 1,
+    "technique": "softer",
+    "choke": {
+      "value": 52,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 46,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 248.13674747943878,
+      "g": 241.55898123979568,
+      "b": 233.76885205507278
+    },
+    "highlightOpacity": 1,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.24,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 10,
+    "size": {
+      "value": 61,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Degraus Arredondados",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 15,
+          "y": 36
+        },
+        {
+          "x": 64,
+          "y": 64
+        },
+        {
+          "x": 84,
+          "y": 106
+        },
+        {
+          "x": 127,
+          "y": 126
+        },
+        {
+          "x": 146,
+          "y": 169
+        },
+        {
+          "x": 192,
+          "y": 190
+        },
+        {
+          "x": 221,
+          "y": 224
+        },
+        {
+          "x": 255,
+          "y": 195
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 255,
+        "g": 111.52178138494492,
+        "b": 26.823779046535492
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Custom",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 255,
+              "g": 109.87680405378342,
+              "b": 9.064146671444178
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 255,
+              "g": 204.893639087677,
+              "b": 44.94052290916443
+            },
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": 90,
+      "type": "reflected",
+      "reverse": false,
+      "dither": false,
+      "interpolationMethod": "classic",
+      "align": true,
+      "scale": 1.5,
+      "offset": {
+        "x": -0.026465408496139077,
+        "y": 0.17482720404179958
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 3.220008728094399,
+      "g": 3.2200099155306816,
+      "b": 3.220008728094399
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.24,
+    "angle": 90,
+    "distance": {
+      "value": 61,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 61,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": true,
+      "position": "inside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "present": true,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      }
+    }
+  ]
+}
+        - [< add your display] (Type: Layer)
+          -> HAS PIXEL MASK
+          -> HAS VECTOR MASK (Radius/Shape)
+      - [hand] (Type: Layer)
+        - [shadow] (Type: Layer)
+        - [hand] (Type: Layer)
+- [PHONE MOCKUP] (Type: Layer)
+  - [PHONE] (Type: Layer)
+    - [Object] (Type: Layer)
+      -> ACTIVE EFFECTS: OuterGlow
+      -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": false,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 1,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 2,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": false,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 1,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 2,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": true,
+    "present": true,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 10,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 183,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": false,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 2,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "highlightOpacity": 0.5,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.5,
+    "technique": "smooth",
+    "style": "stroke emboss",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 10,
+    "size": {
+      "value": 1,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Ring - Double",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 32,
+          "y": 74
+        },
+        {
+          "x": 64,
+          "y": 219
+        },
+        {
+          "x": 96,
+          "y": 187
+        },
+        {
+          "x": 128,
+          "y": 0
+        },
+        {
+          "x": 159,
+          "y": 175
+        },
+        {
+          "x": 191,
+          "y": 202
+        },
+        {
+          "x": 223,
+          "y": 2
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "antialiasGloss": true,
+    "soften": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 62.00000010430813,
+        "g": 62.00000010430813,
+        "b": 62.00000010430813
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": false,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Cinza, Branco",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 215.0006103515625,
+              "g": 215.0006103515625,
+              "b": 215.0006103515625
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            },
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": 90,
+      "type": "linear",
+      "reverse": false,
+      "dither": false,
+      "interpolationMethod": "perceptual",
+      "align": true,
+      "scale": 1,
+      "offset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": false,
+    "blendMode": "multiply",
+    "color": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.5,
+    "angle": 90,
+    "distance": {
+      "value": 12,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 19,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": false,
+      "position": "inside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 1,
+        "units": "Pixels"
+      },
+      "present": false,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 227.00000166893005,
+        "g": 224.33073610067368,
+        "b": 224.33073610067368
+      }
+    }
+  ]
+}
+  - [YOUR DESIGN HERE] (Type: Layer)
+    - [Phone] (Type: Layer)
+      -> HAS PIXEL MASK
+  - [FX] (Type: Layer)
+    - [Shadow] (Type: Layer)
+    - [Highlight] (Type: Layer)
+- [MAMIRTA 1] (Type: Layer)
+- [Group 3] (Type: Layer)
+  - [Rectangle 3] (Type: Layer)
+    -> HAS VECTOR MASK (Radius/Shape)
+  - [ORDER NOW] (Type: Text)
+- [Group 22] (Type: Layer)
+  - [Group 20] (Type: Layer)
+  - [download the night market app] (Type: Text)
+- [Group 24] (Type: Layer)
+  - [x] (Type: Text)
+  - [k]] (Type: Layer)
+    -> ACTIVE EFFECTS: ColorOverlay
+    -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 65.99899291992188,
+        "g": 0,
+        "b": 1.999969482421875
+      },
+      "opacity": 0.3,
+      "useGlobalLight": false,
+      "angle": 129,
+      "distance": {
+        "value": 10,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 8,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Линейный",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 6,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 15,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Линейный",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 89.99862670898438,
+      "g": 53.003082275390625,
+      "b": 133.99795532226562
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 15,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 75,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 224.000001847744,
+      "g": 96.46692842245102,
+      "b": 47.435795813798904
+    },
+    "opacity": 0.17,
+    "technique": "softer",
+    "choke": {
+      "value": 19,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 12,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "highlightOpacity": 0.5,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.5,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 2.2,
+    "size": {
+      "value": 3,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 1,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": true,
+      "present": true,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 39.0032958984375,
+        "g": 39.0032958984375,
+        "b": 39.0032958984375
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Custom",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 255,
+              "g": 222.12840467691422,
+              "b": 1.0077821603044868
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 220.00000208616257,
+              "g": 164.66925591230392,
+              "b": 15.533074401319027
+            },
+            "location": 1,
+            "midpoint": 0.49
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": -90,
+      "type": "linear",
+      "reverse": true,
+      "dither": true,
+      "interpolationMethod": "classic",
+      "align": true,
+      "scale": 1.5,
+      "offset": {
+        "x": -0.04201292509835991,
+        "y": -0.14250836843227366
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "multiply",
+    "color": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.5,
+    "angle": 90,
+    "distance": {
+      "value": 108,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 174,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Линейный",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": false,
+      "position": "outside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 1,
+        "units": "Pixels"
+      },
+      "present": false,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      }
+    }
+  ]
+}
+  - [Group 15] (Type: Layer)
+    -> ACTIVE EFFECTS: ColorOverlay
+    -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.67,
+      "useGlobalLight": false,
+      "angle": 101,
+      "distance": {
+        "value": 48,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 49,
+        "units": "Pixels"
+      },
+      "noise": 0.02,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.27,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 14,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    },
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.45,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 5,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 16,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    },
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 3.220008728094399,
+        "g": 3.2200099155306816,
+        "b": 3.220008728094399
+      },
+      "opacity": 0.65,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 24,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 16,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 254.9996656179428,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 11,
+      "units": "Pixels"
+    },
+    "noise": 0.35,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 234.594304561615,
+      "g": 241.43407434225082,
+      "b": 244.4668436050415
+    },
+    "opacity": 1,
+    "technique": "softer",
+    "choke": {
+      "value": 52,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 28,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 248.13674747943878,
+      "g": 241.55898123979568,
+      "b": 233.76885205507278
+    },
+    "highlightOpacity": 1,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.24,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 10,
+    "size": {
+      "value": 36,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Degraus Arredondados",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 15,
+          "y": 36
+        },
+        {
+          "x": 64,
+          "y": 64
+        },
+        {
+          "x": 84,
+          "y": 106
+        },
+        {
+          "x": 127,
+          "y": 126
+        },
+        {
+          "x": 146,
+          "y": 169
+        },
+        {
+          "x": 192,
+          "y": 190
+        },
+        {
+          "x": 221,
+          "y": 224
+        },
+        {
+          "x": 255,
+          "y": 195
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": true,
+      "present": true,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 47.999267578125,
+        "g": 47.999267578125,
+        "b": 47.999267578125
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Custom",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 255,
+              "g": 109.87680405378342,
+              "b": 9.064146671444178
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 255,
+              "g": 204.893639087677,
+              "b": 44.94052290916443
+            },
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": 90,
+      "type": "reflected",
+      "reverse": false,
+      "dither": false,
+      "interpolationMethod": "classic",
+      "align": true,
+      "scale": 1.5,
+      "offset": {
+        "x": -0.026465408496139077,
+        "y": 0.17482720404179958
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "normal",
+    "color": {
+      "r": 3.220008728094399,
+      "g": 3.2200099155306816,
+      "b": 3.220008728094399
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.24,
+    "angle": 90,
+    "distance": {
+      "value": 36,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 36,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": false,
+      "position": "outside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 31,
+        "units": "Pixels"
+      },
+      "present": false,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 255,
+        "g": 185.99716186523438,
+        "b": 1.999969482421875
+      }
+    },
+    {
+      "enabled": false,
+      "position": "inside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 3,
+        "units": "Pixels"
+      },
+      "present": false,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      }
+    }
+  ]
+}
+    - [Group 8 copy] (Type: Layer)
+      -> ACTIVE EFFECTS: ColorOverlay
+      -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.2,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 227,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 137,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 20,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 47,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 47,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 47,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "highlightOpacity": 0.5,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.5,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 1,
+    "size": {
+      "value": 47,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": true,
+      "present": true,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 41.003265380859375,
+        "g": 39.9993896484375,
+        "b": 39.9993896484375
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Gray, White",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 215.0006103515625,
+              "g": 215.0006103515625,
+              "b": 215.0006103515625
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            },
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": 90,
+      "type": "linear",
+      "reverse": false,
+      "dither": false,
+      "interpolationMethod": "perceptual",
+      "align": true,
+      "scale": 1,
+      "offset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "multiply",
+    "color": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.5,
+    "angle": 90,
+    "distance": {
+      "value": 250,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 250,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": false,
+      "position": "outside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 1,
+      "size": {
+        "value": 52,
+        "units": "Pixels"
+      },
+      "present": true,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 250.01556426286697,
+        "g": 251.00000023841858,
+        "b": 250.61479210853577
+      }
+    }
+  ]
+}
+      - [Group 12] (Type: Layer)
+    - [vendor_icon] (Type: Layer)
+      -> ACTIVE EFFECTS: ColorOverlay
+      -> FULL EFFECTS JSON: {
+  "scale": 4.166666666666667,
+  "dropShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 72,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 155,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      },
+      "layerConceals": true
+    }
+  ],
+  "innerShadow": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "multiply",
+      "color": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "opacity": 0.35,
+      "useGlobalLight": true,
+      "angle": 90,
+      "distance": {
+        "value": 72,
+        "units": "Pixels"
+      },
+      "choke": {
+        "value": 0,
+        "units": "Pixels"
+      },
+      "size": {
+        "value": 155,
+        "units": "Pixels"
+      },
+      "noise": 0,
+      "antialiased": false,
+      "contour": {
+        "name": "Linear",
+        "curve": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 255,
+            "y": 255
+          }
+        ]
+      }
+    }
+  ],
+  "outerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 155,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5
+  },
+  "innerGlow": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "screen",
+    "color": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "opacity": 0.35,
+    "technique": "softer",
+    "choke": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 155,
+      "units": "Pixels"
+    },
+    "noise": 0,
+    "jitter": 0,
+    "antialiased": false,
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "range": 0.5,
+    "source": "edge"
+  },
+  "bevel": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "highlightBlendMode": "screen",
+    "highlightColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "highlightOpacity": 0.5,
+    "shadowBlendMode": "multiply",
+    "shadowColor": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "shadowOpacity": 0.5,
+    "technique": "smooth",
+    "style": "inner bevel",
+    "useGlobalLight": true,
+    "angle": 90,
+    "altitude": 30,
+    "strength": 1,
+    "size": {
+      "value": 155,
+      "units": "Pixels"
+    },
+    "direction": "up",
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    },
+    "antialiasGloss": false,
+    "soften": {
+      "value": 0,
+      "units": "Pixels"
+    },
+    "useShape": false,
+    "useTexture": false
+  },
+  "solidFill": [
+    {
+      "enabled": true,
+      "present": true,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "color": {
+        "r": 21.496284417808056,
+        "g": 21.496284417808056,
+        "b": 21.496284417808056
+      },
+      "opacity": 1
+    }
+  ],
+  "gradientOverlay": [
+    {
+      "enabled": false,
+      "present": false,
+      "showInDialog": true,
+      "blendMode": "normal",
+      "opacity": 1,
+      "gradient": {
+        "type": "solid",
+        "name": "Custom",
+        "smoothness": 1,
+        "colorStops": [
+          {
+            "color": {
+              "r": 255,
+              "g": 226.56358748674393,
+              "b": 0
+            },
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "color": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            },
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ],
+        "opacityStops": [
+          {
+            "opacity": 1,
+            "location": 0,
+            "midpoint": 0.5
+          },
+          {
+            "opacity": 1,
+            "location": 1,
+            "midpoint": 0.5
+          }
+        ]
+      },
+      "angle": 90,
+      "type": "linear",
+      "reverse": false,
+      "dither": false,
+      "interpolationMethod": "perceptual",
+      "align": true,
+      "scale": 1,
+      "offset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "satin": {
+    "enabled": false,
+    "present": false,
+    "showInDialog": true,
+    "blendMode": "multiply",
+    "color": {
+      "r": 0,
+      "g": 0,
+      "b": 0
+    },
+    "antialiased": true,
+    "invert": true,
+    "opacity": 0.5,
+    "angle": 90,
+    "distance": {
+      "value": 250,
+      "units": "Pixels"
+    },
+    "size": {
+      "value": 250,
+      "units": "Pixels"
+    },
+    "contour": {
+      "name": "Linear",
+      "curve": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 255,
+          "y": 255
+        }
+      ]
+    }
+  },
+  "stroke": [
+    {
+      "enabled": false,
+      "position": "outside",
+      "fillType": "color",
+      "blendMode": "normal",
+      "opacity": 0.73,
+      "size": {
+        "value": 137,
+        "units": "Pixels"
+      },
+      "present": false,
+      "showInDialog": true,
+      "overprint": false,
+      "color": {
+        "r": 253.45162868499756,
+        "g": 252.09458470344543,
+        "b": 251.08966022729874
+      }
+    }
+  ]
+}
+    - [Night] (Type: Text)
+    - [Market] (Type: Text)
+- [FOLHA 3 copy 2] (Type: Layer)
+- [FOLHA 3 copy 3] (Type: Layer)
