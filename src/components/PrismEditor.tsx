@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Player } from '@remotion/player';
+import React, { useEffect, useRef } from 'react';
+import { Player, PlayerRef } from '@remotion/player';
 import { PrismComposition } from './PrismComposition';
 import { PrismTimeline } from './PrismTimeline';
 import { usePrismStore } from '../store/usePrismStore';
@@ -56,11 +56,54 @@ const MOCK_PROJECT: PrismProject = {
 };
 
 export default function PrismEditor() {
-    const { project, setProject } = usePrismStore();
+    const { project, setProject, currentTime, isPlaying, setCurrentTime } = usePrismStore();
+    // Use state instead of ref to ensure we react when the player is mounted/ready
+    const [player, setPlayer] = React.useState<PlayerRef | null>(null);
 
     useEffect(() => {
         if (!project) setProject(MOCK_PROJECT);
     }, [setProject, project]);
+
+    // Sync Playback State
+    useEffect(() => {
+        if (player) {
+            if (isPlaying) {
+                if (!player.isPlaying()) {
+                    player.play();
+                }
+            } else {
+                if (player.isPlaying()) {
+                    player.pause();
+                }
+            }
+        }
+    }, [isPlaying, player]);
+
+    // Sync Seek / Scrub (One-way: Store -> Player)
+    useEffect(() => {
+        if (player) {
+            const currentFrame = player.getCurrentFrame();
+            if (Math.abs(currentFrame - currentTime) > 1) {
+                player.seekTo(currentTime);
+            }
+        }
+    }, [currentTime, player]);
+
+    // Sync Frame Updates (Player -> Store)
+    useEffect(() => {
+        if (!player) return;
+
+        const onFrame = (e: { detail: { frame: number } }) => {
+            // console.log('frameupdate', e.detail.frame);
+            setCurrentTime(e.detail.frame);
+        };
+
+        console.log('Adding frameupdate listener to player');
+        player.addEventListener('frameupdate', onFrame);
+        return () => {
+            player.removeEventListener('frameupdate', onFrame);
+        };
+    }, [player, setCurrentTime]);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -164,19 +207,19 @@ export default function PrismEditor() {
                         {/* Player Container */}
                         <div className="relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black">
                             <Player
+                                ref={setPlayer}
                                 component={PrismComposition}
                                 inputProps={{ project }}
-                                durationInFrames={project.durationInFrames}
+                                durationInFrames={Math.max(1, project.durationInFrames)}
                                 fps={project.fps}
                                 compositionWidth={project.width}
                                 compositionHeight={project.height}
                                 style={{
-                                    width: '360px', // TODO: Make dynamic/responsive
+                                    width: '360px',
                                     height: '640px',
                                 }}
-                                controls
-
                                 loop
+                                doubleClickToFullscreen
                             />
                         </div>
 

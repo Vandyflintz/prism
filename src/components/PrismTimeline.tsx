@@ -1,18 +1,29 @@
 import React from 'react';
-import { Timeline } from '@xzdarcy/react-timeline-editor';
+import { Timeline, TimelineState } from '@xzdarcy/react-timeline-editor';
 import '@xzdarcy/react-timeline-editor/dist/react-timeline-editor.css';
 import { usePrismStore } from '../store/usePrismStore';
 
 import { TimelineActionItem } from './TimelineActionItem';
 
 export const PrismTimeline: React.FC = () => {
-    const { project, updateTrack } = usePrismStore();
+    const { project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying } = usePrismStore();
+    const timelineRef = React.useRef<TimelineState>(null);
+
+    // Sync Timeline Cursor (Store -> Timeline)
+    React.useEffect(() => {
+        if (timelineRef.current && project) {
+            // console.log('Syncing timeline to time:', currentTime);
+            timelineRef.current.setTime(currentTime / (project.fps || 30));
+            timelineRef.current.reRender();
+        }
+    }, [currentTime, project]);
 
     if (!project) return <div className="p-4 text-zinc-500">No Project Loaded</div>;
 
     const fps = project.fps || 30;
 
-    const timelineData: any[] = project.tracks.map((track) => ({
+    // Memoize to prevent re-renders breaking drag/zoom state
+    const timelineData: any[] = React.useMemo(() => project.tracks.map((track) => ({
         id: track.id,
         type: track.type, // Pass type for row header
         actions: [
@@ -24,7 +35,7 @@ export const PrismTimeline: React.FC = () => {
                 data: { label: track.type + ' ' + (track.props.content || '') },
             }
         ],
-    }));
+    })), [project.tracks, fps]);
 
     // Helper for Row Header Icons
     const getIcon = (type: string) => {
@@ -37,13 +48,25 @@ export const PrismTimeline: React.FC = () => {
         }
     }
 
-    const [zoom, setZoom] = React.useState(100);
-    const [isPlaying, setIsPlaying] = React.useState(false);
+    const [zoom, setZoom] = React.useState(160); // Default pixels per scale unit
 
-    const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.2, 500));
-    const handleZoomOut = () => setZoom(prev => Math.max(prev * 0.8, 10));
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 20, 500));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 20, 20));
+    const togglePlay = () => setIsPlaying(!isPlaying);
 
-    const scaleWidth = Math.max(20, zoom);
+    // One scale unit = 1 second
+    const scale = 1;
+    const scaleWidth = zoom;
+
+    // Format timecode (HH:MM:SS:FF)
+    const formatTimecode = (frame: number) => {
+        const totalSeconds = frame / fps;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const frames = Math.round((totalSeconds % 1) * fps);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`;
+    };
 
     // Toolbar Icon Helper
     const IconBtn = ({ onClick, children, title }: { onClick?: () => void, children: React.ReactNode, title?: string }) => (
@@ -62,10 +85,10 @@ export const PrismTimeline: React.FC = () => {
             <div className="h-10 shrink-0 border-b border-zinc-900 flex items-center justify-between px-3 bg-[#09090b]">
                 {/* Transport Controls */}
                 <div className="flex items-center gap-1">
-                    <IconBtn title="Jump to Start">
+                    <IconBtn title="Jump to Start" onClick={() => setCurrentTime(0)}>
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
                     </IconBtn>
-                    <IconBtn onClick={() => setIsPlaying(!isPlaying)} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
+                    <IconBtn onClick={togglePlay} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
                         {isPlaying ? (
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
                         ) : (
@@ -75,7 +98,7 @@ export const PrismTimeline: React.FC = () => {
 
                     {/* Time Display */}
                     <div className="ml-3 px-3 py-1 bg-zinc-900 rounded border border-zinc-800 font-mono text-xs text-blue-400 tracking-wider shadow-inner">
-                        00:00:00:00
+                        {formatTimecode(currentTime)}
                     </div>
                 </div>
 
@@ -97,9 +120,23 @@ export const PrismTimeline: React.FC = () => {
             {/* TIMELINE SURFACE */}
             <div className="flex-1 relative overflow-hidden bg-[#09090b]">
                 <Timeline
-                    scale={scaleWidth}
+                    ref={timelineRef}
+                    style={{ width: '100%', height: '100%' }}
+                    scale={scale}
                     scaleWidth={scaleWidth}
                     startLeft={20}
+                    autoScroll={true}
+
+                    // Sync Props
+                    onClickTimeArea={(time: number) => {
+                        const frame = Math.round(time * fps);
+                        setCurrentTime(frame);
+                        return true;
+                    }}
+                    onCursorDrag={(time: number) => {
+                        const frame = Math.round(time * fps);
+                        setCurrentTime(frame);
+                    }}
 
                     editorData={timelineData}
                     effects={{
