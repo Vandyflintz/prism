@@ -112,55 +112,57 @@ export default function PrismEditor() {
         }
     };
 
-    if (!project) return <div className="text-zinc-400 p-10 flex items-center justify-center h-screen bg-zinc-950">Loading Prism...</div>;
+    if (!project) return <div className="text-zinc-500 flex items-center justify-center h-screen bg-[#09090b] text-xs font-mono">INITIALIZING PRISM ENGINE...</div>;
 
     return (
-        <div className="flex flex-col h-screen bg-zinc-950 text-zinc-200 overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-[#09090b] text-zinc-200 overflow-hidden font-sans selection:bg-indigo-500/30">
 
-            {/* Header / Toolbar */}
-            <header className="h-14 flex items-center justify-between px-6 border-b border-zinc-800 glass z-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            {/* Application Header */}
+            <header className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 border-b border-zinc-900 bg-[#09090b] select-none">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
+                        <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
+                        <span className="text-sm">Prism</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium ml-1">BETA</span>
                     </div>
-                    <span className="font-bold text-lg tracking-tight text-white">Prism</span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept=".psd"
-                    />
-                    <button
-                        onClick={openFile}
-                        className="text-xs font-medium px-4 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700 text-zinc-300"
-                    >
-                        Open PSD
-                    </button>
-                    <button
-                        onClick={loadSample}
-                        className="text-xs font-medium px-4 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700 text-zinc-300"
-                    >
-                        Load Sample
-                    </button>
-                    <button className="text-xs font-medium px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 transition-colors text-white shadow-lg shadow-indigo-500/20">
-                        Export Video
+                <div className="flex items-center gap-2">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
+
+                    <div className="flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800">
+                        <button onClick={openFile} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
+                            Open PSD
+                        </button>
+                        <div className="w-[1px] h-3 bg-zinc-800 mx-1"></div>
+                        <button onClick={loadSample} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
+                            Load Sample
+                        </button>
+                    </div>
+
+                    <button className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded shadow-sm shadow-indigo-500/20 transition-all active:scale-95 ml-2">
+                        <span>Export</span>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     </button>
                 </div>
             </header>
 
-            {/* Main Content Grid */}
-            <div className="flex flex-1 overflow-hidden">
+            {/* Workspace Grid */}
+            <div className="flex-1 flex overflow-hidden">
 
-                {/* Left/Center: Canvas & Timeline */}
-                <div className="flex-1 flex flex-col min-w-0 relative">
+                {/* Left/Center Column */}
+                <div className="flex-1 flex flex-col min-w-0">
 
-                    {/* Viewport Area */}
-                    <div className="flex-1 bg-grid-dots relative flex flex-col items-center justify-center p-8 overflow-hidden">
-                        <div className="relative shadow-2xl shadow-black/50 rounded-lg overflow-hidden ring-1 ring-zinc-800/50">
+                    {/* Canvas / Stage Area */}
+                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden">
+                        {/* Dot Grid Background (Using CSS class or inline SVG) */}
+                        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
+                            backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
+                            backgroundSize: '24px 24px'
+                        }}></div>
+
+                        {/* Player Container */}
+                        <div className="relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black">
                             <Player
                                 component={PrismComposition}
                                 inputProps={{ project }}
@@ -169,40 +171,33 @@ export default function PrismEditor() {
                                 compositionWidth={project.width}
                                 compositionHeight={project.height}
                                 style={{
-                                    width: '360px', // Scaling could be dynamic later
+                                    width: '360px', // TODO: Make dynamic/responsive
                                     height: '640px',
                                 }}
                                 controls
-                                autoPlay
+
                                 loop
                             />
                         </div>
-                        <div className="absolute bottom-4 right-4 text-xs text-zinc-500 font-mono">
-                            {project.width}x{project.height} @ {project.fps}fps
+
+                        {/* Stage Info Overlay */}
+                        <div className="absolute bottom-2 right-3 text-[10px] text-zinc-600 font-mono flex gap-2 pointer-events-none select-none">
+                            <span>{project.width}x{project.height}</span>
+                            <span className="text-zinc-700">|</span>
+                            <span>{project.fps} FPS</span>
                         </div>
                     </div>
 
-                    {/* Timeline Area (Bottom) */}
-                    <div className="h-[45vh] bg-zinc-950 border-t border-zinc-800 flex flex-col z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-                        <div className="h-9 flex items-center justify-between px-4 border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Timeline</span>
-                                <div className="h-4 w-[1px] bg-zinc-700"></div>
-                                <div className="flex gap-2">
-                                    <button className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded transition">Split</button>
-                                    <button className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded transition">Snap</button>
-                                </div>
-                            </div>
-                            <span className="text-[10px] text-zinc-600 font-mono">00:00:00:00</span>
-                        </div>
-                        <div className="flex-1 w-full overflow-hidden relative">
-                            <PrismTimeline />
-                        </div>
+                    {/* Timeline Panel */}
+                    <div className="h-[320px] shrink-0 border-t border-zinc-800 bg-[#09090b] flex flex-col z-10">
+                        {/* Top Accent Line */}
+                        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
+                        <PrismTimeline />
                     </div>
 
                 </div>
 
-                {/* Right: Property Inspector */}
+                {/* Right Column: Inspector */}
                 <PropertySidebar />
 
             </div>

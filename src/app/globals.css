@@ -49,26 +49,92 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Timeline Overrides */
-.timeline-editor-engine {
+/* Timeline Overrides - Premium Dark Theme */
+.timeline-editor {
     background-color: #09090b !important;
+    /* zinc-950 */
+    border: none !important;
 }
 
-.timeline-editor-action {
-    border-radius: 4px !important;
-    opacity: 0.9;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
+/* Time Scale (Ruler) */
 .timeline-editor-time-area {
     background-color: #09090b !important;
     border-bottom: 1px solid #27272a !important;
+    /* zinc-800 */
 }
 
-.timeline-editor-row-area {
+.timeline-editor-time-area .time-unit {
+    color: #71717a !important;
+    /* zinc-500 */
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* Grid Lines */
+.timeline-editor-grid-row {
+    border-bottom: 1px solid #18181b !important;
+    /* zinc-900 */
+}
+
+.timeline-editor-grid-col {
+    border-right: 1px solid #18181b !important;
+    /* zinc-900 */
+}
+
+/* Track Headers (Left Side) */
+.timeline-editor-row-header {
+    background-color: #09090b !important;
     border-right: 1px solid #27272a !important;
+    border-bottom: 1px solid #18181b !important;
+    color: #d4d4d8 !important;
+    /* zinc-300 */
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+}
+
+/* Track Area (Right Side) */
+.timeline-editor-row-area {
+    background-color: #000000 !important;
+    background-image: radial-gradient(#27272a 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    /* Subtle grid */
 }
 
 .timeline-editor-row {
     border-bottom: 1px solid #18181b !important;
+    height: 32px !important;
+}
+
+/* Actions (Clips Container) */
+.timeline-editor-action {
+    background: transparent !important;
+    /* Let component handle bg */
+    border-radius: 3px !important;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    box-shadow: none !important;
+}
+
+/* Cursor/Playhead */
+.timeline-editor-cursor {
+    border-left: 1px solid #3b82f6 !important;
+    /* blue-500 */
+    z-index: 50 !important;
+}
+
+.timeline-editor-cursor-top {
+    background-color: #3b82f6 !important;
+    width: 0px !important;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #3b82f6;
+    height: 6px;
+    transform: translateX(-5.5px);
+    border-radius: 0 !important;
 }

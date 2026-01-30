@@ -398,8 +398,6 @@ async function bakeGroupLayer(group: Layer): Promise<Layer | null> {
         top: bounds.top,
         right: bounds.right,
         bottom: bounds.bottom,
-        width: bounds.width,
-        height: bounds.height,
         opacity: group.opacity,
         blendMode: group.blendMode,
         canvas: canvas,
@@ -420,7 +418,9 @@ function getGroupBounds(layer: Layer): { left: number, top: number, right: numbe
         } else {
             const left = l.left || 0;
             const top = l.top || 0;
+            // @ts-ignore
             const right = l.right || (left + (l.width || 0));
+            // @ts-ignore
             const bottom = l.bottom || (top + (l.height || 0));
 
             if (right > left && bottom > top) {

@@ -12,7 +12,7 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
                     <Sequence
                         key={track.id}
                         from={track.startFrame}
-                        durationInFrames={track.durationInFrames}
+                        durationInFrames={Math.max(1, track.durationInFrames)}
                         layout="none"
                     >
                         <PrismLayer track={track} project={project} />
@@ -28,7 +28,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     project,
 }) => {
     const { props, type } = track;
-    const { x, y, width, height, opacity, rotation, scale, content, color, fontSize, fontFamily, assetId, textAlign, isRasterized, borderWidth, borderColor, borderRadius, mask, backgroundColor, textStrokeWidth, textStrokeColor, textShadow } = props;
+    const { x, y, width, height, opacity, rotation, scale, content, color, fontSize, fontFamily, assetId, textAlign, isRasterized, borderWidth, borderColor, borderRadius, textStrokeWidth, textStrokeColor, textShadow } = props;
 
     // Common styles
     const style: React.CSSProperties = {

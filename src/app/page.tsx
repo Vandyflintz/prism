@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import PrismEditor from '../components/PrismEditor';
 
 export default function Home() {
