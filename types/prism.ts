@@ -24,7 +24,7 @@ export interface PrismProject {
     tracks: PrismTrack[];
 }
 
-export type AssetType = 'image' | 'audio' | 'font';
+export type AssetType = 'image' | 'audio' | 'video' | 'font';
 
 export interface PrismAsset {
     id: string;
@@ -35,13 +35,14 @@ export interface PrismAsset {
         mimeType?: string;
         width?: number;
         height?: number;
+        duration?: number; // Video duration
         // For fonts
         fontFamily?: string;
         fontWeight?: string;
     };
 }
 
-export type TrackType = 'image' | 'text' | 'shape' | 'audio';
+export type TrackType = 'image' | 'video' | 'text' | 'shape' | 'audio';
 
 export interface PrismTrack {
     id: string; // Unique layer ID

@@ -9,8 +9,8 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
     const { label, type, src, color } = action.data || {};
 
     // Default Styles
-    let baseClasses = "flex items-center px-3 h-[90%] my-auto rounded-md shadow-sm border text-xs font-medium select-none overflow-hidden transition-all hover:brightness-110 ring-1 ring-black/10 relative";
-    let colorClasses = "bg-zinc-800 border-zinc-700 text-zinc-300";
+    let baseClasses = "flex items-center px-3 h-[24px] my-auto rounded-md shadow-md border text-xs font-medium select-none overflow-hidden transition-all hover:brightness-110 ring-1 ring-white/10 relative";
+    let colorClasses = "bg-zinc-700 border-zinc-600 text-zinc-200";
     let icon = null;
 
     // Custom background style for thumbnails
@@ -57,11 +57,13 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
     return (
         <div className={`w-full h-full flex flex-col justify-center`}>
             {/* If using image background, add a dark scrim overlay to make text readable */}
-            <div className={`${baseClasses} ${colorClasses} overflow-hidden`} style={style}>
+            <div className={`${baseClasses} ${colorClasses} overflow-hidden group`} style={style}>
                 {src && <div className="absolute inset-0 bg-black/40 pointer-events-none" />}
-                <div className="relative flex items-center z-10">
+                <div className="relative flex items-center z-10 w-full">
                     {icon}
-                    <span className="truncate drop-shadow-md">{label || 'Untitled'}</span>
+                    <span className={`truncate drop-shadow-md transition-opacity duration-200 ${type === 'text' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        {label || 'Untitled'}
+                    </span>
                 </div>
             </div>
         </div>

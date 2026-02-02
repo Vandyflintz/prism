@@ -65,6 +65,17 @@ export const PrismTimeline: React.FC = () => {
         }
     }
 
+    const getTrackBackground = (type: string, isSelected: boolean) => {
+        const base = isSelected ? "bg-opacity-40" : "bg-opacity-20";
+        switch (type) {
+            case 'audio': return `${base} bg-emerald-900 border-emerald-900/50`;
+            case 'text': return `${base} bg-violet-900 border-violet-900/50`;
+            case 'image': return `${base} bg-blue-900 border-blue-900/50`;
+            case 'shape': return `${base} bg-zinc-700 border-zinc-700/50`;
+            default: return isSelected ? 'bg-zinc-700 border-white/5' : 'bg-zinc-800 border-white/5 hover:bg-zinc-700';
+        }
+    };
+
     const [zoom, setZoom] = React.useState(160); // Default pixels per scale unit
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 20, 500));
@@ -104,11 +115,12 @@ export const PrismTimeline: React.FC = () => {
     };
 
     // Toolbar Icon Helper
+    // Toolbar Icon Helper - Updated for "Outline" look (No background, keep border)
     const IconBtn = ({ onClick, children, title, className = '' }: { onClick?: () => void, children: React.ReactNode, title?: string, className?: string }) => (
         <button
             onClick={onClick}
             title={title}
-            className={`w-8 h-8 flex items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all active:scale-95 ${className}`}
+            className={`w-8 h-8 flex items-center justify-center rounded-md bg-transparent border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-sm ${className}`}
         >
             {children}
         </button>
@@ -126,9 +138,26 @@ export const PrismTimeline: React.FC = () => {
                     opacity: 0 !important;
                     z-index: 1 !important;
                     cursor: grab !important;
+                    font-size: 0 !important; /* Hide potential text */
+                    color: transparent !important;
+                }
+                .timeline-editor-edit-row-drag-handle::after,
+                .timeline-editor-edit-row-drag-handle::before {
+                    content: none !important;
+                    display: none !important;
                 }
                 .timeline-editor-edit-row-drag-handle:active {
                     cursor: grabbing !important;
+                }
+                /* Hide any default text in drag guide lines */
+                .timeline-editor-drag-line,
+                .timeline-editor-drag-line-container {
+                     font-size: 0 !important;
+                     color: transparent !important;
+                }
+                .timeline-editor-drag-line::after,
+                .timeline-editor-drag-line::before {
+                    content: none !important;
                 }
                 .timeline-editor-action {
                     z-index: 20 !important;
@@ -238,7 +267,9 @@ export const PrismTimeline: React.FC = () => {
                     {/* Header Spacer to match Ruler (Height approximated to 40px) */}
                     <div className="h-[40px] w-full bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 flex items-center justify-center border-r border-zinc-800">
                         {/* Settings / Gear Icon to indicate "Track Options" */}
-                        <svg className="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <button className="w-6 h-6 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 transition-colors">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
                     </div>
 
                     {/* Track Headers List */}
@@ -266,60 +297,76 @@ export const PrismTimeline: React.FC = () => {
                                         reorderTracks(newOrder.map(t => t.id));
                                     }
                                 }}
-                                className={`h-[32px] flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-400 border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors group relative cursor-move ${selectedTrackId === track.id ? 'bg-zinc-800' : ''}`}
+                                className={`h-[32px] flex items-center px-1 cursor-move outline-none`}
                                 onClick={() => setSelectedTrackId(track.id)}
                             >
-                                {/* Track Controls (Left Aligned) */}
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                    {/* Lock */}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleTrackLock(track.id); }}
-                                        className={`p-1 rounded hover:bg-zinc-700 ${track.locked ? 'text-amber-500' : 'text-zinc-600 hover:text-zinc-300'}`}
-                                        title={track.locked ? "Unlock" : "Lock"}
-                                    >
-                                        {track.locked ? (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                        ) : (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
-                                        )}
-                                    </button>
+                                {/* Inner "Floating" Card */}
+                                <div className={`w-full h-[28px] flex items-center justify-between px-2 rounded-md border transition-colors ${getTrackBackground(track.type, selectedTrackId === track.id)}`}>
 
-                                    {/* Visibility */}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleTrackVisibility(track.id); }}
-                                        className={`p-1 rounded hover:bg-zinc-700 ${track.visible === false ? 'text-zinc-600' : 'text-zinc-500 hover:text-zinc-200'}`}
-                                        title={track.visible === false ? "Show" : "Hide"}
-                                    >
-                                        {track.visible === false ? (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                                        ) : (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                        )}
-                                    </button>
+                                    {/* Track Controls (Left Aligned) - Individual Buttons */}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {/* Lock */}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleTrackLock(track.id); }}
+                                            className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-700 transition-colors ${track.locked ? 'text-amber-500 border-amber-500/30' : 'text-zinc-500 hover:text-zinc-200'}`}
+                                            title={track.locked ? "Unlock" : "Lock"}
+                                        >
+                                            {track.locked ? (
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                            ) : (
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                            )}
+                                        </button>
 
-                                    {/* Mute */}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (track.type === 'audio') toggleTrackMute(track.id);
-                                        }}
-                                        className={`p-1 rounded hover:bg-zinc-700 ${track.type !== 'audio' ? 'opacity-20 cursor-default' :
-                                            track.muted ? 'text-red-400' : 'text-zinc-500 hover:text-zinc-200'}`}
-                                        title={track.type === 'audio' ? (track.muted ? "Unmute" : "Mute") : "Mute (Audio Only)"}
-                                    >
-                                        {track.muted ? (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                                        ) : (
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                        )}
-                                    </button>
-                                </div>
+                                        {/* Visibility */}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleTrackVisibility(track.id); }}
+                                            className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-700 transition-colors ${track.visible === false ? 'text-zinc-600' : 'text-zinc-500 hover:text-zinc-200'}`}
+                                            title={track.visible === false ? "Show" : "Hide"}
+                                        >
+                                            {track.visible === false ? (
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                            ) : (
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            )}
+                                        </button>
 
-                                {/* Drag Grip (Vertical Dots) */}
-                                <div className="text-zinc-700 cursor-move flex items-center justify-center h-full px-1 hover:text-zinc-400">
-                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M8 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm6-12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z" />
-                                    </svg>
+                                        {/* Mute (Audio) OR Transition/FX (Video/Image) */}
+                                        {track.type === 'audio' ? (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleTrackMute(track.id);
+                                                }}
+                                                className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-700 transition-colors ${track.muted ? 'text-red-400 border-red-500/30' : 'text-zinc-500 hover:text-zinc-200'}`}
+                                                title={track.muted ? "Unmute" : "Mute"}
+                                            >
+                                                {track.muted ? (
+                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                                                ) : (
+                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                                                )}
+                                            </button>
+                                        ) : (track.type === 'image' || track.type === 'video' || track.type === 'text') ? (
+                                            <div className="flex items-center gap-1">
+                                                {/* Transition Button */}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); console.log('Transition Clicked'); }}
+                                                    className="w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-purple-900/30 hover:border-purple-500/50 hover:text-purple-300 text-zinc-500 transition-all"
+                                                    title="Add Transition"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
+
+                                    {/* Drag Grip (Vertical Dots) */}
+                                    <div className="text-zinc-700 cursor-move flex items-center justify-center h-full px-1 hover:text-zinc-400">
+                                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M8 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm6-12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z" />
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -372,8 +419,10 @@ export const PrismTimeline: React.FC = () => {
                         // @ts-ignore
                         getRowRender={(row: any) => {
                             return (
-                                <div className="h-full w-full border-b border-zinc-900/50 bg-zinc-950/20">
-                                    {/* Optional: Grid lines or patterns here */}
+                                <div className="h-full w-full flex items-center bg-transparent">
+                                    <div className={`w-full h-[28px] rounded-md border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] ${getTrackBackground(row.type, false)}`}>
+                                        {/* Optional: Grid lines or patterns here */}
+                                    </div>
                                 </div>
                             );
                         }}
