@@ -18,6 +18,7 @@
     "react-dom": "19.2.3",
     "remotion": "4.0.412",
     "zod": "3.22.3",
+    "zundo": "^2.3.0",
     "zustand": "^5.0.10"
   },
   "devDependencies": {

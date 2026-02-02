@@ -56,7 +56,11 @@ const MOCK_PROJECT: PrismProject = {
 };
 
 export default function PrismEditor() {
-    const { project, setProject, currentTime, isPlaying, setCurrentTime } = usePrismStore();
+    const project = usePrismStore((state) => state.project);
+    const setProject = usePrismStore((state) => state.setProject);
+    const isPlaying = usePrismStore((state) => state.isPlaying);
+    const setCurrentTime = usePrismStore((state) => state.setCurrentTime);
+
     // Use state instead of ref to ensure we react when the player is mounted/ready
     const [player, setPlayer] = React.useState<PlayerRef | null>(null);
 
@@ -81,13 +85,24 @@ export default function PrismEditor() {
 
     // Sync Seek / Scrub (One-way: Store -> Player)
     useEffect(() => {
-        if (player) {
-            const currentFrame = player.getCurrentFrame();
-            if (Math.abs(currentFrame - currentTime) > 1) {
-                player.seekTo(currentTime);
+        const unsubscribe = usePrismStore.subscribe((state) => {
+            if (player) {
+                const time = state.currentTime;
+                const currentFrame = player.getCurrentFrame();
+                // Avoid infinite loop by checking if we are already close enough
+                // and avoiding seeking if player is already playing (which handles frame updates itself)
+                // Actually, if we seek while playing, it might stutter. 
+                // We only need to seek if the external time changed (e.g. user clicked timeline).
+                // But during playback, state.currentTime is updated BY the player.
+                // So we should verify if the source of change was external.
+                // However, the simple check |current - target| > 1 works for scrubbing.
+                if (Math.abs(currentFrame - time) > 1) {
+                    player.seekTo(time);
+                }
             }
-        }
-    }, [currentTime, player]);
+        });
+        return unsubscribe;
+    }, [player]);
 
     // Sync Frame Updates (Player -> Store)
     useEffect(() => {

@@ -49,6 +49,11 @@ export interface PrismTrack {
     startFrame: number; // When the layer appears (absolute frame)
     durationInFrames: number; // How long it stays visible
 
+    // Track State
+    locked?: boolean;
+    visible?: boolean;
+    muted?: boolean; // Audio only
+
     // Visual properties directly mapped to CSS/Remotion style props
     props: LayerProps;
 
