@@ -17,6 +17,7 @@ export const PrismTimeline: React.FC = () => {
     const { undo, redo, pastStates, futureStates } = useStore(usePrismStore.temporal, (state) => state);
 
     const timelineRef = React.useRef<TimelineState>(null);
+    const sidebarRef = React.useRef<HTMLDivElement>(null);
 
     // Sync Timeline Cursor (Store -> Timeline)
     React.useEffect(() => {
@@ -43,11 +44,15 @@ export const PrismTimeline: React.FC = () => {
                 effectId: track.type === 'audio' ? 'audio' : 'visual',
                 data: {
                     label: track.props.content || track.id,
-                    type: track.type
+                    type: track.type,
+                    // Resolve asset src for thumbnails
+                    src: track.props.assetId ? project.assets[track.props.assetId]?.src : undefined,
+                    // Pass color for generic tracks
+                    color: track.props.backgroundColor
                 },
             }
         ],
-    })), [project.tracks, fps]);
+    })), [project.tracks, project.assets, fps]);
 
     // Helper for Row Header Icons
     const getIcon = (type: string) => {
@@ -64,7 +69,25 @@ export const PrismTimeline: React.FC = () => {
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 20, 500));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 20, 20));
-    const togglePlay = () => setIsPlaying(!isPlaying);
+    const togglePlay = React.useCallback(() => setIsPlaying(!isPlaying), [isPlaying, setIsPlaying]);
+
+    // Global Key Shortcuts
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if active element is an input or textarea
+            if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent scrolling
+                togglePlay();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePlay]);
 
     // One scale unit = 1 second
     const scale = 1;
@@ -93,6 +116,24 @@ export const PrismTimeline: React.FC = () => {
 
     return (
         <div className="w-full h-full flex flex-col bg-zinc-950 border-t border-zinc-800 select-none">
+            <style>{`
+                .timeline-editor-edit-row-drag-handle {
+                    width: 100% !important;
+                    height: 100% !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    transform: none !important;
+                    opacity: 0 !important;
+                    z-index: 1 !important;
+                    cursor: grab !important;
+                }
+                .timeline-editor-edit-row-drag-handle:active {
+                    cursor: grabbing !important;
+                }
+                .timeline-editor-action {
+                    z-index: 20 !important;
+                }
+            `}</style>
             {/* COMPACT TOOLBAR */}
             <div className="h-10 shrink-0 border-b border-zinc-900 flex items-center justify-between px-3 bg-[#09090b]">
                 {/* Transport Controls */}
@@ -182,127 +223,212 @@ export const PrismTimeline: React.FC = () => {
             </div>
 
             {/* TIMELINE SURFACE */}
-            <div className="flex-1 relative overflow-hidden bg-[#09090b]">
-                <Timeline
-                    ref={timelineRef}
-                    style={{ width: '100%', height: '100%' }}
-                    scale={scale}
-                    scaleWidth={scaleWidth}
-                    startLeft={20}
-                    autoScroll={true}
-                    enableRowDrag={true}
+            <div className="flex-1 relative overflow-hidden bg-[#09090b] flex">
 
-                    gridSnap={isMagnetEnabled}
-                    dragLine={isMagnetEnabled}
-
-                    // Sync Props
-                    onClickTimeArea={(time: number) => {
-                        const frame = Math.round(time * fps);
-                        setCurrentTime(frame);
-                        setSelectedTrackId(null); // Deselect on click empty area
-                        return true;
+                {/* LEFT SIDEBAR (Track Headers) */}
+                <div
+                    ref={sidebarRef}
+                    className="w-28 shrink-0 bg-zinc-900 border-r border-zinc-800 overflow-hidden overflow-y-auto no-scrollbar"
+                    onScroll={(e) => {
+                        if (timelineRef.current) {
+                            timelineRef.current.setScrollTop(e.currentTarget.scrollTop);
+                        }
                     }}
-                    onCursorDrag={(time: number) => {
-                        const frame = Math.round(time * fps);
-                        setCurrentTime(frame);
-                    }}
-                    onClickAction={(e, { action }) => {
-                        setSelectedTrackId(action.id);
-                    }}
+                >
+                    {/* Header Spacer to match Ruler (Height approximated to 40px) */}
+                    <div className="h-[40px] w-full bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 flex items-center justify-center border-r border-zinc-800">
+                        {/* Settings / Gear Icon to indicate "Track Options" */}
+                        <svg className="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
 
-                    editorData={timelineData}
-                    effects={{
-                        visual: { id: 'visual', name: 'Visual Layer' },
-                        audio: { id: 'audio', name: 'Audio Layer' }
-                    }}
-                    getActionRender={(action, row) => <TimelineActionItem action={action} row={row} />}
-                    // @ts-ignore
-                    getRowRender={(row: any) => {
-                        const track = project.tracks.find(t => t.id === row.id);
-                        if (!track) return null;
-
-                        return (
-                            <div className="h-full w-full flex items-center px-4 text-xs font-medium text-zinc-400 border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors group relative">
-                                {/* Track Colored Indicator */}
-                                <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${row.type === 'audio' ? 'bg-emerald-500/50' :
-                                    row.type === 'text' ? 'bg-violet-500/50' :
-                                        row.type === 'image' ? 'bg-blue-500/50' : 'bg-zinc-500/50'
-                                    }`} />
-
-                                {/* Icon */}
-                                <div className="w-6 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity">
-                                    {getIcon(row.type)}
-                                </div>
-
-                                {/* Name */}
-                                <span className="truncate flex-1 font-medium text-zinc-300 group-hover:text-white transition-colors select-none mr-2" title={row.id}>
-                                    {row.id}
-                                </span>
-
-                                {/* Track Controls (Hover or Active) */}
-                                <div className={`flex items-center space-x-1 ${track.locked || track.visible === false || track.muted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                                    {/* Mute (Audio Only) */}
-                                    {track.type === 'audio' && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); toggleTrackMute(track.id); }}
-                                            className={`p-1 rounded hover:bg-zinc-800 ${track.muted ? 'text-red-400' : 'text-zinc-500 hover:text-white'}`}
-                                            title={track.muted ? "Unmute" : "Mute"}
-                                        >
-                                            {track.muted ? (
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                                            ) : (
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                            )}
-                                        </button>
-                                    )}
+                    {/* Track Headers List */}
+                    <div className="flex flex-col">
+                        {project.tracks.map((track, index) => (
+                            <div
+                                key={track.id}
+                                draggable
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData('text/plain', index.toString());
+                                    e.dataTransfer.effectAllowed = 'move';
+                                }}
+                                onDragOver={(e) => {
+                                    e.preventDefault(); // Allow drop
+                                    e.dataTransfer.dropEffect = 'move';
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                                    const toIndex = index;
+                                    if (fromIndex !== toIndex) {
+                                        const newOrder = [...project.tracks];
+                                        const [moved] = newOrder.splice(fromIndex, 1);
+                                        newOrder.splice(toIndex, 0, moved);
+                                        reorderTracks(newOrder.map(t => t.id));
+                                    }
+                                }}
+                                className={`h-[32px] flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-400 border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors group relative cursor-move ${selectedTrackId === track.id ? 'bg-zinc-800' : ''}`}
+                                onClick={() => setSelectedTrackId(track.id)}
+                            >
+                                {/* Track Controls (Left Aligned) */}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    {/* Lock */}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleTrackLock(track.id); }}
+                                        className={`p-1 rounded hover:bg-zinc-700 ${track.locked ? 'text-amber-500' : 'text-zinc-600 hover:text-zinc-300'}`}
+                                        title={track.locked ? "Unlock" : "Lock"}
+                                    >
+                                        {track.locked ? (
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        ) : (
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                        )}
+                                    </button>
 
                                     {/* Visibility */}
                                     <button
                                         onClick={(e) => { e.stopPropagation(); toggleTrackVisibility(track.id); }}
-                                        className={`p-1 rounded hover:bg-zinc-800 ${track.visible === false ? 'text-zinc-600' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`p-1 rounded hover:bg-zinc-700 ${track.visible === false ? 'text-zinc-600' : 'text-zinc-500 hover:text-zinc-200'}`}
                                         title={track.visible === false ? "Show" : "Hide"}
                                     >
                                         {track.visible === false ? (
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                                         ) : (
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                         )}
                                     </button>
 
-                                    {/* Lock */}
+                                    {/* Mute */}
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); toggleTrackLock(track.id); }}
-                                        className={`p-1 rounded hover:bg-zinc-800 ${track.locked ? 'text-amber-500' : 'text-zinc-500 hover:text-white'}`}
-                                        title={track.locked ? "Unlock" : "Lock"}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (track.type === 'audio') toggleTrackMute(track.id);
+                                        }}
+                                        className={`p-1 rounded hover:bg-zinc-700 ${track.type !== 'audio' ? 'opacity-20 cursor-default' :
+                                            track.muted ? 'text-red-400' : 'text-zinc-500 hover:text-zinc-200'}`}
+                                        title={track.type === 'audio' ? (track.muted ? "Unmute" : "Mute") : "Mute (Audio Only)"}
                                     >
-                                        {track.locked ? (
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        {track.muted ? (
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
                                         ) : (
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                                         )}
                                     </button>
                                 </div>
-                            </div>
-                        );
-                    }}
-                    onActionMoveEnd={(event: any) => {
-                        const action = event.action;
-                        const startFrame = Math.round(action.start * fps);
-                        const durationInFrames = Math.round((action.end - action.start) * fps);
-                        updateTrack(action.id, { startFrame, durationInFrames });
-                    }}
-                    onActionResizeEnd={(event: any) => {
-                        const action = event.action;
-                        const startFrame = Math.round(action.start * fps);
-                        const durationInFrames = Math.round((action.end - action.start) * fps);
-                        updateTrack(action.id, { startFrame, durationInFrames });
-                    }}
-                    onRowDragEnd={(params: any) => {
-                        const newOrderIds = params.editorData.map((row: any) => row.id);
-                        reorderTracks(newOrderIds);
-                    }}
 
-                />
+                                {/* Drag Grip (Vertical Dots) */}
+                                <div className="text-zinc-700 cursor-move flex items-center justify-center h-full px-1 hover:text-zinc-400">
+                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M8 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm6-12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 6a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* RIGHT TIMELINE */}
+                <div className="flex-1 overflow-hidden relative">
+                    <Timeline
+                        ref={timelineRef}
+                        style={{ width: '100%', height: '100%' }}
+                        scale={scale}
+                        scaleWidth={scaleWidth}
+                        startLeft={10}
+                        autoScroll={true}
+                        enableRowDrag={true}
+                        rowHeight={32} // Explicit height Sync with Sidebar
+
+                        gridSnap={isMagnetEnabled}
+                        dragLine={isMagnetEnabled}
+
+                        // Sync Props
+                        onClickTimeArea={(time: number) => {
+                            const frame = Math.round(time * fps);
+                            setCurrentTime(frame);
+                            setSelectedTrackId(null);
+                            return true;
+                        }}
+                        onCursorDrag={(time: number) => {
+                            const frame = Math.round(time * fps);
+                            setCurrentTime(frame);
+                        }}
+                        onClickAction={(e, { action }) => {
+                            setSelectedTrackId(action.id);
+                        }}
+                        // Sync Scroll (Timeline -> Sidebar)
+                        onScroll={({ scrollTop }) => {
+                            if (sidebarRef.current) {
+                                sidebarRef.current.scrollTop = scrollTop;
+                            }
+                        }}
+
+                        editorData={timelineData}
+                        effects={{
+                            visual: { id: 'visual', name: 'Visual Layer' },
+                            audio: { id: 'audio', name: 'Audio Layer' }
+                        }}
+                        getActionRender={(action, row) => <TimelineActionItem action={action} row={row} />}
+                        // Clean row render purely for background lines
+                        // @ts-ignore
+                        getRowRender={(row: any) => {
+                            return (
+                                <div className="h-full w-full border-b border-zinc-900/50 bg-zinc-950/20">
+                                    {/* Optional: Grid lines or patterns here */}
+                                </div>
+                            );
+                        }}
+                        onActionMoveEnd={(event: any) => {
+                            const { action, row } = event;
+
+                            // Check if moved to a different row (Reorder Intent)
+                            if (row && row.id !== action.id) {
+                                const fromIndex = project.tracks.findIndex(t => t.id === action.id);
+                                const toIndex = project.tracks.findIndex(t => t.id === row.id);
+
+                                if (fromIndex !== -1 && toIndex !== -1) {
+                                    const newOrder = [...project.tracks];
+                                    const [moved] = newOrder.splice(fromIndex, 1);
+                                    newOrder.splice(toIndex, 0, moved);
+                                    reorderTracks(newOrder.map(t => t.id));
+                                }
+                            } else {
+                                // Same row, just update time
+                                const startFrame = Math.round(action.start * fps);
+                                const durationInFrames = Math.round((action.end - action.start) * fps);
+                                updateTrack(action.id, { startFrame, durationInFrames });
+                            }
+                        }}
+                        onActionResizeEnd={(event: any) => {
+                            const action = event.action;
+                            const startFrame = Math.round(action.start * fps);
+                            const durationInFrames = Math.round((action.end - action.start) * fps);
+                            updateTrack(action.id, { startFrame, durationInFrames });
+                        }}
+                        onRowDragEnd={(params: any) => {
+                            const newOrderIds = params.editorData.map((row: any) => row.id);
+                            reorderTracks(newOrderIds);
+                        }}
+
+                    />
+                </div>
+            </div>
+
+            {/* TIMELINE FOOTER */}
+            <div className="h-7 shrink-0 bg-[#09090b] border-t border-zinc-900 flex items-center justify-end px-4 gap-4 z-20">
+                <div className="flex items-center gap-2">
+                    <svg className="w-3 h-3 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                    <input
+                        type="range"
+                        min={20}
+                        max={500}
+                        step={10}
+                        value={zoom}
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-500"
+                        title="Zoom Level"
+                    />
+                    <svg className="w-3 h-3 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                </div>
             </div>
         </div>
     );
