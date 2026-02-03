@@ -394,16 +394,42 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                     processPsdLayers(asset.metadata.layers);
                                 }
                             } else if (data.assetType === 'video' || data.assetType === 'image') {
+                                // Default dimensions: Asset native size or Project size
+                                const asset = project?.assets[assetId];
+                                let width = project?.width || 1920;
+                                let height = project?.height || 1080;
+                                let x = 0;
+                                let y = 0;
+
+                                if (asset && asset.metadata) {
+                                    if (asset.metadata.width && asset.metadata.height) {
+                                        width = asset.metadata.width;
+                                        height = asset.metadata.height;
+
+                                        // Center if smaller than canvas
+                                        const canvasW = project?.width || 1920;
+                                        const canvasH = project?.height || 1080;
+
+                                        if (width < canvasW || height < canvasH) {
+                                            x = (canvasW - width) / 2;
+                                            y = (canvasH - height) / 2;
+                                        }
+
+                                        // Optional: Scale down if larger? 
+                                        // For now, let's keep native resolution as requested "strict to take small area" implied they want full size.
+                                    }
+                                }
+
                                 addTrack({
                                     id,
                                     type: data.assetType,
                                     startFrame,
-                                    durationInFrames: 150,
+                                    durationInFrames: asset?.metadata?.duration ? Math.round(asset.metadata.duration * fps) : 150,
                                     props: {
-                                        x: (project?.width || 1920) / 2 - 250,
-                                        y: (project?.height || 1080) / 2 - 250,
-                                        width: 500,
-                                        height: 500,
+                                        x,
+                                        y,
+                                        width,
+                                        height,
                                         opacity: 1,
                                         rotation: 0,
                                         scale: 1,
@@ -672,16 +698,28 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                 const updates: any = { startFrame, durationInFrames, props: { ...originalTrack.props } };
 
                                 // Handle Slip Edit (Resize from Left)
-                                // If startFrame changed, we must adjust mediaOffset to keep the content "pinned"
-                                if (startFrame !== originalTrack.startFrame) {
-                                    const delta = startFrame - originalTrack.startFrame;
-                                    const currentOffset = originalTrack.props.mediaOffset || 0;
-                                    updates.props.mediaOffset = Math.max(0, currentOffset + delta);
+                                const delta = startFrame - originalTrack.startFrame;
+                                const originalMediaOffset = originalTrack.props.mediaOffset || 0;
+                                updates.props.mediaOffset = Math.max(0, originalMediaOffset + delta);
+
+                                // Enforce Max Duration Limit
+                                const assetId = originalTrack.props.assetId;
+                                if (assetId) {
+                                    const asset = project.assets[assetId];
+                                    if (asset && asset.metadata?.duration) {
+                                        const maxDurationFrames = Math.floor(asset.metadata.duration * fps);
+                                        const currentOffset = updates.props.mediaOffset || 0;
+
+                                        if (updates.durationInFrames + currentOffset > maxDurationFrames) {
+                                            updates.durationInFrames = Math.max(1, maxDurationFrames - currentOffset);
+                                        }
+                                    }
                                 }
 
                                 updateTrack(action.id, updates);
                             }
                         }}
+
                         onRowDragEnd={(params: any) => {
                             const newOrderIds = params.editorData.map((row: any) => row.id);
                             reorderTracks(newOrderIds);

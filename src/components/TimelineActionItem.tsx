@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { AudioWaveform } from './AudioWaveform';
+import { VideoThumbnail } from './VideoThumbnail';
 
 interface TimelineActionItemProps {
     action: Record<string, any>;
@@ -88,6 +89,18 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
                             />
                         )}
                     </div>
+                )}
+
+                {/* Video Thumbnail Background */}
+                {type === 'video' && src && dimensions.width > 0 && (
+                    <VideoThumbnail
+                        src={src}
+                        width={dimensions.width}
+                        // Duration in Seconds. action.duration is usually frames? No, action.end-start is seconds in this timeline (dnd-kit coord)
+                        // Actually, PrismTimeline conversion: startFrame = action.start * fps. So action.start is seconds.
+                        duration={action.end - action.start}
+                        className="absolute inset-0 z-0 opacity-50 contrast-125"
+                    />
                 )}
 
                 <div className="relative flex items-center z-10 w-full pl-1">
