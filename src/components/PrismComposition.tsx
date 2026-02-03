@@ -10,6 +10,7 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
 
             {/* Render in reverse order so the first track in the list (Top of Timeline) is rendered Last (Top Z-Index) */}
             {[...project.tracks].reverse().map((track) => {
+                if (track.visible === false) return null;
                 return (
                     <Sequence
                         key={track.id}

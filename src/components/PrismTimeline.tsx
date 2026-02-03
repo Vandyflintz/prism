@@ -72,6 +72,9 @@ export const PrismTimeline: React.FC = () => {
                     // Pass color for generic tracks
                     color: track.props.backgroundColor
                 },
+                movable: !track.locked,
+                resizable: !track.locked,
+                flexible: !track.locked,
             }
         ],
     })), [project.tracks, project.assets, fps]);
