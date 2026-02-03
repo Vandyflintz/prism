@@ -36,16 +36,48 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     // Animation Logic (Interpolation)
     const frame = useCurrentFrame();
     const duration = track.durationInFrames;
+    const TRANSITION_DURATION = 15; // 0.5s at 30fps
+
+    let animOpacity = 1;
     let animScale = 1;
     let animTranslateX = 0;
+    let animTranslateY = 0;
+    let animClipPath: string | undefined = undefined;
 
-    if (animation === 'zoom_in') {
-        animScale = interpolate(frame, [0, duration], [1, 1.2], { extrapolateRight: 'clamp' });
-    } else if (animation === 'zoom_out') {
-        animScale = interpolate(frame, [0, duration], [1.2, 1], { extrapolateRight: 'clamp' });
-    } else if (animation === 'slide_in') {
-        animTranslateX = interpolate(frame, [0, 20], [-50, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.ease) });
-    } else if (animation === 'ken_burns') {
+    if (animation === 'fade_in') {
+        animOpacity = interpolate(frame, [0, TRANSITION_DURATION], [0, 1], { extrapolateRight: 'clamp' });
+    }
+    else if (animation === 'slide_in_left') {
+        animTranslateX = interpolate(frame, [0, TRANSITION_DURATION], [-width, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+    }
+    else if (animation === 'slide_in_right') {
+        animTranslateX = interpolate(frame, [0, TRANSITION_DURATION], [width, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+    }
+    else if (animation === 'slide_in_top') {
+        animTranslateY = interpolate(frame, [0, TRANSITION_DURATION], [-height, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+    }
+    else if (animation === 'slide_in_bottom') {
+        animTranslateY = interpolate(frame, [0, TRANSITION_DURATION], [height, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+    }
+    else if (animation === 'zoom_in') {
+        animScale = interpolate(frame, [0, TRANSITION_DURATION], [0, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+        animOpacity = interpolate(frame, [0, 5], [0, 1], { extrapolateRight: 'clamp' }); // Quick fade to avoid pop
+    }
+    else if (animation === 'zoom_out') {
+        animScale = interpolate(frame, [0, TRANSITION_DURATION], [1.5, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+        animOpacity = interpolate(frame, [0, 5], [0, 1], { extrapolateRight: 'clamp' });
+    }
+    else if (animation === 'wipe_left') {
+        // Wipe from Right to Left (Reveals content)
+        const p = interpolate(frame, [0, TRANSITION_DURATION], [100, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+        animClipPath = `inset(0 ${p}% 0 0)`;
+    }
+    else if (animation === 'wipe_right') {
+        // Wipe from Left to Right
+        const p = interpolate(frame, [0, TRANSITION_DURATION], [100, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+        animClipPath = `inset(0 0 0 ${p}%)`;
+    }
+    else if (animation === 'ken_burns') {
         animScale = interpolate(frame, [0, duration], [1.1, 1.3], { extrapolateRight: 'clamp' });
     }
 
@@ -56,8 +88,9 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
         top: y,
         width,
         height,
-        opacity,
-        transform: `translateX(${animTranslateX}px) rotate(${rotation}deg) scale(${scale * animScale})`,
+        opacity: opacity * animOpacity,
+        transform: `translateX(${animTranslateX}px) translateY(${animTranslateY}px) rotate(${rotation}deg) scale(${scale * animScale})`,
+        clipPath: animClipPath,
         borderWidth: borderWidth ? `${borderWidth}px` : undefined,
         borderColor: borderColor || undefined,
         borderStyle: borderWidth ? 'solid' : undefined,
