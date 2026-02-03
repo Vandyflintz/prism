@@ -2,7 +2,17 @@ import { readPsd, Layer } from 'ag-psd';
 import { PrismProject, PrismTrack, PrismAsset, TrackType, LayerProps } from '../types/prism';
 
 // Helper to generate IDs
-const generateId = () => crypto.randomUUID();
+// Helper to generate IDs (Polyfill for crypto.randomUUID)
+const generateId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // Fallback for older environments / non-secure contexts
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
 
 /**
  * Parses a PSD buffer and converts it into a PrismProject schema.
@@ -108,12 +118,25 @@ export async function parsePsd(buffer: ArrayBuffer | Uint8Array): Promise<PrismP
             }
         }
 
+
+        const ANIMATIONS = [
+            'fade_in',
+            'zoom_in',
+            'slide_in_bottom',
+            'slide_in_top',
+            'slide_in_left',
+            'slide_in_right'
+        ];
+        const randomAnim = ANIMATIONS[Math.floor(Math.random() * ANIMATIONS.length)];
+
         const track: PrismTrack = {
             id: trackId,
             type: determineLayerType(layer),
             startFrame: staggerFrame,
             durationInFrames: project.durationInFrames - staggerFrame,
+            animation: randomAnim, // Random Animation
             props: {
+                transitionDuration: 20, // Default beautiful duration (0.7s)
                 x: layer.left || 0,
                 y: layer.top || 0,
                 width: width,
