@@ -294,7 +294,7 @@ export async function parsePsd(buffer: ArrayBuffer | Uint8Array): Promise<PrismP
             }
         }
 
-        project.tracks.push(track);
+        project.tracks.unshift(track);
     }
 
     return project;

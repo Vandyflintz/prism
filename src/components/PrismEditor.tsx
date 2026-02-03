@@ -73,10 +73,12 @@ export default function PrismEditor() {
         if (player) {
             if (isPlaying) {
                 if (!player.isPlaying()) {
+                    console.log('Force Play');
                     player.play();
                 }
             } else {
                 if (player.isPlaying()) {
+                    console.log('Force Pause');
                     player.pause();
                 }
             }

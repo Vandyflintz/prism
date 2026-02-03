@@ -133,8 +133,12 @@ export const usePrismStore = create<PrismState>()(
             }),
         }),
         {
-            partialize: (state) => ({ project: state.project }),
-            limit: 20 // Limit history to last 20 actions
+
+            partialize: (state) => ({
+                project: state.project
+            }),
+            equality: (a, b) => JSON.stringify(a) === JSON.stringify(b), // Simple deep compare to avoid duplicate history entries
+            limit: 50 // Increase limit slightly now that it's cleaner
         }
     )
 );

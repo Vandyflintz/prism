@@ -159,21 +159,33 @@ export const PropertySidebar: React.FC = () => {
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Animations</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <button className="flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all group">
-                                        <svg className="w-5 h-5 text-zinc-500 group-hover:text-blue-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
-                                        <span className="text-[10px] text-zinc-400">Zoom In</span>
+                                    <button
+                                        onClick={() => updateTrack(track.id, { animation: track.animation === 'zoom_in' ? undefined : 'zoom_in' })}
+                                        className={`flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border transition-all group ${track.animation === 'zoom_in' ? 'border-blue-500 bg-blue-900/20' : 'border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10'}`}
+                                    >
+                                        <svg className={`w-5 h-5 mb-2 ${track.animation === 'zoom_in' ? 'text-blue-400' : 'text-zinc-500 group-hover:text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                        <span className={`text-[10px] ${track.animation === 'zoom_in' ? 'text-blue-200' : 'text-zinc-400'}`}>Zoom In</span>
                                     </button>
-                                    <button className="flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all group">
-                                        <svg className="w-5 h-5 text-zinc-500 group-hover:text-blue-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
-                                        <span className="text-[10px] text-zinc-400">Zoom Out</span>
+                                    <button
+                                        onClick={() => updateTrack(track.id, { animation: track.animation === 'zoom_out' ? undefined : 'zoom_out' })}
+                                        className={`flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border transition-all group ${track.animation === 'zoom_out' ? 'border-blue-500 bg-blue-900/20' : 'border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10'}`}
+                                    >
+                                        <svg className={`w-5 h-5 mb-2 ${track.animation === 'zoom_out' ? 'text-blue-400' : 'text-zinc-500 group-hover:text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
+                                        <span className={`text-[10px] ${track.animation === 'zoom_out' ? 'text-blue-200' : 'text-zinc-400'}`}>Zoom Out</span>
                                     </button>
-                                    <button className="flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all group">
-                                        <svg className="w-5 h-5 text-zinc-500 group-hover:text-blue-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                        <span className="text-[10px] text-zinc-400">Slide In</span>
+                                    <button
+                                        onClick={() => updateTrack(track.id, { animation: track.animation === 'slide_in' ? undefined : 'slide_in' })}
+                                        className={`flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border transition-all group ${track.animation === 'slide_in' ? 'border-blue-500 bg-blue-900/20' : 'border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10'}`}
+                                    >
+                                        <svg className={`w-5 h-5 mb-2 ${track.animation === 'slide_in' ? 'text-blue-400' : 'text-zinc-500 group-hover:text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                        <span className={`text-[10px] ${track.animation === 'slide_in' ? 'text-blue-200' : 'text-zinc-400'}`}>Slide In</span>
                                     </button>
-                                    <button className="flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all group">
-                                        <svg className="w-5 h-5 text-zinc-500 group-hover:text-blue-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        <span className="text-[10px] text-zinc-400">Ken Burns</span>
+                                    <button
+                                        onClick={() => updateTrack(track.id, { animation: track.animation === 'ken_burns' ? undefined : 'ken_burns' })}
+                                        className={`flex flex-col items-center justify-center p-3 rounded bg-zinc-900 border transition-all group ${track.animation === 'ken_burns' ? 'border-blue-500 bg-blue-900/20' : 'border-zinc-800 hover:border-blue-500/50 hover:bg-blue-900/10'}`}
+                                    >
+                                        <svg className={`w-5 h-5 mb-2 ${track.animation === 'ken_burns' ? 'text-blue-400' : 'text-zinc-500 group-hover:text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span className={`text-[10px] ${track.animation === 'ken_burns' ? 'text-blue-200' : 'text-zinc-400'}`}>Ken Burns</span>
                                     </button>
                                 </div>
                             </div>

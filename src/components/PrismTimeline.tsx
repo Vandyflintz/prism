@@ -6,6 +6,28 @@ import { usePrismStore } from '../store/usePrismStore';
 
 import { TimelineActionItem } from './TimelineActionItem';
 
+
+// Helper: Format timecode (HH:MM:SS:FF)
+const formatTimecode = (frame: number, fps: number) => {
+    const totalSeconds = frame / fps;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const frames = Math.round((totalSeconds % 1) * fps);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`;
+};
+
+// Toolbar Icon Helper
+const IconBtn = ({ onClick, children, title, className = '' }: { onClick?: () => void, children: React.ReactNode, title?: string, className?: string }) => (
+    <button
+        onClick={onClick}
+        title={title}
+        className={`w-8 h-8 flex items-center justify-center rounded-md bg-transparent border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-sm ${className}`}
+    >
+        {children}
+    </button>
+);
+
 export const PrismTimeline: React.FC = () => {
     const {
         project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
@@ -104,27 +126,7 @@ export const PrismTimeline: React.FC = () => {
     const scale = 1;
     const scaleWidth = zoom;
 
-    // Format timecode (HH:MM:SS:FF)
-    const formatTimecode = (frame: number) => {
-        const totalSeconds = frame / fps;
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        const frames = Math.round((totalSeconds % 1) * fps);
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`;
-    };
 
-    // Toolbar Icon Helper
-    // Toolbar Icon Helper - Updated for "Outline" look (No background, keep border)
-    const IconBtn = ({ onClick, children, title, className = '' }: { onClick?: () => void, children: React.ReactNode, title?: string, className?: string }) => (
-        <button
-            onClick={onClick}
-            title={title}
-            className={`w-8 h-8 flex items-center justify-center rounded-md bg-transparent border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-sm ${className}`}
-        >
-            {children}
-        </button>
-    );
 
     return (
         <div className="w-full h-full flex flex-col bg-zinc-950 border-t border-zinc-800 select-none">
@@ -204,7 +206,7 @@ export const PrismTimeline: React.FC = () => {
                     <IconBtn
                         onClick={toggleMagnet}
                         title={`Magnet Snap (${isMagnetEnabled ? "On" : "Off"})`}
-                        className={isMagnetEnabled ? 'text-blue-400 bg-blue-900/20 hover:bg-blue-900/40 hover:text-blue-300' : ''}
+                        className={isMagnetEnabled ? 'text-blue-400 bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' : 'text-zinc-500 hover:text-zinc-300'}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                     </IconBtn>
@@ -232,7 +234,7 @@ export const PrismTimeline: React.FC = () => {
 
                     {/* Time Display */}
                     <div className="ml-3 px-3 py-1 bg-zinc-900 rounded border border-zinc-800 font-mono text-xs text-blue-400 tracking-wider shadow-inner">
-                        {formatTimecode(currentTime)}
+                        {formatTimecode(currentTime, fps)}
                     </div>
                 </div>
 

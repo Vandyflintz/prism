@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Sequence, Audio } from 'remotion';
+import { AbsoluteFill, Sequence, Audio, useCurrentFrame, interpolate, Easing } from 'remotion';
 import { PrismProject, PrismTrack } from '../../types/prism';
 
 export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project }) => {
@@ -7,7 +7,9 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
 
     return (
         <AbsoluteFill style={{ backgroundColor: undefined }}>
-            {project.tracks.map((track) => {
+
+            {/* Render in reverse order so the first track in the list (Top of Timeline) is rendered Last (Top Z-Index) */}
+            {[...project.tracks].reverse().map((track) => {
                 return (
                     <Sequence
                         key={track.id}
@@ -27,8 +29,24 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     track,
     project,
 }) => {
-    const { props, type } = track;
+    const { props, type, animation } = track;
     const { x, y, width, height, opacity, rotation, scale, content, color, fontSize, fontFamily, assetId, textAlign, isRasterized, borderWidth, borderColor, borderRadius, textStrokeWidth, textStrokeColor, textShadow } = props;
+
+    // Animation Logic (Interpolation)
+    const frame = useCurrentFrame();
+    const duration = track.durationInFrames;
+    let animScale = 1;
+    let animTranslateX = 0;
+
+    if (animation === 'zoom_in') {
+        animScale = interpolate(frame, [0, duration], [1, 1.2], { extrapolateRight: 'clamp' });
+    } else if (animation === 'zoom_out') {
+        animScale = interpolate(frame, [0, duration], [1.2, 1], { extrapolateRight: 'clamp' });
+    } else if (animation === 'slide_in') {
+        animTranslateX = interpolate(frame, [0, 20], [-50, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.ease) });
+    } else if (animation === 'ken_burns') {
+        animScale = interpolate(frame, [0, duration], [1.1, 1.3], { extrapolateRight: 'clamp' });
+    }
 
     // Common styles
     const style: React.CSSProperties = {
@@ -38,12 +56,12 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
         width,
         height,
         opacity,
-        transform: `rotate(${rotation}deg) scale(${scale})`,
+        transform: `translateX(${animTranslateX}px) rotate(${rotation}deg) scale(${scale * animScale})`,
         borderWidth: borderWidth ? `${borderWidth}px` : undefined,
         borderColor: borderColor || undefined,
         borderStyle: borderWidth ? 'solid' : undefined,
         borderRadius: borderRadius ? `${borderRadius}px` : undefined,
-        overflow: borderRadius ? 'hidden' : undefined, // Clip content for radius
+        overflow: borderRadius ? 'hidden' : undefined,
     };
 
     if (type === 'text') {
