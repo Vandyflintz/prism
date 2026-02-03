@@ -8,6 +8,7 @@ import { usePrismStore } from '../store/usePrismStore';
 import { PrismProject } from '../../types/prism';
 import { PropertySidebar } from './PropertySidebar';
 import { parsePsd } from '../../lib/psd-to-json';
+import { TimelineSettingsModal } from './TimelineSettingsModal';
 
 const MOCK_PROJECT: PrismProject = {
     id: 'mock-1',
@@ -63,6 +64,7 @@ export default function PrismEditor() {
 
     // Use state instead of ref to ensure we react when the player is mounted/ready
     const [player, setPlayer] = React.useState<PlayerRef | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
     useEffect(() => {
         if (!project) setProject(MOCK_PROJECT);
@@ -252,7 +254,7 @@ export default function PrismEditor() {
                     <div className="h-[320px] shrink-0 border-t border-zinc-800 bg-[#09090b] flex flex-col z-10">
                         {/* Top Accent Line */}
                         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
-                        <PrismTimeline />
+                        <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
                     </div>
 
                 </div>
@@ -261,6 +263,9 @@ export default function PrismEditor() {
                 <PropertySidebar />
 
             </div>
+
+            {/* Settings Modal */}
+            {isSettingsOpen && <TimelineSettingsModal onClose={() => setIsSettingsOpen(false)} />}
         </div>
     );
 }

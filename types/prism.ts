@@ -12,6 +12,7 @@ export interface PrismProject {
     height: number; // Canvas height, e.g., 1920
     fps: number; // Frames per second, e.g., 30
     durationInFrames: number; // Total duration of the video
+    backgroundColor?: string; // Global canvas background color
 
     // Asset Map: Central repository for external resources
     // Key = assetId (generated uuid)

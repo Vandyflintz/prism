@@ -21,6 +21,7 @@ interface PrismState {
     isPlaying: boolean;
     isMagnetEnabled: boolean;
     setProject: (project: PrismProject) => void;
+    updateProjectSettings: (settings: Partial<PrismProject>) => void;
     setSelectedTrackId: (id: string | null) => void;
     setCurrentTime: (time: number) => void;
     setIsPlaying: (playing: boolean) => void;
@@ -48,6 +49,14 @@ export const usePrismStore = create<PrismState>()(
             isMagnetEnabled: true,
 
             setProject: (project) => set({ project }),
+
+            updateProjectSettings: (settings) => set((state) => {
+                if (!state.project) return state;
+                return {
+                    project: { ...state.project, ...settings }
+                };
+            }),
+
             setSelectedTrackId: (id) => set({ selectedTrackId: id }),
 
             setCurrentTime: (time) => set({ currentTime: time }),

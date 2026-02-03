@@ -6,7 +6,7 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
     if (!project) return <AbsoluteFill style={{ backgroundColor: 'red' }}>No Project Data</AbsoluteFill>;
 
     return (
-        <AbsoluteFill style={{ backgroundColor: undefined }}>
+        <AbsoluteFill style={{ backgroundColor: project.backgroundColor || '#ffffff' }}>
 
             {/* Render in reverse order so the first track in the list (Top of Timeline) is rendered Last (Top Z-Index) */}
             {[...project.tracks].reverse().map((track) => {
