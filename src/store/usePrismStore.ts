@@ -135,12 +135,20 @@ export const usePrismStore = create<PrismState>()(
                 const firstHalfDuration = splitFrame - track.startFrame;
                 const secondHalfDuration = track.durationInFrames - firstHalfDuration;
 
+                // Calculate new media offset for the second half
+                const currentMediaOffset = track.props.mediaOffset || 0;
+                const newMediaOffset = currentMediaOffset + firstHalfDuration;
+
                 // Create second half (new track)
                 const newTrack: PrismTrack = {
                     ...track,
                     id: generateId(),
                     startFrame: splitFrame,
                     durationInFrames: secondHalfDuration,
+                    props: {
+                        ...track.props,
+                        mediaOffset: newMediaOffset
+                    }
                 };
 
                 // Update first half (existing track)
