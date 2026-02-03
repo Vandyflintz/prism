@@ -87,6 +87,26 @@ export const PropertySidebar: React.FC = () => {
                                             className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                         />
                                     </div>
+                                    <div className="col-span-2 grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800/50">
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-zinc-400">Width</span>
+                                            <input
+                                                type="number"
+                                                value={track.props.width || 0}
+                                                onChange={(e) => handleChange('width', parseInt(e.target.value))}
+                                                className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-zinc-400">Height</span>
+                                            <input
+                                                type="number"
+                                                value={track.props.height || 0}
+                                                onChange={(e) => handleChange('height', parseInt(e.target.value))}
+                                                className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="col-span-2 space-y-1">
                                         <div className="flex justify-between">
                                             <span className="text-xs text-zinc-400">Opacity</span>

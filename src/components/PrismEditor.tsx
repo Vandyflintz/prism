@@ -9,6 +9,7 @@ import { PrismProject } from '../../types/prism';
 import { PropertySidebar } from './PropertySidebar';
 import { parsePsd } from '../../lib/psd-to-json';
 import { TimelineSettingsModal } from './TimelineSettingsModal';
+import { ResourcePanel } from './ResourcePanel';
 
 const MOCK_PROJECT: PrismProject = {
     id: 'mock-1',
@@ -65,6 +66,8 @@ export default function PrismEditor() {
     // Use state instead of ref to ensure we react when the player is mounted/ready
     const [player, setPlayer] = React.useState<PlayerRef | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+    const [showLeftPanel, setShowLeftPanel] = React.useState(true);
+    const [showRightPanel, setShowRightPanel] = React.useState(true);
 
     useEffect(() => {
         if (!project) setProject(MOCK_PROJECT);
@@ -182,6 +185,24 @@ export default function PrismEditor() {
             {/* Application Header */}
             <header className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 border-b border-zinc-900 bg-[#09090b] select-none">
                 <div className="flex items-center gap-3">
+                    {/* Collapse Toggles */}
+                    <div className="flex items-center gap-1 border-r border-zinc-800 pr-3 mr-1">
+                        <button
+                            onClick={() => setShowLeftPanel(!showLeftPanel)}
+                            className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${showLeftPanel ? 'text-zinc-100' : 'text-zinc-600'}`}
+                            title="Toggle Resources"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                        </button>
+                        <button
+                            onClick={() => setShowRightPanel(!showRightPanel)}
+                            className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${showRightPanel ? 'text-zinc-100' : 'text-zinc-600'}`}
+                            title="Toggle Inspector"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M13 18h7" /></svg>
+                        </button>
+                    </div>
+
                     <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
                         <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
                         <span className="text-sm">Prism</span>
@@ -210,14 +231,19 @@ export default function PrismEditor() {
             </header>
 
             {/* Workspace Grid */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0">
 
-                {/* Left/Center Column */}
-                <div className="flex-1 flex flex-col min-w-0">
+                {/* TOP AREA: Assets, Player, Inspector */}
+                <div className="flex-1 flex min-h-0">
 
-                    {/* Canvas / Stage Area */}
-                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden">
-                        {/* Dot Grid Background (Using CSS class or inline SVG) */}
+                    {/* Left: Resources */}
+                    <div style={{ display: showLeftPanel ? 'block' : 'none' }}>
+                        <ResourcePanel />
+                    </div>
+
+                    {/* Center: Stage */}
+                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden border-x border-zinc-900">
+                        {/* Dot Grid Background */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
                             backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
                             backgroundSize: '24px 24px'
@@ -250,17 +276,18 @@ export default function PrismEditor() {
                         </div>
                     </div>
 
-                    {/* Timeline Panel */}
-                    <div className="h-[320px] shrink-0 border-t border-zinc-800 bg-[#09090b] flex flex-col z-10">
-                        {/* Top Accent Line */}
-                        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
-                        <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
+                    {/* Right: Inspector */}
+                    <div style={{ display: showRightPanel ? 'block' : 'none' }}>
+                        <PropertySidebar />
                     </div>
-
                 </div>
 
-                {/* Right Column: Inspector */}
-                <PropertySidebar />
+                {/* BOTTOM AREA: Timeline */}
+                <div className="h-[320px] shrink-0 border-t border-zinc-800 bg-[#09090b] flex flex-col z-10">
+                    {/* Top Accent Line */}
+                    <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
+                    <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
+                </div>
 
             </div>
 

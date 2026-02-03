@@ -25,7 +25,7 @@ export interface PrismProject {
     tracks: PrismTrack[];
 }
 
-export type AssetType = 'image' | 'audio' | 'video' | 'font';
+export type AssetType = 'image' | 'audio' | 'video' | 'font' | 'psd';
 
 export interface PrismAsset {
     id: string;
@@ -40,7 +40,30 @@ export interface PrismAsset {
         // For fonts
         fontFamily?: string;
         fontWeight?: string;
+        // For PSDs
+        layers?: PsdLayerSummary[];
+        // Full parsed project for Drag & Drop
+        psdProject?: PrismProject;
+        // Internal assets (e.g. PSD layers) hidden from library
+        isInternal?: boolean;
     };
+}
+
+export interface PsdLayerSummary {
+    id: string; // Unique ID within the PSD asset scope
+    name: string;
+    type: 'image' | 'text' | 'group';
+    visible: boolean;
+    // For images, we might have a blob URL for their rendered content
+    src?: string;
+    // For text
+    text?: string;
+    // Dimensions relative to PSD canvas
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+    children?: PsdLayerSummary[]; // For groups
 }
 
 export type TrackType = 'image' | 'video' | 'text' | 'shape' | 'audio';
@@ -84,6 +107,7 @@ export interface LayerProps {
     // Specific to 'text'
     content?: string; // The actual text string
     fontFamily?: string; // Should match an uploaded font or system font
+    fontWeight?: string;
     fontSize?: number; // px
     color?: string; // Hex code or rgba
     textAlign?: 'left' | 'center' | 'right';

@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import { usePrismStore } from '../store/usePrismStore';
 
 import { TimelineActionItem } from './TimelineActionItem';
+import { PrismProject } from '../../types/prism';
 import { TransitionEditor } from './TransitionEditor';
 
 
@@ -39,7 +40,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const {
         project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, toggleTrackMute, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
-        isMagnetEnabled, toggleMagnet
+        isMagnetEnabled, toggleMagnet, addTrack, addAsset
     } = usePrismStore();
 
     const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
@@ -269,7 +270,186 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
             </div>
 
             {/* TIMELINE SURFACE */}
-            <div className="flex-1 relative overflow-hidden bg-[#09090b] flex">
+            <div
+                className="flex-1 relative overflow-hidden bg-[#09090b] flex"
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    const dataStr = e.dataTransfer.getData('application/json');
+                    if (!dataStr) return;
+
+                    try {
+                        const data = JSON.parse(dataStr);
+                        const id = crypto.randomUUID();
+                        const startFrame = currentTime || 0;
+
+                        if (data.type === 'asset') {
+                            let assetId = data.assetId;
+
+                            // If we have a src but no assetId (e.g. PSD Layer), create an asset now
+                            if (!assetId && data.src) {
+                                assetId = crypto.randomUUID();
+                                addAsset({
+                                    id: assetId,
+                                    type: data.assetType, // 'image' or 'text' -> but likely 'image' here
+                                    src: data.src,
+                                    metadata: { originalName: 'Layer Drop' }
+                                });
+                            }
+
+                            if (data.assetType === 'psd') {
+                                const asset = project?.assets[data.assetId];
+
+                                // High-Fidelity Import (using pre-parsed project)
+                                if (asset?.metadata?.psdProject) {
+                                    const psdProject = asset.metadata.psdProject as PrismProject;
+
+                                    // 1. Import Internal Assets (Images hidden inside PSD)
+                                    if (psdProject.assets) {
+                                        Object.values(psdProject.assets).forEach(internalAsset => {
+                                            addAsset(internalAsset);
+                                        });
+                                    }
+
+                                    // 2. Add Tracks (preserving relative order)
+                                    if (psdProject.tracks) {
+                                        psdProject.tracks.forEach(track => {
+                                            const newTrackId = crypto.randomUUID();
+                                            addTrack({
+                                                ...track,
+                                                id: newTrackId,
+                                                startFrame: startFrame + track.startFrame
+                                            });
+                                        });
+                                    }
+                                    return;
+                                }
+
+                                if (asset && asset.metadata && asset.metadata.layers) {
+                                    // Helper to traverse and add simple layers
+                                    const processPsdLayers = (layers: any[]) => {
+                                        // Reverse to stack correctly (bottom to top in array? typically 0 is bottom)
+                                        // But we want to add tracks. `addTrack` usually appends.
+                                        // If we append leaf-first, they stack up.
+                                        layers.forEach(layer => {
+                                            if (!layer.visible) return;
+
+                                            if (layer.children) {
+                                                processPsdLayers(layer.children);
+                                            } else {
+                                                // Leaf
+                                                const trackId = crypto.randomUUID();
+                                                const props: any = {
+                                                    // asset.metadata.layers has coordinates relative to PSD canvas (0,0).
+                                                    // We use absolute coordinates match PSD structure.
+                                                    x: layer.left,
+                                                    y: layer.top,
+                                                    width: layer.width,
+                                                    height: layer.height,
+                                                    opacity: 1,
+                                                    rotation: 0,
+                                                    scale: 1,
+                                                };
+
+                                                let type = layer.type === 'text' ? 'text' : 'image';
+
+                                                if (type === 'text') {
+                                                    props.content = layer.text || 'Text';
+                                                    props.fontSize = 40;
+                                                    props.color = '#ffffff';
+                                                    props.fontFamily = 'Inter';
+                                                } else {
+                                                    // Image Layer
+                                                    if (layer.src) {
+                                                        const newAssetId = crypto.randomUUID();
+                                                        addAsset({
+                                                            id: newAssetId,
+                                                            type: 'image',
+                                                            src: layer.src,
+                                                            metadata: { originalName: layer.name }
+                                                        });
+                                                        props.assetId = newAssetId;
+                                                    } else {
+                                                        // Fallback for shape layers without src?
+                                                        // Just skip or placeholder?
+                                                        // props.backgroundColor = '#555';
+                                                    }
+                                                }
+
+                                                addTrack({
+                                                    id: trackId,
+                                                    type: type as any,
+                                                    startFrame,
+                                                    durationInFrames: 150,
+                                                    props,
+                                                });
+                                            }
+                                        });
+                                    };
+                                    processPsdLayers(asset.metadata.layers);
+                                }
+                            } else if (data.assetType === 'video' || data.assetType === 'image') {
+                                addTrack({
+                                    id,
+                                    type: data.assetType,
+                                    startFrame,
+                                    durationInFrames: 150,
+                                    props: {
+                                        x: (project?.width || 1920) / 2 - 250,
+                                        y: (project?.height || 1080) / 2 - 250,
+                                        width: 500,
+                                        height: 500,
+                                        opacity: 1,
+                                        rotation: 0,
+                                        scale: 1,
+                                        assetId: assetId
+                                    }
+                                });
+                            } else if (data.assetType === 'audio') {
+                                addTrack({
+                                    id,
+                                    type: 'audio',
+                                    startFrame,
+                                    durationInFrames: 300,
+                                    props: {
+                                        x: 0, y: 0, width: 0, height: 0,
+                                        opacity: 1, rotation: 0, scale: 1,
+                                        assetId: assetId,
+                                        volume: 1
+                                    }
+                                });
+                            }
+                        } else if (data.type === 'text') {
+                            addTrack({
+                                id,
+                                type: 'text',
+                                startFrame,
+                                durationInFrames: 150,
+                                props: {
+                                    x: (project?.width || 1920) / 2 - 400,
+                                    y: (project?.height || 1080) / 2 - 100,
+                                    width: 800,
+                                    height: 200,
+                                    opacity: 1,
+                                    rotation: 0,
+                                    scale: 1,
+                                    content: data.content,
+                                    fontSize: data.fontSize,
+                                    fontWeight: data.fontWeight,
+                                    color: data.color || '#ffffff',
+                                    fontFamily: data.fontFamily || 'Inter',
+                                    textAlign: 'center'
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Drop failed', err);
+                    }
+                }}
+            >
 
                 {/* LEFT SIDEBAR (Track Headers) */}
                 <div
@@ -300,15 +480,18 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                 key={track.id}
                                 draggable
                                 onDragStart={(e) => {
+                                    e.stopPropagation();
                                     e.dataTransfer.setData('text/plain', index.toString());
                                     e.dataTransfer.effectAllowed = 'move';
                                 }}
                                 onDragOver={(e) => {
                                     e.preventDefault(); // Allow drop
+                                    e.stopPropagation();
                                     e.dataTransfer.dropEffect = 'move';
                                 }}
                                 onDrop={(e) => {
                                     e.preventDefault();
+                                    e.stopPropagation();
                                     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
                                     const toIndex = index;
                                     if (fromIndex !== toIndex) {

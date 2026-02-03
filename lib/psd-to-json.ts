@@ -1,5 +1,5 @@
 import { readPsd, Layer } from 'ag-psd';
-import { PrismProject, PrismTrack, PrismAsset, TrackType, LayerProps } from '../types/prism';
+import { PrismProject, PrismTrack, PrismAsset, TrackType, LayerProps, PsdLayerSummary } from '../types/prism';
 
 // Helper to generate IDs
 // Helper to generate IDs (Polyfill for crypto.randomUUID)
@@ -249,7 +249,7 @@ export async function parsePsd(buffer: ArrayBuffer | Uint8Array): Promise<PrismP
                 const imgSrc = await processLayerImage(layer, track.props.x, track.props.y);
 
                 if (imgSrc) {
-                    const asset: PrismAsset = { id: assetId, type: 'image', src: imgSrc };
+                    const asset: PrismAsset = { id: assetId, type: 'image', src: imgSrc, metadata: { isInternal: true } };
                     project.assets[assetId] = asset;
                     track.props.assetId = assetId;
                     track.props.isRasterized = true;
@@ -265,6 +265,7 @@ export async function parsePsd(buffer: ArrayBuffer | Uint8Array): Promise<PrismP
                 id: assetId,
                 type: 'image',
                 src: finalSrc,
+                metadata: { isInternal: true }
             };
 
             project.assets[assetId] = asset;
@@ -683,4 +684,77 @@ async function processLayerImage(layer: Layer, trackX: number, trackY: number): 
         }
     }
     return null;
+}
+
+/**
+ * Parses a PSD buffer to extract its composite thumbnail or canvas.
+ */
+export async function getPsdPreview(buffer: ArrayBuffer | Uint8Array): Promise<string | undefined> {
+    try {
+        const psd = readPsd(buffer, {
+            skipLayerImageData: true, // we only want the composite
+            skipThumbnail: false,
+        });
+
+        // 1. Try Canvas (Composite)
+        if (psd.canvas) {
+            const blob = await new Promise<Blob | null>(resolve => psd.canvas!.toBlob(resolve, 'image/webp'));
+            if (blob) return URL.createObjectURL(blob);
+        }
+    } catch (e) {
+        console.warn("Failed to extract PSD preview", e);
+    }
+    return undefined;
+}
+
+/**
+ * Parses a PSD buffer and returns a summary of layers for the Asset Library.
+ * Similar to parsePsd but returns PsdLayerSummary[] structure instead of a PrismProject.
+ */
+export async function getLayersFromPsd(buffer: ArrayBuffer | Uint8Array): Promise<PsdLayerSummary[]> {
+    const psd = readPsd(buffer, {
+        skipLayerImageData: false,
+        skipThumbnail: true,
+    });
+
+    const traverse = async (layers: Layer[]): Promise<PsdLayerSummary[]> => {
+        const summaries: PsdLayerSummary[] = [];
+        for (const layer of layers) {
+            const id = generateId();
+
+            // Process Image logic similar to original parsePsd but scoped
+            let imgSrc = undefined;
+            if (layer.canvas) {
+                try {
+                    // @ts-ignore
+                    const blob = await new Promise<Blob | null>(resolve => layer.canvas.toBlob(resolve, 'image/webp'));
+                    if (blob) imgSrc = URL.createObjectURL(blob);
+                } catch (e) {
+                    console.error('Failed to create blob for summary', e);
+                }
+            }
+
+            const summary: PsdLayerSummary = {
+                id: id,
+                name: layer.name || 'Layer',
+                type: layer.text ? 'text' : (layer.children ? 'group' : 'image'),
+                visible: !layer.hidden,
+                left: layer.left || 0,
+                top: layer.top || 0,
+                width: (layer.right || 0) - (layer.left || 0),
+                height: (layer.bottom || 0) - (layer.top || 0),
+                text: layer.text?.text,
+                src: imgSrc
+            };
+
+            if (layer.children) {
+                summary.children = await traverse(layer.children);
+            }
+
+            summaries.push(summary);
+        }
+        return summaries;
+    };
+
+    return traverse(psd.children || []);
 }

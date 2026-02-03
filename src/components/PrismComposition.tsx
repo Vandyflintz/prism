@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Sequence, Audio, useCurrentFrame, interpolate, Easing } from 'remotion';
+import { AbsoluteFill, Sequence, Audio, Video, useCurrentFrame, interpolate, Easing } from 'remotion';
 import { PrismProject, PrismTrack } from '../../types/prism';
 
 export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project }) => {
@@ -134,6 +134,25 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
                 textShadow: textShadow,
             }}>
                 {content}
+            </div>
+        );
+    }
+
+    if (type === 'video') {
+        const asset = assetId ? project.assets[assetId] : null;
+        if (!asset) return <div style={{ ...style, border: '2px dashed red' }}>Missing Video Asset</div>;
+
+        return (
+            <div style={style}>
+                <Video
+                    src={asset.src}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                    }}
+                    volume={props.volume ?? 1}
+                />
             </div>
         );
     }

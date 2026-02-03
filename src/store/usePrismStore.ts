@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
-import { PrismProject, PrismTrack } from '../../types/prism';
+import { PrismProject, PrismTrack, PrismAsset } from '../../types/prism';
 
 // Helper to generate IDs (Polyfill for crypto.randomUUID)
 const generateId = () => {
@@ -29,7 +29,8 @@ interface PrismState {
     updateTrack: (trackId: string, updates: Partial<PrismTrack>) => void;
     reorderTracks: (orderedTrackIds: string[]) => void;
 
-    // Track Controls
+    addTrack: (track: PrismTrack) => void;
+    addAsset: (asset: PrismAsset) => void;
     toggleTrackLock: (trackId: string) => void;
     toggleTrackVisibility: (trackId: string) => void;
     toggleTrackMute: (trackId: string) => void;
@@ -69,6 +70,18 @@ export const usePrismStore = create<PrismState>()(
                     t.id === trackId ? { ...t, ...updates } : t
                 );
                 return { project: { ...state.project, tracks } };
+            }),
+
+            addTrack: (track) => set((state) => {
+                if (!state.project) return state;
+                const tracks = [...state.project.tracks, track];
+                return { project: { ...state.project, tracks } };
+            }),
+
+            addAsset: (asset) => set((state) => {
+                if (!state.project) return state;
+                const assets = { ...state.project.assets, [asset.id]: asset };
+                return { project: { ...state.project, assets } };
             }),
 
             reorderTracks: (orderedTrackIds: string[]) => set((state) => {
