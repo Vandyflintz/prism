@@ -36,7 +36,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     // Animation Logic (Interpolation)
     const frame = useCurrentFrame();
     const duration = track.durationInFrames;
-    const TRANSITION_DURATION = 15; // 0.5s at 30fps
+    const TRANSITION_DURATION = track.props.transitionDuration || 15; // Default 0.5s
 
     let animOpacity = 1;
     let animScale = 1;

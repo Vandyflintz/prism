@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import { usePrismStore } from '../store/usePrismStore';
 
 import { TimelineActionItem } from './TimelineActionItem';
+import { TransitionEditor } from './TransitionEditor';
 
 
 // Helper: Format timecode (HH:MM:SS:FF)
@@ -37,28 +38,10 @@ export const PrismTimeline: React.FC = () => {
         isMagnetEnabled, toggleMagnet
     } = usePrismStore();
 
-    const [transitionMenuOpenId, setTransitionMenuOpenId] = React.useState<string | null>(null);
+    const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
 
-    // Close menu when clicking outside
-    React.useEffect(() => {
-        const handleClickOutside = () => setTransitionMenuOpenId(null);
-        window.addEventListener('click', handleClickOutside);
-        return () => window.removeEventListener('click', handleClickOutside);
-    }, []);
+    // Old transitionOptions are now in the Editor component
 
-    const transitionOptions = [
-        { label: 'None', value: '' },
-        { label: 'Fade In', value: 'fade_in' },
-        { label: 'Zoom In', value: 'zoom_in' },
-        { label: 'Zoom Out', value: 'zoom_out' },
-        { label: 'Slide Up', value: 'slide_in_bottom' }, // Comes from bottom
-        { label: 'Slide Down', value: 'slide_in_top' },
-        { label: 'Slide Left', value: 'slide_in_right' }, // Moves to left? No, "In Left" usually means "From Left"
-        { label: 'Slide Right', value: 'slide_in_left' },
-        { label: 'Wipe Left', value: 'wipe_left' },
-        { label: 'Wipe Right', value: 'wipe_right' },
-        { label: 'Ken Burns', value: 'ken_burns' },
-    ];
 
     // Zundo Temporal Store
     const { undo, redo, pastStates, futureStates } = useStore(usePrismStore.temporal, (state) => state);
@@ -383,34 +366,13 @@ export const PrismTimeline: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setTransitionMenuOpenId(transitionMenuOpenId === track.id ? null : track.id);
+                                                        setEditingTransitionTrackId(track.id);
                                                     }}
                                                     className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 transition-all ${track.animation ? 'text-purple-400 border-purple-500/50 bg-purple-900/20' : 'text-zinc-500 hover:text-purple-300'}`}
-                                                    title={track.animation ? `Transition: ${track.animation}` : "Add Transition"}
+                                                    title={track.animation ? `Transition: ${track.animation}` : "Edit Transition"}
                                                 >
                                                     <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                                                 </button>
-
-                                                {/* Transition Dropdown Menu */}
-                                                {transitionMenuOpenId === track.id && (
-                                                    <div
-                                                        className="absolute top-full left-0 mt-1 w-32 bg-zinc-900 border border-zinc-700 rounded-md shadow-xl z-50 flex flex-col py-1"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        {transitionOptions.map(opt => (
-                                                            <button
-                                                                key={opt.value}
-                                                                onClick={() => {
-                                                                    updateTrack(track.id, { animation: opt.value as any }); // Update Store
-                                                                    setTransitionMenuOpenId(null);
-                                                                }}
-                                                                className={`px-3 py-1.5 text-left text-xs hover:bg-zinc-800 ${track.animation === opt.value ? 'text-purple-400 font-bold' : 'text-zinc-300'}`}
-                                                            >
-                                                                {opt.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
                                             </div>
                                         ) : null}
                                     </div>
@@ -533,6 +495,13 @@ export const PrismTimeline: React.FC = () => {
                     <svg className="w-3 h-3 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 </div>
             </div>
+            {/* Transition Editor Modal */}
+            {editingTransitionTrackId && (
+                <TransitionEditor
+                    trackId={editingTransitionTrackId}
+                    onClose={() => setEditingTransitionTrackId(null)}
+                />
+            )}
         </div>
     );
 };

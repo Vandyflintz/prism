@@ -61,6 +61,8 @@ export interface PrismTrack {
     // Animation preset identifier (e.g., 'fade_in', 'slide_up')
     // The Renderer will map this string to a concrete transition function
     animation?: string;
+    // Animation Duration in frames
+    transitionDuration?: number;
 }
 
 export interface LayerProps {
@@ -108,4 +110,6 @@ export interface LayerProps {
         height: number;
         radius?: number;
     };
+    // Animation Duration in frames
+    transitionDuration?: number;
 }
