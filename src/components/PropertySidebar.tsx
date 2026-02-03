@@ -174,6 +174,82 @@ export const PropertySidebar: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Image/Video Layout Settings */}
+                        {(track.type === 'image' || track.type === 'video') && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="h-[1px] bg-zinc-800 my-4" />
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Frame & Crop</label>
+
+                                <div className="space-y-3">
+                                    {/* Object Fit Dropdown */}
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-zinc-400">Fit Mode</span>
+                                        <select
+                                            value={track.props.objectFit || 'cover'}
+                                            onChange={(e) => handleChange('objectFit', e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
+                                        >
+                                            <option value="cover">Cover (Default)</option>
+                                            <option value="contain">Contain (Fit)</option>
+                                            <option value="fill">Fill (Stretch)</option>
+                                            <option value="none">Manual / Crop</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Manual Crop Controls (Only valid if Manual or effectively modifier on others maybe?) 
+                                        Let's only show these if 'none' (Manual) is selected for clarity 
+                                    */}
+                                    {track.props.objectFit === 'none' && (
+                                        <div className="p-2 bg-zinc-900/30 rounded border border-zinc-800/50 space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-zinc-500 uppercase">Crop Transform</span>
+                                                <button
+                                                    onClick={() => updateTrack(track.id, { props: { ...track.props, contentX: 0, contentY: 0, contentScale: 1 } })}
+                                                    className="text-[10px] text-indigo-400 hover:text-indigo-300"
+                                                >
+                                                    Reset
+                                                </button>
+                                            </div>
+
+                                            <div className="gap-2 grid grid-cols-2">
+                                                <div className="space-y-1">
+                                                    <span className="text-xs text-zinc-400">Pan X</span>
+                                                    <input
+                                                        type="number"
+                                                        value={track.props.contentX || 0}
+                                                        onChange={(e) => handleChange('contentX', parseInt(e.target.value))}
+                                                        className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-xs text-zinc-400">Pan Y</span>
+                                                    <input
+                                                        type="number"
+                                                        value={track.props.contentY || 0}
+                                                        onChange={(e) => handleChange('contentY', parseInt(e.target.value))}
+                                                        className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between">
+                                                    <span className="text-xs text-zinc-400">Zoom</span>
+                                                    <span className="text-xs text-zinc-500">{Math.round((track.props.contentScale || 1) * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0.1" max="3" step="0.1"
+                                                    value={track.props.contentScale || 1}
+                                                    onChange={(e) => handleChange('contentScale', parseFloat(e.target.value))}
+                                                    className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Animation Group (Image Only) */}
                         {track.type === 'image' && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">

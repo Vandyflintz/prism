@@ -192,6 +192,65 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
         }
         // -----------------------------------
 
+        // Create the image element with appropriate styles
+        const fitMode = props.objectFit || 'cover';
+
+        let imageStyle: React.CSSProperties = {
+            ...style, // Inherits x, y, w, h, rotation, opacity
+            objectFit: fitMode as any,
+        };
+
+        if (fitMode === 'none') {
+            // Manual Mode ("Crop")
+            // In this mode, the <img> itself is positioned absolutely relative to the container?
+            // Actually, 'style' here applies to the container div or img directly?
+            // If we use 'style' on the <img>, it positions the IMG.
+            // But we want the IMG to be LARGER than the frame (Layer Width/Height).
+            // So we need:
+            // 1. A container DIV (The Layer Frame) with overflow: hidden
+            // 2. The IMG inside, transformed.
+
+            // NOTE: The current structure returns 'content' which is an <img> tag.
+            // If we wrap it, we change the structure.
+            // Let's modify 'content' to be a wrapper if needed.
+
+            // If manual, we don't set objectFit. We set width/height to 'auto' or 100%?
+            // If scale is 1, maybe it matches layer size?
+            // Let's say: The image is centered in the layer.
+
+            // Revised approach for Manual Mode:
+            // Wrapper (Layer Frame): x, y, width, height, overflow: hidden
+            // Image: absolute, left: 50%, top: 50%, translate(-50%, -50%) + translate(contentX, contentY) scale(contentScale)
+
+            // To achieve this without major refactor, let's wrap the IMG in a div that acts as the layer frame.
+            // BUT `style` above is already defining position on the canvas.
+
+            // Let's redefine `imageStyle` for the IMG tag when in manual mode.
+            // FIX: Use 'contain' so the full image data is available to be transformed. 
+            // 'cover' would clip pixels before we can pan/zoom to them.
+
+            return (
+                <div style={{
+                    ...style, // Position, Size, Rotation, Opacity
+                    overflow: 'hidden', // Crop
+                }}>
+                    <img
+                        src={finalSrc}
+                        crossOrigin="anonymous"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            transformOrigin: 'center center',
+                            transform: `translate(${props.contentX || 0}px, ${props.contentY || 0}px) scale(${props.contentScale || 1})`,
+                        }}
+                    />
+                </div>
+            );
+        }
+
+        // Standard Modes (Cover, Contain, Fill)
+        // Just render the image directly with object-fit
         let content = (
             <img
                 src={finalSrc}
@@ -200,7 +259,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
                     // If masked, we need to reset the position relative to the mask container
                     left: props.mask ? x - props.mask.x : x,
                     top: props.mask ? y - props.mask.y : y,
-                    objectFit: 'cover',
+                    objectFit: fitMode as any,
                 }}
                 crossOrigin="anonymous"
                 onError={(e) => {

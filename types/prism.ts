@@ -137,4 +137,13 @@ export interface LayerProps {
     };
     // Animation Duration in frames
     transitionDuration?: number;
+
+    // Media Start Offset (for slipping audio/video)
+    mediaOffset?: number;
+
+    // Image Crop & Fit Props
+    objectFit?: 'cover' | 'contain' | 'fill' | 'none'; // Default 'cover'
+    contentX?: number; // Offset X of the image content relative to the layer center (when objectFit is none/manual)
+    contentY?: number; // Offset Y
+    contentScale?: number; // Scale of the image content (Zoom) within the layer
 }
