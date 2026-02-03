@@ -650,14 +650,37 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                 // Same row, just update time
                                 const startFrame = Math.round(action.start * fps);
                                 const durationInFrames = Math.round((action.end - action.start) * fps);
-                                updateTrack(action.id, { startFrame, durationInFrames });
+
+                                // Preserve existing props
+                                const originalTrack = project.tracks.find(t => t.id === action.id);
+                                if (originalTrack) {
+                                    updateTrack(action.id, {
+                                        startFrame,
+                                        durationInFrames,
+                                        props: originalTrack.props
+                                    });
+                                }
                             }
                         }}
                         onActionResizeEnd={(event: any) => {
                             const action = event.action;
                             const startFrame = Math.round(action.start * fps);
                             const durationInFrames = Math.round((action.end - action.start) * fps);
-                            updateTrack(action.id, { startFrame, durationInFrames });
+
+                            const originalTrack = project.tracks.find(t => t.id === action.id);
+                            if (originalTrack) {
+                                const updates: any = { startFrame, durationInFrames, props: { ...originalTrack.props } };
+
+                                // Handle Slip Edit (Resize from Left)
+                                // If startFrame changed, we must adjust mediaOffset to keep the content "pinned"
+                                if (startFrame !== originalTrack.startFrame) {
+                                    const delta = startFrame - originalTrack.startFrame;
+                                    const currentOffset = originalTrack.props.mediaOffset || 0;
+                                    updates.props.mediaOffset = Math.max(0, currentOffset + delta);
+                                }
+
+                                updateTrack(action.id, updates);
+                            }
                         }}
                         onRowDragEnd={(params: any) => {
                             const newOrderIds = params.editorData.map((row: any) => row.id);
