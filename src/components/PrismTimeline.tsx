@@ -437,11 +437,12 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                     }
                                 });
                             } else if (data.assetType === 'audio') {
+                                const asset = project?.assets[assetId];
                                 addTrack({
                                     id,
                                     type: 'audio',
                                     startFrame,
-                                    durationInFrames: 300,
+                                    durationInFrames: asset?.metadata?.duration ? Math.round(asset.metadata.duration * fps) : 300,
                                     props: {
                                         x: 0, y: 0, width: 0, height: 0,
                                         opacity: 1, rotation: 0, scale: 1,

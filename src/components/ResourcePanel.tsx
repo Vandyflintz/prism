@@ -94,6 +94,48 @@ export const ResourcePanel: React.FC = () => {
                 }
             }
 
+            // Metadata Extraction
+            let duration = 0;
+            let width = 0;
+            let height = 0;
+
+            if (isVideo) {
+                await new Promise<void>((resolve) => {
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.onloadedmetadata = () => {
+                        duration = video.duration;
+                        width = video.videoWidth;
+                        height = video.videoHeight;
+                        resolve();
+                    };
+                    video.onerror = () => resolve();
+                    video.src = objectUrl;
+                });
+            } else if (isAudio) {
+                await new Promise<void>((resolve) => {
+                    const audio = document.createElement('audio');
+                    audio.preload = 'metadata';
+                    audio.onloadedmetadata = () => {
+                        duration = audio.duration;
+                        resolve();
+                    };
+                    audio.onerror = () => resolve();
+                    audio.src = objectUrl;
+                });
+            } else if (isImage) {
+                await new Promise<void>((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        width = img.width;
+                        height = img.height;
+                        resolve();
+                    };
+                    img.onerror = () => resolve();
+                    img.src = objectUrl;
+                });
+            }
+
             const newAsset: PrismAsset = {
                 id: assetId,
                 type: type,
@@ -102,7 +144,10 @@ export const ResourcePanel: React.FC = () => {
                     originalName: file.name,
                     mimeType: file.type,
                     layers: layers,
-                    psdProject: startProjectData
+                    psdProject: startProjectData,
+                    duration,
+                    width,
+                    height
                 }
             };
             addAsset(newAsset);
