@@ -146,6 +146,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
             <div style={style}>
                 <Video
                     src={asset.src}
+                    startFrom={props.mediaOffset || 0}
                     style={{
                         width: '100%',
                         height: '100%',
@@ -238,7 +239,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
         const asset = assetId ? project.assets[assetId] : null;
         if (!asset) return null;
         // Same normalization logic might be needed for audio
-        return <Audio src={asset.src} volume={props.volume ?? 1} />;
+        return <Audio src={asset.src} startFrom={props.mediaOffset || 0} volume={props.volume ?? 1} />;
     }
 
     return <div style={{ ...style, backgroundColor: 'rgba(255,0,0,0.3)' }} />;

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { AudioWaveform } from './AudioWaveform';
 
 interface TimelineActionItemProps {
     action: Record<string, any>;
@@ -54,12 +55,42 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
             break;
     }
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        if (containerRef.current) {
+            const { width, height } = containerRef.current.getBoundingClientRect();
+            setDimensions({ width, height });
+        }
+    }, [action]);
+
+    // Helper: Determine if we should show waveform
+    // Only if type is audio and we have a valid src
+    const showWaveform = type === 'audio' && src;
+
     return (
-        <div className={`w-full h-full flex flex-col justify-center`}>
+        <div ref={containerRef} className={`w-full h-full flex flex-col justify-center`}>
             {/* If using image background, add a dark scrim overlay to make text readable */}
             <div className={`${baseClasses} ${colorClasses} overflow-hidden group`} style={style}>
-                {src && <div className="absolute inset-0 bg-black/40 pointer-events-none" />}
-                <div className="relative flex items-center z-10 w-full">
+                {src && type === 'image' && <div className="absolute inset-0 bg-black/40 pointer-events-none" />}
+
+                {/* Audio Waveform Background */}
+                {showWaveform && (
+                    <div className="absolute inset-0 z-0 opacity-50 mix-blend-overlay">
+                        {/* We pass dynamically measured width to canvas */}
+                        {dimensions.width > 0 && (
+                            <AudioWaveform
+                                src={src}
+                                width={dimensions.width}
+                                height={24} // Fixed height of row
+                                color="#a7f3d0" // emerald-200
+                            />
+                        )}
+                    </div>
+                )}
+
+                <div className="relative flex items-center z-10 w-full pl-1">
                     {icon}
                     <span className={`truncate drop-shadow-md transition-opacity duration-200 ${type === 'text' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         {label || 'Untitled'}

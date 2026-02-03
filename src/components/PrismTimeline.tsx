@@ -7,6 +7,7 @@ import { usePrismStore } from '../store/usePrismStore';
 import { TimelineActionItem } from './TimelineActionItem';
 import { PrismProject } from '../../types/prism';
 import { TransitionEditor } from './TransitionEditor';
+import { AudioEditor } from './AudioEditor';
 
 
 // Helper: Format timecode (HH:MM:SS:FF)
@@ -39,11 +40,12 @@ interface PrismTimelineProps {
 export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) => {
     const {
         project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
-        toggleTrackLock, toggleTrackVisibility, toggleTrackMute, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
+        toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
         isMagnetEnabled, toggleMagnet, addTrack, addAsset
     } = usePrismStore();
 
     const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
+    const [editingAudioTrackId, setEditingAudioTrackId] = React.useState<string | null>(null);
 
     // Old transitionOptions are now in the Editor component
 
@@ -540,16 +542,13 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    toggleTrackMute(track.id);
+                                                    // toggleTrackMute(track.id);
+                                                    setEditingAudioTrackId(track.id);
                                                 }}
                                                 className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-700 transition-colors ${track.muted ? 'text-red-400 border-red-500/30' : 'text-zinc-500 hover:text-zinc-200'}`}
-                                                title={track.muted ? "Unmute" : "Mute"}
+                                                title="Edit Audio"
                                             >
-                                                {track.muted ? (
-                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                                                ) : (
-                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                                )}
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                                             </button>
                                         ) : (track.type === 'image' || track.type === 'video' || track.type === 'text') ? (
                                             <div className="flex items-center gap-1 relative">
@@ -691,6 +690,14 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 <TransitionEditor
                     trackId={editingTransitionTrackId}
                     onClose={() => setEditingTransitionTrackId(null)}
+                />
+            )}
+
+            {/* Audio Editor Modal */}
+            {editingAudioTrackId && (
+                <AudioEditor
+                    trackId={editingAudioTrackId}
+                    onClose={() => setEditingAudioTrackId(null)}
                 />
             )}
         </div>
