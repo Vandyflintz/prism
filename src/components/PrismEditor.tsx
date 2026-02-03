@@ -127,6 +127,57 @@ export default function PrismEditor() {
         };
     }, [player, setCurrentTime]);
 
+    const [zoomLevel, setZoomLevel] = React.useState<number>(0); // 0 = Fit
+
+    // Responsive Player Scaling Hooks
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [containerSize, setContainerSize] = React.useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setContainerSize({
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height
+                });
+            }
+        });
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    // Calculate Fit Scale
+    const playerStyle = React.useMemo(() => {
+        if (!project) return { width: '100%', height: '100%', scale: 1 };
+
+        let finalScale = 1;
+
+        if (zoomLevel > 0) {
+            // Manual Zoom
+            finalScale = zoomLevel;
+        } else {
+            // Fit Logic
+            if (containerSize.width > 0 && containerSize.height > 0) {
+                const padding = 60;
+                const availableW = Math.max(10, containerSize.width - padding);
+                const availableH = Math.max(10, containerSize.height - padding);
+                const scaleW = availableW / project.width;
+                const scaleH = availableH / project.height;
+                finalScale = Math.min(scaleW, scaleH);
+            } else {
+                // If container not ready, estimate or default to reasonable small scale
+                finalScale = 0.5;
+            }
+        }
+
+        return {
+            width: `${project.width * finalScale}px`,
+            height: `${project.height * finalScale}px`,
+            scale: finalScale
+        };
+    }, [project, containerSize, zoomLevel]);
+
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const openFile = async () => {
@@ -242,7 +293,7 @@ export default function PrismEditor() {
                     </div>
 
                     {/* Center: Stage */}
-                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden border-x border-zinc-900">
+                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden border-x border-zinc-900" ref={containerRef}>
                         {/* Dot Grid Background */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
                             backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
@@ -250,7 +301,13 @@ export default function PrismEditor() {
                         }}></div>
 
                         {/* Player Container */}
-                        <div className="relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black">
+                        <div
+                            className="relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black transition-all duration-200 ease-out"
+                            style={{
+                                width: playerStyle.width,
+                                height: playerStyle.height
+                            }}
+                        >
                             <Player
                                 ref={setPlayer}
                                 component={PrismComposition}
@@ -260,8 +317,8 @@ export default function PrismEditor() {
                                 compositionWidth={project.width}
                                 compositionHeight={project.height}
                                 style={{
-                                    width: '360px',
-                                    height: '640px',
+                                    width: '100%',
+                                    height: '100%',
                                 }}
                                 loop
                                 doubleClickToFullscreen
@@ -269,10 +326,34 @@ export default function PrismEditor() {
                         </div>
 
                         {/* Stage Info Overlay */}
-                        <div className="absolute bottom-2 right-3 text-[10px] text-zinc-600 font-mono flex gap-2 pointer-events-none select-none">
-                            <span>{project.width}x{project.height}</span>
-                            <span className="text-zinc-700">|</span>
-                            <span>{project.fps} FPS</span>
+                        <div className="absolute bottom-2 right-3 flex gap-4 pointer-events-auto select-none items-center bg-zinc-900 border border-zinc-800 px-2 py-1 rounded shadow-lg">
+                            <div className="text-[10px] text-zinc-600 font-mono flex gap-2 border-r border-zinc-800 pr-2">
+                                <span>{project.width}x{project.height}</span>
+                                <span className="text-zinc-700">|</span>
+                                <span>{project.fps} FPS</span>
+                            </div>
+
+                            {/* Scale Control */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-zinc-500 font-medium">
+                                    {(playerStyle.scale * 100).toFixed(0)}%
+                                </span>
+                                <select
+                                    className="bg-transparent text-[10px] text-zinc-300 font-medium outline-none cursor-pointer"
+                                    value={zoomLevel} // 0 is Fit
+                                    onChange={(e) => setZoomLevel(Number(e.target.value))}
+                                >
+                                    <option value={0} className="bg-zinc-900">Fit</option>
+                                    <option value={0.1} className="bg-zinc-900">10%</option>
+                                    <option value={0.20} className="bg-zinc-900">20%</option>
+                                    <option value={0.25} className="bg-zinc-900">25%</option>
+                                    <option value={0.5} className="bg-zinc-900">50%</option>
+                                    <option value={0.75} className="bg-zinc-900">75%</option>
+                                    <option value={1} className="bg-zinc-900">100%</option>
+                                    <option value={1.5} className="bg-zinc-900">150%</option>
+                                    <option value={2} className="bg-zinc-900">200%</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
