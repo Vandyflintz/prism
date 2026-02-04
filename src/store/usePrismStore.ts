@@ -15,6 +15,7 @@ const generateId = () => {
 };
 
 interface PrismState {
+    assets: Record<string, PrismAsset>; // Global Asset Library (Not Undoable)
     project: PrismProject | null;
     selectedTrackId: string | null;
     currentTime: number; // For sync between player and timeline
@@ -50,6 +51,7 @@ interface PrismState {
 export const usePrismStore = create<PrismState>()(
     temporal(
         (set) => ({
+            assets: {},
             project: null,
             selectedTrackId: null,
             currentTime: 0,
@@ -86,9 +88,7 @@ export const usePrismStore = create<PrismState>()(
             }),
 
             addAsset: (asset) => set((state) => {
-                if (!state.project) return state;
-                const assets = { ...state.project.assets, [asset.id]: asset };
-                return { project: { ...state.project, assets } };
+                return { assets: { ...state.assets, [asset.id]: asset } };
             }),
 
             reorderTracks: (orderedTrackIds: string[]) => set((state) => {
@@ -182,21 +182,18 @@ export const usePrismStore = create<PrismState>()(
             }),
 
             deleteAsset: (assetId: string) => set((state) => {
-                if (!state.project) return state;
-                const { [assetId]: deleted, ...remainingAssets } = state.project.assets;
+                const { [assetId]: deleted, ...remainingAssets } = state.assets;
                 return {
-                    project: { ...state.project, assets: remainingAssets }
+                    assets: remainingAssets
                 };
             }),
 
             hydrateAssets: (assets: PrismAsset[]) => set((state) => {
-                if (!state.project) return state;
-                // Merge loaded assets with existing (if any)
-                const newAssets = { ...state.project.assets };
+                const newAssets = { ...state.assets };
                 assets.forEach((a: PrismAsset) => {
                     newAssets[a.id] = a;
                 });
-                return { project: { ...state.project, assets: newAssets } };
+                return { assets: newAssets };
             }),
 
             clearTimeline: () => set((state) => {

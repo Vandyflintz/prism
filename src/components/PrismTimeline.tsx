@@ -39,7 +39,7 @@ interface PrismTimelineProps {
 
 export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) => {
     const {
-        project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
+        project, assets, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
         isMagnetEnabled, toggleMagnet, addTrack, addAsset,
         alignTracksToStart, clearTimeline, resetProject
@@ -84,7 +84,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     label: track.props.content || track.id,
                     type: track.type,
                     // Resolve asset src for thumbnails
-                    src: track.props.assetId ? project.assets[track.props.assetId]?.src : undefined,
+                    src: track.props.assetId ? assets[track.props.assetId]?.src : undefined,
                     // Pass color for generic tracks
                     color: track.props.backgroundColor
                 },
@@ -93,7 +93,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 flexible: !track.locked,
             }
         ],
-    })), [project.tracks, project.assets, fps]);
+    })), [project.tracks, assets, fps]);
 
     // Helper for Row Header Icons
     const getIcon = (type: string) => {
@@ -314,7 +314,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             }
 
                             if (data.assetType === 'psd') {
-                                const asset = project?.assets[data.assetId];
+                                const asset = assets[data.assetId];
 
                                 // High-Fidelity Import (using pre-parsed project)
                                 if (asset?.metadata?.psdProject) {
@@ -406,7 +406,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                 }
                             } else if (data.assetType === 'video' || data.assetType === 'image') {
                                 // Default dimensions: Asset native size or Project size
-                                const asset = project?.assets[assetId];
+                                const asset = assets[assetId];
                                 let width = project?.width || 1920;
                                 let height = project?.height || 1080;
                                 let x = 0;
@@ -448,7 +448,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                     }
                                 });
                             } else if (data.assetType === 'audio') {
-                                const asset = project?.assets[assetId];
+                                const asset = assets[assetId];
                                 addTrack({
                                     id,
                                     type: 'audio',
@@ -746,7 +746,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                 // Enforce Max Duration Limit
                                 const assetId = originalTrack.props.assetId;
                                 if (assetId) {
-                                    const asset = project.assets[assetId];
+                                    const asset = assets[assetId];
                                     if (asset && asset.metadata?.duration) {
                                         const maxDurationFrames = Math.floor(asset.metadata.duration * fps);
                                         const currentOffset = updates.props.mediaOffset || 0;

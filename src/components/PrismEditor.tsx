@@ -60,7 +60,7 @@ const MOCK_PROJECT: PrismProject = {
 
 export const PrismEditor: React.FC = () => {
     const {
-        project, setProject, isPlaying, setCurrentTime,
+        project, assets, setProject, isPlaying, setCurrentTime,
         hydrateAssets
     } = usePrismStore();
 
@@ -375,7 +375,7 @@ export const PrismEditor: React.FC = () => {
                             <Player
                                 ref={setPlayer}
                                 component={PrismComposition}
-                                inputProps={{ project }}
+                                inputProps={{ project, assets }}
                                 durationInFrames={Math.max(1, project.durationInFrames)}
                                 fps={project.fps}
                                 compositionWidth={project.width}

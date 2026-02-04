@@ -19,7 +19,7 @@ const SYSTEM_FONTS = [
 ];
 
 export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
-    const { project, addAsset, deleteAsset } = usePrismStore();
+    const { assets, addAsset, deleteAsset } = usePrismStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
@@ -175,8 +175,8 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
 
     // Filter Assets
     const filteredAssets = useMemo(() => {
-        if (!project) return [];
-        return Object.values(project.assets)
+        if (!assets) return [];
+        return Object.values(assets)
             .filter(asset => {
                 // Hide internal assets (generated from PSD layers)
                 if (asset.metadata?.isInternal) return false;
@@ -191,7 +191,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                 const timeB = b.metadata?.createdAt || 0;
                 return timeB - timeA;
             });
-    }, [project, searchQuery]);
+    }, [assets, searchQuery]);
 
     // Render Grid Items with Denser Layout
     const renderAssetItem = (asset: PrismAsset) => {

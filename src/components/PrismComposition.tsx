@@ -1,8 +1,8 @@
 import React from 'react';
 import { AbsoluteFill, Sequence, Audio, Video, useCurrentFrame, interpolate, Easing } from 'remotion';
-import { PrismProject, PrismTrack } from '../../types/prism';
+import { PrismProject, PrismTrack, PrismAsset } from '../../types/prism';
 
-export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project }) => {
+export const PrismComposition: React.FC<{ project: PrismProject; assets: Record<string, PrismAsset> }> = ({ project, assets }) => {
     if (!project) return <AbsoluteFill style={{ backgroundColor: 'red' }}>No Project Data</AbsoluteFill>;
 
     return (
@@ -18,7 +18,7 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
                         durationInFrames={Math.max(1, track.durationInFrames)}
                         layout="none"
                     >
-                        <PrismLayer track={track} project={project} />
+                        <PrismLayer track={track} project={project} assets={assets} />
                     </Sequence>
                 );
             })}
@@ -26,9 +26,10 @@ export const PrismComposition: React.FC<{ project: PrismProject }> = ({ project 
     );
 };
 
-const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
+const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: Record<string, PrismAsset> }> = ({
     track,
     project,
+    assets
 }) => {
     const { props, type, animation } = track;
     const { x, y, width, height, opacity, rotation, scale, content, color, fontSize, fontFamily, assetId, textAlign, isRasterized, borderWidth, borderColor, borderRadius, textStrokeWidth, textStrokeColor, textShadow } = props;
@@ -100,7 +101,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
 
     if (type === 'text') {
         if (isRasterized && assetId) {
-            const asset = project.assets[assetId];
+            const asset = assets[assetId];
             if (asset) {
                 let finalSrc = asset.src;
                 // Path Normalization
@@ -139,7 +140,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     }
 
     if (type === 'video') {
-        const asset = assetId ? project.assets[assetId] : null;
+        const asset = assetId ? assets[assetId] : null;
         if (!asset) return <div style={{ ...style, border: '2px dashed red' }}>Missing Video Asset</div>;
 
         return (
@@ -169,7 +170,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
             );
         }
 
-        const asset = assetId ? project.assets[assetId] : null;
+        const asset = assetId ? assets[assetId] : null;
 
         if (!asset) {
             // If it's a shape with no asset (handled above) we shouldn't be here.
@@ -295,7 +296,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject }> = ({
     }
 
     if (type === 'audio') {
-        const asset = assetId ? project.assets[assetId] : null;
+        const asset = assetId ? assets[assetId] : null;
         if (!asset) return null;
         // Same normalization logic might be needed for audio
         return <Audio src={asset.src} startFrom={props.mediaOffset || 0} volume={props.volume ?? 1} />;
