@@ -152,11 +152,9 @@ export const PrismEditor: React.FC = () => {
             const stagedAssets: Record<string, any> = {};
 
             console.log("Preparing export assets (Debug Mode)...");
-            // alert("Starting Export Process"); // Debug
 
-            // Process all assets in the project (or just the ones used? Better to process all loaded assets)
+            // Process all assets in the project
             const assetIds = Object.keys(assets);
-            // alert(`Found ${assetIds.length} assets to process`);
 
             for (const id of assetIds) {
                 const asset = assets[id];
@@ -169,18 +167,17 @@ export const PrismEditor: React.FC = () => {
                         // FETCH BLOB DIRECTLY
                         const response = await fetch(asset.src);
                         const blob = await response.blob();
+                        const buffer = await blob.arrayBuffer();
 
-                        // Convert to Base64 (Data URI)
-                        const base64 = await new Promise<string>((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => resolve(reader.result as string);
-                            reader.onerror = reject;
-                            reader.readAsDataURL(blob);
-                        });
+                        const ext = asset.type === 'video' ? 'mp4' : asset.type === 'audio' ? 'mp3' : 'png';
+                        const filename = `${id}.${ext}`;
 
-                        // Set src to Data URI
-                        stagedAsset.src = base64;
-                        console.log(`-> Converted to Base64 (${base64.length} chars)`);
+                        // Save to Temp via IPC
+                        const tempPath = await window.electron.saveTempFile(filename, buffer);
+
+                        // Update asset src to file:// path
+                        stagedAsset.src = `file://${tempPath}`;
+                        console.log(`-> Saved to: ${tempPath}`);
                     } catch (err) {
                         console.error(`[Export] Failed to stage asset ${id}`, err);
                     }

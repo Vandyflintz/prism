@@ -57,7 +57,7 @@
     "render": "remotion render",
     "deploy": "node deploy.mjs",
     "electron:build": "tsc -p tsconfig.electron.json",
-    "e:d": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\""
+    "e": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\""
   },
   "main": "dist-electron/main.js"
 }
