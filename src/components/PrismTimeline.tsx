@@ -134,12 +134,23 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
             if (e.code === 'Space') {
                 e.preventDefault(); // Prevent scrolling
                 togglePlay();
+            } else if (e.code === 'KeyS') {
+                if (selectedTrackId) splitTrack(selectedTrackId);
+            } else if (e.code === 'Delete' || e.code === 'Backspace') {
+                if (selectedTrackId) deleteTrack(selectedTrackId);
+            } else if ((e.metaKey || e.ctrlKey) && e.code === 'KeyZ') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    redo();
+                } else {
+                    undo();
+                }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [togglePlay]);
+    }, [togglePlay, selectedTrackId, splitTrack, deleteTrack, undo, redo]);
 
     // One scale unit = 1 second
     const scale = 1;
