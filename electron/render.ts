@@ -151,5 +151,15 @@ export const renderComposition = async (
     } finally {
         // Cleanup: Stop server
         server.close();
+
+        // Clean up temp files
+        try {
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+                console.log(`[Render] Cleaned up temp directory: ${tempDir}`);
+            }
+        } catch (e) {
+            console.error(`[Render] Failed to clean up temp directory:`, e);
+        }
     }
 };
