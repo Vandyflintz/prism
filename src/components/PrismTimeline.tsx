@@ -41,7 +41,8 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const {
         project, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
-        isMagnetEnabled, toggleMagnet, addTrack, addAsset
+        isMagnetEnabled, toggleMagnet, addTrack, addAsset,
+        alignTracksToStart, clearTimeline, resetProject
     } = usePrismStore();
 
     const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
@@ -187,20 +188,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
             <div className="h-10 shrink-0 border-b border-zinc-900 flex items-center justify-between px-3 bg-[#09090b]">
                 {/* Transport Controls */}
                 <div className="flex items-center gap-1">
-                    <IconBtn title="Jump to Start" onClick={() => setCurrentTime(0)}>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
-                    </IconBtn>
-                    <IconBtn onClick={togglePlay} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
-                        {isPlaying ? (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                        ) : (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                        )}
-                    </IconBtn>
-
-                    {/* Separator */}
-                    <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
-
                     {/* Undo / Redo */}
                     <IconBtn
                         onClick={() => undo()}
@@ -220,6 +207,25 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     {/* Separator */}
                     <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
 
+                    {/* Edit Tools */}
+                    <IconBtn
+                        onClick={() => selectedTrackId && splitTrack(selectedTrackId)}
+                        title="Split (S)"
+                        className={!selectedTrackId ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" /></svg>
+                    </IconBtn>
+                    <IconBtn
+                        onClick={() => selectedTrackId && deleteTrack(selectedTrackId)}
+                        title="Delete (Del)"
+                        className={!selectedTrackId ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-zinc-600' : 'hover:bg-red-900/50 hover:text-red-400'}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </IconBtn>
+
+                    {/* Separator */}
+                    <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
+
                     {/* Magnet Snap */}
                     <IconBtn
                         onClick={toggleMagnet}
@@ -229,25 +235,19 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                     </IconBtn>
 
-                    {/* Edit Tools */}
-                    <IconBtn
-                        onClick={() => selectedTrackId && splitTrack(selectedTrackId)}
-                        title="Split (S)"
-                        className={!selectedTrackId ? 'opacity-50 cursor-not-allowed' : ''}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" /></svg>
-                    </IconBtn>
-
                     {/* Separator */}
                     <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
 
-                    {/* Edit Tools */}
-                    <IconBtn
-                        onClick={() => selectedTrackId && deleteTrack(selectedTrackId)}
-                        title="Delete (Del)"
-                        className={!selectedTrackId ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-zinc-600' : 'hover:bg-red-900/50 hover:text-red-400'}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    {/* Transport Controls */}
+                    <IconBtn title="Jump to Start" onClick={() => setCurrentTime(0)}>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+                    </IconBtn>
+                    <IconBtn onClick={togglePlay} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
+                        {isPlaying ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                        ) : (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        )}
                     </IconBtn>
 
                     {/* Time Display */}
@@ -491,15 +491,44 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     }}
                 >
                     {/* Header Spacer to match Ruler (Height approximated to 40px) */}
-                    <div className="h-[40px] w-full bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 flex items-center justify-center border-r border-zinc-800">
-                        {/* Settings / Gear Icon to indicate "Track Options" */}
-                        <button
-                            onClick={onOpenSettings}
-                            className="w-6 h-6 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 transition-colors"
-                            title="Project Settings"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        </button>
+                    <div className="h-[40px] w-full bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 flex items-center justify-between px-0 border-r border-zinc-800 gap-1">
+                        {/* Tools Left */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={alignTracksToStart}
+                                className="w-6 h-6 flex items-center justify-center rounded bg-transparent hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+                                title="Align All Tracks to Start"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h8" /></svg>
+                            </button>
+                        </div>
+
+                        {/* Tools Right */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => { if (confirm('Clear timeline?')) clearTimeline(); }}
+                                className="w-6 h-6 flex items-center justify-center rounded bg-transparent hover:bg-zinc-800 text-zinc-500 hover:text-red-400 transition-colors"
+                                title="Clear Timeline"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                            <button
+                                onClick={() => { if (confirm('Reset project?')) resetProject(); }}
+                                className="w-6 h-6 flex items-center justify-center rounded bg-transparent hover:bg-zinc-800 text-zinc-500 hover:text-red-400 transition-colors"
+                                title="Reset Project"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            </button>
+
+                            {/* Settings / Gear Icon */}
+                            <button
+                                onClick={onOpenSettings}
+                                className="w-6 h-6 flex items-center justify-center rounded bg-transparent hover:bg-zinc-800 text-zinc-500 hover:text-indigo-400 transition-colors"
+                                title="Project Settings"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Track Headers List */}

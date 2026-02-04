@@ -40,6 +40,11 @@ interface PrismState {
     deleteTrack: (trackId: string) => void;
     deleteAsset: (assetId: string) => void;
     hydrateAssets: (assets: PrismAsset[]) => void;
+
+    // Timeline Actions
+    clearTimeline: () => void;
+    resetProject: () => void;
+    alignTracksToStart: () => void;
 }
 
 export const usePrismStore = create<PrismState>()(
@@ -192,6 +197,44 @@ export const usePrismStore = create<PrismState>()(
                     newAssets[a.id] = a;
                 });
                 return { project: { ...state.project, assets: newAssets } };
+            }),
+
+            clearTimeline: () => set((state) => {
+                if (!state.project) return state;
+                return {
+                    project: { ...state.project, tracks: [] },
+                    selectedTrackId: null,
+                    currentTime: 0
+                };
+            }),
+
+            resetProject: () => set((state) => {
+                if (!state.project) return state;
+                return {
+                    project: {
+                        ...state.project,
+                        width: 1080,
+                        height: 1920,
+                        fps: 30,
+                        durationInFrames: 300,
+                        backgroundColor: '#000000',
+                        tracks: [] // Reset also clears? Or just settings? "Reset Timeline" implies starting over.
+                    },
+                    selectedTrackId: null,
+                    currentTime: 0
+                };
+            }),
+
+            alignTracksToStart: () => set((state) => {
+                if (!state.project || state.project.tracks.length === 0) return state;
+
+                // Align ALL tracks to start (Frame 0)
+                const tracks = state.project.tracks.map(t => ({
+                    ...t,
+                    startFrame: 0
+                }));
+
+                return { project: { ...state.project, tracks } };
             }),
         }),
         {

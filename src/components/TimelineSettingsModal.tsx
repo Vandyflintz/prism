@@ -168,6 +168,11 @@ export const TimelineSettingsModal: React.FC<TimelineSettingsModalProps> = ({ on
                             </div>
                         </div>
                     </div>
+
+
+                    <div className="h-[1px] bg-zinc-800 w-full" />
+
+
                 </div>
 
                 {/* Footer */}
