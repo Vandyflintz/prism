@@ -163,7 +163,7 @@ export const PropertySidebar: React.FC = () => {
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span className="text-xs text-zinc-400">Volume</span>
-                                        <span className="text-xs text-zinc-500">{((track.props.volume || 1) * 100).toFixed(0)}%</span>
+                                        <span className="text-xs text-zinc-500">{((track.props.volume ?? 1) * 100).toFixed(0)}%</span>
                                     </div>
                                     <input
                                         type="range" min="0" max="1" step="0.05"
