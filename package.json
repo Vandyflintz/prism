@@ -59,5 +59,17 @@
     "electron:build": "tsc -p tsconfig.electron.json",
     "e": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\""
   },
-  "main": "dist-electron/main.js"
+  "main": "dist-electron/main.js",
+  "overrides": {
+    "remotion": "4.0.412",
+    "@remotion/bundler": "4.0.412",
+    "@remotion/cli": "4.0.412",
+    "@remotion/google-fonts": "4.0.412",
+    "@remotion/lambda": "4.0.412",
+    "@remotion/paths": "4.0.412",
+    "@remotion/player": "4.0.412",
+    "@remotion/renderer": "4.0.412",
+    "@remotion/shapes": "4.0.412",
+    "@remotion/media-utils": "4.0.412"
+  }
 }
