@@ -10,7 +10,9 @@ import { PropertySidebar } from './PropertySidebar';
 import { parsePsd, getLayersFromPsd, getPsdPreview } from '../../lib/psd-to-json';
 import { TimelineSettingsModal } from './TimelineSettingsModal';
 import { ResourcePanel } from './ResourcePanel';
+import { ExportModal } from './ExportModal';
 import { AssetStorage } from '../lib/AssetStorage';
+
 
 const MOCK_PROJECT: PrismProject = {
     id: 'mock-1',
@@ -125,6 +127,100 @@ export const PrismEditor: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
     const [showLeftPanel, setShowLeftPanel] = React.useState(true);
     const [showRightPanel, setShowRightPanel] = React.useState(true);
+
+    // Export State
+    const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
+    const [exportProgress, setExportProgress] = React.useState(0);
+    const [exportStatus, setExportStatus] = React.useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
+    const [exportOutput, setExportOutput] = React.useState('');
+
+    // Export Handler
+    const handleExport = async () => {
+        if (!window.electron) {
+            alert("Export is only available in the desktop app.");
+            return;
+        }
+
+        setIsExportModalOpen(true);
+        setExportStatus('rendering');
+        setExportProgress(0);
+        setExportOutput('');
+
+        try {
+            // 1. STAGE ASSETS (Fixes Blob URL issue in Render Process)
+            // We need to convert all Blob URL assets to physical temp files that the Node.js renderer can access.
+            const stagedAssets: Record<string, any> = {};
+
+            console.log("Preparing export assets (Debug Mode)...");
+            // alert("Starting Export Process"); // Debug
+
+            // Process all assets in the project (or just the ones used? Better to process all loaded assets)
+            const assetIds = Object.keys(assets);
+            // alert(`Found ${assetIds.length} assets to process`);
+
+            for (const id of assetIds) {
+                const asset = assets[id];
+                const stagedAsset = { ...asset };
+
+                // If it's a blob URL
+                if (asset.src.startsWith('blob:') || asset.src.startsWith('http')) {
+                    console.log(`Staging asset: ${id} (${asset.type})`);
+                    try {
+                        // FETCH BLOB DIRECTLY
+                        const response = await fetch(asset.src);
+                        const blob = await response.blob();
+
+                        // Convert to Base64 (Data URI)
+                        const base64 = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+
+                        // Set src to Data URI
+                        stagedAsset.src = base64;
+                        console.log(`-> Converted to Base64 (${base64.length} chars)`);
+                    } catch (err) {
+                        console.error(`[Export] Failed to stage asset ${id}`, err);
+                    }
+                }
+
+                stagedAssets[id] = stagedAsset;
+            }
+
+            // 2. RENDER
+            // Pass the modified assets map
+            const output = await window.electron.renderComposition({
+                project,
+                assets: stagedAssets
+            });
+
+            setExportStatus('done');
+            setExportOutput(output);
+        } catch (error: any) {
+            console.error("Export failed:", error);
+            setExportStatus('error');
+            setExportOutput(error.message || "Unknown error");
+        }
+    };
+
+    // Listen for Progress
+    useEffect(() => {
+        if (!window.electron) return;
+
+        // Assuming preload exposes 'on' which returns a cleanup function or we wrap it
+        // Check preload.ts if unsure, but standard pattern is:
+        const removeListener = window.electron.onRenderProgress((progress: number) => {
+            setExportProgress(progress);
+        });
+
+        // If 'on' doesn't return cleanup, we might need a specific 'off'
+        // For now assuming the standard custom preload I usually see in these projects.
+        return () => {
+            removeListener();
+        };
+    }, []);
 
     useEffect(() => {
         if (!project) setProject(MOCK_PROJECT);
@@ -338,7 +434,10 @@ export const PrismEditor: React.FC = () => {
                         </button>
                     </div>
 
-                    <button className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded shadow-sm shadow-indigo-500/20 transition-all active:scale-95 ml-2">
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded shadow-sm shadow-indigo-500/20 transition-all active:scale-95 ml-2"
+                    >
                         <span>Export</span>
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     </button>
@@ -438,6 +537,15 @@ export const PrismEditor: React.FC = () => {
 
             {/* Settings Modal */}
             {isSettingsOpen && <TimelineSettingsModal onClose={() => setIsSettingsOpen(false)} />}
+
+            {/* Export Modal */}
+            <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                progress={exportProgress}
+                status={exportStatus}
+                outputValue={exportOutput}
+            />
         </div>
     );
 }

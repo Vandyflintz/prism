@@ -202,8 +202,12 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
             if (asset) {
                 let finalSrc = asset.src;
                 // Path Normalization
+                // Path Normalization
                 if (finalSrc.includes('\\')) finalSrc = finalSrc.replace(/\\/g, '/');
-                if (!finalSrc.startsWith('http') && !finalSrc.startsWith('file://') && !finalSrc.startsWith('blob:')) {
+                if (!finalSrc.startsWith('http') &&
+                    !finalSrc.startsWith('file://') &&
+                    !finalSrc.startsWith('blob:') &&
+                    !finalSrc.startsWith('data:')) {
                     if (finalSrc.startsWith('/')) finalSrc = `file://${finalSrc}`;
                     else finalSrc = `file:///${finalSrc}`;
                 }
@@ -303,10 +307,17 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
 
         // --- THE FIX: Path Normalization ---
         let finalSrc = asset.src;
+        // Fix Windows paths if present
         if (finalSrc.includes('\\')) {
             finalSrc = finalSrc.replace(/\\/g, '/');
         }
-        if (!finalSrc.startsWith('http') && !finalSrc.startsWith('file://') && !finalSrc.startsWith('blob:')) {
+
+        // Handle common protocols
+        if (!finalSrc.startsWith('http') &&
+            !finalSrc.startsWith('file://') &&
+            !finalSrc.startsWith('blob:') &&
+            !finalSrc.startsWith('data:')) { // Allow Data URIs
+
             if (finalSrc.startsWith('/')) {
                 finalSrc = `file://${finalSrc}`;
             } else {

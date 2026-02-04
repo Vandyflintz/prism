@@ -9,6 +9,7 @@
     "@remotion/lambda": "4.0.412",
     "@remotion/paths": "4.0.412",
     "@remotion/player": "4.0.412",
+    "@remotion/renderer": "4.0.412",
     "@remotion/shapes": "4.0.412",
     "@xzdarcy/react-timeline-editor": "^1.0.0",
     "ag-psd": "^30.1.0",

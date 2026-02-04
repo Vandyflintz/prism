@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
+const os = __importStar(require("os"));
 let mainWindow = null;
 function createWindow() {
     mainWindow = new electron_1.BrowserWindow({
@@ -84,6 +85,16 @@ electron_1.ipcMain.handle('dialog:openFile', async () => {
         return filePaths[0];
     }
 });
+electron_1.ipcMain.handle('fs:saveTempFile', async (event, { filename, buffer }) => {
+    console.log(`[Main] Saving temp file: ${filename}, size: ${buffer.byteLength}`);
+    const tempDir = path.join(os.tmpdir(), 'prism-export-assets');
+    if (!fs.existsSync(tempDir)) {
+        await fs.promises.mkdir(tempDir, { recursive: true });
+    }
+    const filePath = path.join(tempDir, filename);
+    await fs.promises.writeFile(filePath, new Uint8Array(buffer));
+    return filePath;
+});
 // Read File
 electron_1.ipcMain.handle('fs:readFile', async (event, filePath) => {
     try {
@@ -94,4 +105,19 @@ electron_1.ipcMain.handle('fs:readFile', async (event, filePath) => {
         console.error("Failed to read file", error);
         throw error;
     }
+});
+// Render Composition
+const render_1 = require("./render");
+electron_1.ipcMain.handle('render-composition', async (event, data) => {
+    return new Promise((resolve, reject) => {
+        // Find the window to send progress back
+        const win = electron_1.BrowserWindow.fromWebContents(event.sender);
+        (0, render_1.renderComposition)(data, (progress) => {
+            if (win) {
+                win.webContents.send('render-progress', progress);
+            }
+        })
+            .then((output) => resolve(output))
+            .catch((err) => reject(err));
+    });
 });

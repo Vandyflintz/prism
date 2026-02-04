@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -57,6 +58,17 @@ ipcMain.handle('dialog:openFile', async () => {
     }
 });
 
+ipcMain.handle('fs:saveTempFile', async (event, { filename, buffer }) => {
+    console.log(`[Main] Saving temp file: ${filename}, size: ${buffer.byteLength}`);
+    const tempDir = path.join(os.tmpdir(), 'prism-export-assets');
+    if (!fs.existsSync(tempDir)) {
+        await fs.promises.mkdir(tempDir, { recursive: true });
+    }
+    const filePath = path.join(tempDir, filename);
+    await fs.promises.writeFile(filePath, new Uint8Array(buffer));
+    return filePath;
+});
+
 // Read File
 ipcMain.handle('fs:readFile', async (event: IpcMainInvokeEvent, filePath: string) => {
     try {
@@ -66,4 +78,21 @@ ipcMain.handle('fs:readFile', async (event: IpcMainInvokeEvent, filePath: string
         console.error("Failed to read file", error);
         throw error;
     }
+});
+
+// Render Composition
+import { renderComposition } from './render';
+ipcMain.handle('render-composition', async (event: IpcMainInvokeEvent, data: any) => {
+    return new Promise((resolve, reject) => {
+        // Find the window to send progress back
+        const win = BrowserWindow.fromWebContents(event.sender);
+
+        renderComposition(data, (progress) => {
+            if (win) {
+                win.webContents.send('render-progress', progress);
+            }
+        })
+            .then((output) => resolve(output))
+            .catch((err) => reject(err));
+    });
 });

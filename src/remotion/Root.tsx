@@ -1,38 +1,46 @@
-import { Composition } from "remotion";
-import { Main } from "./MyComp/Main";
-import {
-  COMP_NAME,
-  defaultMyCompProps,
-  DURATION_IN_FRAMES,
-  VIDEO_FPS,
-  VIDEO_HEIGHT,
-  VIDEO_WIDTH,
-} from "../types/constants";
-import { NextLogo } from "./MyComp/NextLogo";
+import React from 'react';
+import { Composition } from 'remotion';
+import { PrismComposition } from '../components/PrismComposition';
+import { PrismProject, PrismAsset } from '../../types/prism';
+
+// Default props for testing/preview in Remotion Studio
+const defaultProps: { project: PrismProject; assets: Record<string, PrismAsset> } = {
+  project: {
+    id: 'default',
+
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    durationInFrames: 300,
+    tracks: [],
+    assets: {},
+    backgroundColor: '#000000'
+  },
+  assets: {}
+};
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <>
-      <Composition
-        id={COMP_NAME}
-        component={Main}
-        durationInFrames={DURATION_IN_FRAMES}
-        fps={VIDEO_FPS}
-        width={VIDEO_WIDTH}
-        height={VIDEO_HEIGHT}
-        defaultProps={defaultMyCompProps}
-      />
-      <Composition
-        id="NextLogo"
-        component={NextLogo}
-        durationInFrames={300}
-        fps={30}
-        width={140}
-        height={140}
-        defaultProps={{
-          outProgress: 0,
-        }}
-      />
-    </>
+    <Composition
+      id="PrismComposition"
+      component={PrismComposition}
+      durationInFrames={300} // This will be overridden by input props during render
+      fps={30}
+      width={1920}
+      height={1080}
+      defaultProps={defaultProps}
+      // IMPORTANT: Calculate metadata dynamically if needed, 
+      // but for simple exports we pass the duration in the input props
+      calculateMetadata={async ({ props }) => {
+        return {
+          durationInFrames: props.project?.tracks?.length > 0
+            ? Math.max(...props.project.tracks.map(t => t.startFrame + t.durationInFrames))
+            : 300,
+          width: props.project?.width || 1920,
+          height: props.project?.height || 1080,
+          fps: props.project?.fps || 30
+        };
+      }}
+    />
   );
 };
