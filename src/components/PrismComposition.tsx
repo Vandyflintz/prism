@@ -143,6 +143,31 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         const asset = assetId ? assets[assetId] : null;
         if (!asset) return <div style={{ ...style, border: '2px dashed red' }}>Missing Video Asset</div>;
 
+        const fitMode = props.objectFit || 'cover';
+
+        if (fitMode === 'none') {
+            // Manual Mode (Crop)
+            return (
+                <div style={{
+                    ...style,
+                    overflow: 'hidden',
+                }}>
+                    <Video
+                        src={asset.src}
+                        startFrom={props.mediaOffset || 0}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain', // Use contain so full video is available for transform
+                            transformOrigin: 'center center',
+                            transform: `translate(${props.contentX || 0}px, ${props.contentY || 0}px) scale(${props.contentScale || 1})`,
+                        }}
+                        volume={props.volume ?? 1}
+                    />
+                </div>
+            );
+        }
+
         return (
             <div style={style}>
                 <Video
@@ -151,7 +176,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                     style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover'
+                        objectFit: fitMode as any
                     }}
                     volume={props.volume ?? 1}
                 />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePrismStore } from '../store/usePrismStore';
+import { PanControl } from './PanControl';
 
 export const PropertySidebar: React.FC = () => {
     const { project, selectedTrackId, updateTrack, setSelectedTrackId } = usePrismStore();
@@ -156,7 +157,7 @@ export const PropertySidebar: React.FC = () => {
                         )}
 
                         {/* Audio Group */}
-                        {track.type === 'audio' && (
+                        {(track.type === 'audio' || track.type === 'video') && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Audio Mixer</label>
                                 <div className="space-y-2">
@@ -196,9 +197,7 @@ export const PropertySidebar: React.FC = () => {
                                         </select>
                                     </div>
 
-                                    {/* Manual Crop Controls (Only valid if Manual or effectively modifier on others maybe?) 
-                                        Let's only show these if 'none' (Manual) is selected for clarity 
-                                    */}
+                                    {/* Manual Crop Controls */}
                                     {track.props.objectFit === 'none' && (
                                         <div className="p-2 bg-zinc-900/30 rounded border border-zinc-800/50 space-y-3">
                                             <div className="flex justify-between items-center">
@@ -211,26 +210,16 @@ export const PropertySidebar: React.FC = () => {
                                                 </button>
                                             </div>
 
-                                            <div className="gap-2 grid grid-cols-2">
-                                                <div className="space-y-1">
-                                                    <span className="text-xs text-zinc-400">Pan X</span>
-                                                    <input
-                                                        type="number"
-                                                        value={track.props.contentX || 0}
-                                                        onChange={(e) => handleChange('contentX', parseInt(e.target.value))}
-                                                        className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 outline-none"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-xs text-zinc-400">Pan Y</span>
-                                                    <input
-                                                        type="number"
-                                                        value={track.props.contentY || 0}
-                                                        onChange={(e) => handleChange('contentY', parseInt(e.target.value))}
-                                                        className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 outline-none"
-                                                    />
-                                                </div>
-                                            </div>
+                                            {/* Interactive Pan Control */}
+                                            <PanControl
+                                                x={track.props.contentX || 0}
+                                                y={track.props.contentY || 0}
+                                                onChange={(x: number, y: number) => {
+                                                    updateTrack(track.id, {
+                                                        props: { ...track.props, contentX: x, contentY: y }
+                                                    });
+                                                }}
+                                            />
 
                                             <div className="space-y-1">
                                                 <div className="flex justify-between">
