@@ -32,7 +32,13 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
     assets
 }) => {
     const { props, type, animation } = track;
-    const { x, y, width, height, opacity, rotation, scale, content, color, fontSize, fontFamily, assetId, textAlign, isRasterized, borderWidth, borderColor, borderRadius, textStrokeWidth, textStrokeColor, textShadow } = props;
+    const {
+        x, y, width, height, opacity, rotation, scale,
+        content, color, fontSize, fontFamily, assetId, textAlign, isRasterized,
+        borderWidth, borderColor, borderRadius,
+        textStrokeWidth, textStrokeColor, textShadow,
+        brightness, contrast, saturate, grayscale, blur
+    } = props;
 
     // Animation Logic (Interpolation)
     const frame = useCurrentFrame();
@@ -82,6 +88,11 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         animScale = interpolate(frame, [0, duration], [1.1, 1.3], { extrapolateRight: 'clamp' });
     }
 
+    // Construct Filter String
+    // If undefined, defaults will be used in logic or CSS defaults (1 or 0)
+    // brightness(1) contrast(1) saturate(1) grayscale(0) blur(0px)
+    const filterString = `brightness(${brightness ?? 1}) contrast(${contrast ?? 1}) saturate(${saturate ?? 1}) grayscale(${grayscale ?? 0}) blur(${blur ?? 0}px)`;
+
     // Common styles
     const style: React.CSSProperties = {
         position: 'absolute',
@@ -97,6 +108,8 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         borderStyle: borderWidth ? 'solid' : undefined,
         borderRadius: borderRadius ? `${borderRadius}px` : undefined,
         overflow: borderRadius ? 'hidden' : undefined,
+        // Apply Filters
+        filter: filterString,
     };
 
     if (type === 'text') {

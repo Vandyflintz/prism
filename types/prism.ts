@@ -147,4 +147,11 @@ export interface LayerProps {
     contentX?: number; // Offset X of the image content relative to the layer center (when objectFit is none/manual)
     contentY?: number; // Offset Y
     contentScale?: number; // Scale of the image content (Zoom) within the layer
+
+    // Visual Filters (Color Correction)
+    brightness?: number; // Default 1
+    contrast?: number; // Default 1
+    saturate?: number; // Default 1
+    grayscale?: number; // Default 0 (0-1)
+    blur?: number; // Default 0 (px)
 }

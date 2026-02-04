@@ -239,6 +239,86 @@ export const PropertySidebar: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Color & Effects Group */}
+                        {(track.type === 'image' || track.type === 'video') && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="h-[1px] bg-zinc-800 my-4" />
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Color & Effects</label>
+
+                                <div className="space-y-4">
+                                    {/* Brightness / Exposure */}
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Exposure</span>
+                                            <span className="text-xs text-zinc-500">{Math.round((track.props.brightness ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="3" step="0.05"
+                                            value={track.props.brightness ?? 1}
+                                            onChange={(e) => handleChange('brightness', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Contrast */}
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Contrast</span>
+                                            <span className="text-xs text-zinc-500">{Math.round((track.props.contrast ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="3" step="0.05"
+                                            value={track.props.contrast ?? 1}
+                                            onChange={(e) => handleChange('contrast', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Saturation */}
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Saturation</span>
+                                            <span className="text-xs text-zinc-500">{Math.round((track.props.saturate ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="3" step="0.05"
+                                            value={track.props.saturate ?? 1}
+                                            onChange={(e) => handleChange('saturate', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Grayscale */}
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Grayscale</span>
+                                            <span className="text-xs text-zinc-500">{Math.round((track.props.grayscale ?? 0) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="1" step="0.01"
+                                            value={track.props.grayscale ?? 0}
+                                            onChange={(e) => handleChange('grayscale', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Blur */}
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-zinc-400">Blur (px)</span>
+                                            <span className="text-xs text-zinc-500">{track.props.blur ?? 0}px</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="20" step="1"
+                                            value={track.props.blur ?? 0}
+                                            onChange={(e) => handleChange('blur', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Animation Group (Image Only) */}
                         {track.type === 'image' && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
