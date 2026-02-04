@@ -40,53 +40,136 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         brightness, contrast, saturate, grayscale, blur
     } = props;
 
-    // Animation Logic (Interpolation)
+    // --- ANIMATION SYSTEM ---
     const frame = useCurrentFrame();
     const duration = track.durationInFrames;
-    const TRANSITION_DURATION = track.props.transitionDuration || 15; // Default 0.5s
 
-    let animOpacity = 1;
-    let animScale = 1;
-    let animTranslateX = 0;
-    let animTranslateY = 0;
-    let animClipPath: string | undefined = undefined;
+    // 1. Resolve Parameters
+    // Backward Compatibility: If 'animation' exists but 'entrance' doesn't, use it.
+    let entranceType = track.entrance;
+    let motionType = track.motion;
 
-    if (animation === 'fade_in') {
-        animOpacity = interpolate(frame, [0, TRANSITION_DURATION], [0, 1], { extrapolateRight: 'clamp' });
+    if (!entranceType && !motionType && track.animation) {
+        // Map legacy 'animation' to new types
+        if (track.animation === 'ken_burns') {
+            motionType = 'ken_burns';
+        } else {
+            entranceType = track.animation;
+        }
     }
-    else if (animation === 'slide_in_left') {
-        animTranslateX = interpolate(frame, [0, TRANSITION_DURATION], [-width, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+
+    const entranceDuration = track.entranceDuration || track.transitionDuration || 30; // Default 1s (30fps)
+    const motionSpeed = track.motionSpeed || 90; // Default Cycle 3s
+    const motionRepeat = track.motionRepeat ?? 0; // 0 = Infinite
+
+    // 2. Entrance Calculations
+    let entOpacity = 1;
+    let entScale = 1;
+    let entX = 0;
+    let entY = 0;
+    let entRotate = 0;
+    let entClipPath: string | undefined = undefined;
+
+    if (entranceType) {
+        // Clamp frame to entrance duration
+        const t = Math.min(frame, entranceDuration);
+
+        if (entranceType === 'fade_in') {
+            entOpacity = interpolate(t, [0, entranceDuration], [0, 1]);
+        }
+        else if (entranceType === 'slide_in_left') {
+            entX = interpolate(t, [0, entranceDuration], [-width, 0], { easing: Easing.out(Easing.cubic) });
+        }
+        else if (entranceType === 'slide_in_right') {
+            entX = interpolate(t, [0, entranceDuration], [width, 0], { easing: Easing.out(Easing.cubic) });
+        }
+        else if (entranceType === 'slide_in_top') {
+            entY = interpolate(t, [0, entranceDuration], [-height, 0], { easing: Easing.out(Easing.cubic) });
+        }
+        else if (entranceType === 'slide_in_bottom') {
+            entY = interpolate(t, [0, entranceDuration], [height, 0], { easing: Easing.out(Easing.cubic) });
+        }
+        else if (entranceType === 'zoom_in') {
+            entScale = interpolate(t, [0, entranceDuration], [0, 1], { easing: Easing.out(Easing.cubic) });
+            entOpacity = interpolate(t, [0, Math.min(10, entranceDuration)], [0, 1]); // Fast fade
+        }
+        else if (entranceType === 'zoom_out') {
+            entScale = interpolate(t, [0, entranceDuration], [1.5, 1], { easing: Easing.out(Easing.cubic) });
+            entOpacity = interpolate(t, [0, Math.min(10, entranceDuration)], [0, 1]);
+        }
+        else if (entranceType === 'wipe_left') {
+            const p = interpolate(t, [0, entranceDuration], [100, 0], { easing: Easing.out(Easing.cubic) });
+            entClipPath = `inset(0 ${p}% 0 0)`;
+        }
+        else if (entranceType === 'wipe_right') {
+            const p = interpolate(t, [0, entranceDuration], [100, 0], { easing: Easing.out(Easing.cubic) });
+            entClipPath = `inset(0 0 0 ${p}%)`;
+        }
     }
-    else if (animation === 'slide_in_right') {
-        animTranslateX = interpolate(frame, [0, TRANSITION_DURATION], [width, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
+
+    // 3. Motion Calculations (Looping)
+    let motScale = 1;
+    let motX = 0;
+    let motY = 0;
+    let motRotate = 0;
+
+    if (motionType) {
+        // Calculate Cycle Progress
+        let cycleProgress = 0;
+
+        if (motionType === 'ken_burns') {
+            // Ken Burns is linear over the WHOLE duration usually, not looping
+            const kbProgress = interpolate(frame, [0, duration], [0, 1], { extrapolateRight: 'clamp' });
+            motScale = 1 + (kbProgress * 0.2); // 1.0 -> 1.2
+        } else {
+            // Looping Animations
+            // If repeat is set, clamp total cycles
+            const totalAllowedFrames = motionRepeat > 0 ? motionRepeat * motionSpeed : Infinity;
+
+            if (frame < totalAllowedFrames) {
+                const timeInCycle = frame % motionSpeed;
+                cycleProgress = timeInCycle / motionSpeed; // 0 -> 1
+
+                if (motionType === 'pulse') {
+                    // 1 -> 1.05 -> 1
+                    // Sine wave: 0 -> PI
+                    const val = Math.sin(cycleProgress * Math.PI);
+                    motScale = 1 + (val * 0.05);
+                }
+                else if (motionType === 'shake') {
+                    // Random-ish shake using sine combination
+                    const val = Math.sin(cycleProgress * Math.PI * 4); // 2 wiggles per cycle?
+                    motX = val * 5; // +/- 5px
+                }
+                else if (motionType === 'wiggle') {
+                    // Rotate
+                    const val = Math.sin(cycleProgress * Math.PI * 2);
+                    motRotate = val * 3; // +/- 3 deg
+                }
+                else if (motionType === 'spin') {
+                    // 0 -> 360
+                    motRotate = cycleProgress * 360;
+                }
+                else if (motionType === 'bounce') {
+                    // Y axis bounce
+                    // abs(sin)
+                    const val = Math.abs(Math.sin(cycleProgress * Math.PI));
+                    motY = -val * 20; // Jump up 20px
+                }
+            }
+        }
     }
-    else if (animation === 'slide_in_top') {
-        animTranslateY = interpolate(frame, [0, TRANSITION_DURATION], [-height, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-    }
-    else if (animation === 'slide_in_bottom') {
-        animTranslateY = interpolate(frame, [0, TRANSITION_DURATION], [height, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-    }
-    else if (animation === 'zoom_in') {
-        animScale = interpolate(frame, [0, TRANSITION_DURATION], [0, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-        animOpacity = interpolate(frame, [0, 5], [0, 1], { extrapolateRight: 'clamp' }); // Quick fade to avoid pop
-    }
-    else if (animation === 'zoom_out') {
-        animScale = interpolate(frame, [0, TRANSITION_DURATION], [1.5, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-        animOpacity = interpolate(frame, [0, 5], [0, 1], { extrapolateRight: 'clamp' });
-    }
-    else if (animation === 'wipe_left') {
-        // Wipe from Right to Left (Reveals content)
-        const p = interpolate(frame, [0, TRANSITION_DURATION], [100, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-        animClipPath = `inset(0 ${p}% 0 0)`;
-    }
-    else if (animation === 'wipe_right') {
-        // Wipe from Left to Right
-        const p = interpolate(frame, [0, TRANSITION_DURATION], [100, 0], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
-        animClipPath = `inset(0 0 0 ${p}%)`;
-    }
-    else if (animation === 'ken_burns') {
-        animScale = interpolate(frame, [0, duration], [1.1, 1.3], { extrapolateRight: 'clamp' });
-    }
+
+    // 4. Combine Transforms (Entrance * Motion * Base)
+    const finalOpacity = opacity * entOpacity;
+    const finalScale = scale * entScale * motScale;
+    const finalRotate = rotation + entRotate + motRotate;
+    const finalX = x + entX + motX;
+    const finalY = y + entY + motY;
+    const finalClip = entClipPath; // Motion clip not supported yet
+
+    // Update style creation to use these new finals
+    // Replaced logic below...
 
     // Construct Filter String
     // If undefined, defaults will be used in logic or CSS defaults (1 or 0)
@@ -96,13 +179,14 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
     // Common styles
     const style: React.CSSProperties = {
         position: 'absolute',
-        left: x,
-        top: y,
+        // We use the computed finals which include base x/y + entrance + motion
+        left: finalX,
+        top: finalY,
         width,
         height,
-        opacity: opacity * animOpacity,
-        transform: `translateX(${animTranslateX}px) translateY(${animTranslateY}px) rotate(${rotation}deg) scale(${scale * animScale})`,
-        clipPath: animClipPath,
+        opacity: finalOpacity,
+        transform: `rotate(${finalRotate}deg) scale(${finalScale})`,
+        clipPath: finalClip,
         borderWidth: borderWidth ? `${borderWidth}px` : undefined,
         borderColor: borderColor || undefined,
         borderStyle: borderWidth ? 'solid' : undefined,

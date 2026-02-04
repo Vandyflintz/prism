@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePrismStore } from '../store/usePrismStore';
-import { PrismTrack } from '../../types/prism'; // Fixed import path
+import { PrismTrack } from '../../types/prism';
 
 interface TransitionEditorProps {
     trackId: string;
@@ -11,10 +11,8 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
     const { project, updateTrack, setCurrentTime, setIsPlaying } = usePrismStore();
     const track = project?.tracks.find(t => t.id === trackId);
 
-    // Local state for "Draft" changes? 
-    // Actually, for "Realtime Preview", we want to update the REAL store, but maybe revert if Cancelled.
-    // Let's store the INITIAL state on mount.
-    const [initialState, setInitialState] = React.useState<{ animation?: string, duration?: number } | null>(null);
+    // Initial state for Revert
+    const [initialState, setInitialState] = React.useState<{ entrance?: string, motion?: string, duration?: number } | null>(null);
 
     const [previewAnimation, setPreviewAnimation] = React.useState<string>('');
     const [previewKey, setPreviewKey] = React.useState(0);
@@ -22,10 +20,17 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
     React.useEffect(() => {
         if (track && !initialState) {
             setInitialState({
-                animation: track.animation,
-                duration: track.props.transitionDuration || 15
+                entrance: track.entrance,
+                motion: track.motion,
+                duration: track.entranceDuration || 30
             });
-            setPreviewAnimation(track.animation || '');
+            // If it has motion 'ken_burns', treat that as the active "Effect" in this UI?
+            // The UI mixes Entrances and Ken Burns.
+            if (track.motion === 'ken_burns') {
+                setPreviewAnimation('ken_burns');
+            } else {
+                setPreviewAnimation(track.entrance || '');
+            }
         }
     }, [track]);
 
@@ -36,28 +41,45 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
         { label: 'Fade In', value: 'fade_in' },
         { label: 'Zoom In', value: 'zoom_in' },
         { label: 'Zoom Out', value: 'zoom_out' },
-        { label: 'Slide Up', value: 'slide_in_bottom' },
-        { label: 'Slide Down', value: 'slide_in_top' },
-        { label: 'Slide Left', value: 'slide_in_right' },
-        { label: 'Slide Right', value: 'slide_in_left' },
+        // Use correct keys matching PrismComposition
+        { label: 'Slide Up', value: 'slide_in_bottom' }, // Comes FROM bottom
+        { label: 'Slide Down', value: 'slide_in_top' }, // Comes FROM top
+        { label: 'Slide Left', value: 'slide_in_right' }, // Comes FROM right
+        { label: 'Slide Right', value: 'slide_in_left' }, // Comes FROM left
         { label: 'Wipe Left', value: 'wipe_left' },
         { label: 'Wipe Right', value: 'wipe_right' },
         { label: 'Ken Burns', value: 'ken_burns' },
     ];
 
-    const handleSelect = (animation: string) => {
-        // Update Store Immediate for main player
-        updateTrack(trackId, { animation: animation as any });
+    const currentSelection = track.motion === 'ken_burns' ? 'ken_burns' : (track.entrance || '');
 
-        // Update Local Preview
-        setPreviewAnimation(animation);
-        setPreviewKey(k => k + 1); // Re-trigger CSS animation
+    const handleSelect = (anim: string) => {
+        // Update Store
+        if (anim === 'ken_burns') {
+            updateTrack(trackId, {
+                motion: 'ken_burns',
+                entrance: undefined,
+                animation: undefined // Clear legacy
+            });
+        } else {
+            updateTrack(trackId, {
+                entrance: anim as any,
+                motion: track.motion === 'ken_burns' ? undefined : track.motion, // Remove Ken Burns if setting an entrance, but keep other motions? 
+                // Actually, this simple editor assumes one main effect. Removing KB is safer for clarity.
+                animation: undefined
+            });
+        }
 
-        // Also Trigger Main Player Preview
-        const fps = project?.fps || 30;
-        setCurrentTime(track.startFrame);
-        setIsPlaying(true);
-        setTimeout(() => setIsPlaying(false), 2000);
+        // Update Preview
+        setPreviewAnimation(anim);
+        setPreviewKey(k => k + 1);
+
+        // Simple Play trigger
+        if (project) {
+            setCurrentTime(track.startFrame);
+            setIsPlaying(true);
+            setTimeout(() => setIsPlaying(false), 2000);
+        }
     };
 
     const handleApply = () => {
@@ -65,24 +87,21 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
     };
 
     const handleCancel = () => {
-        // Revert to initial state
         if (initialState) {
             updateTrack(trackId, {
-                animation: initialState.animation as any,
-                props: { ...track.props, transitionDuration: initialState.duration }
+                entrance: initialState.entrance as any,
+                motion: initialState.motion as any,
+                entranceDuration: initialState.duration
             });
         }
         onClose();
     };
 
-    // Helper to get animation styles for the PREVIEW BOX
+    // Helper for CSS PREVIEW only
     const getPreviewStyle = (anim: string): React.CSSProperties => {
-        // Calculate Duration from Props (frames -> seconds)
-        // Default to 0.5s if missing
-        const durationFrames = track.props.transitionDuration || 15;
-        const durationSec = durationFrames / 30; // Assuming 30fps for UI preview
+        const durationFrames = track.entranceDuration || 30;
+        const durationSec = durationFrames / 30; // UI uses 30fps assumption
         const durationStr = `${durationSec}s`;
-
         const easing = 'cubic-bezier(0.33, 1, 0.68, 1)';
 
         let animRule = '';
@@ -103,24 +122,18 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
         return { animation: animRule };
     };
 
-    // --- Content Resolver ---
-    // Try to get the actual image/content for the preview
     const renderPreviewContent = () => {
         const style = getPreviewStyle(previewAnimation);
-        const commonClasses = "w-full h-full object-contain shadow-lg bg-transparent"; // Changed from bg-black
+        const commonClasses = "w-full h-full object-contain shadow-lg bg-transparent";
 
-        // 1. Image / Video (Thumbnail)
         if (track.type === 'image' || track.type === 'video') {
             const assetId = track.props.assetId;
             const asset = assetId && project?.assets[assetId];
-
             if (asset) {
                 let finalSrc = asset.src;
-                // Normalize logic (simplified for UI)
                 if (finalSrc && !finalSrc.startsWith('http') && !finalSrc.startsWith('file:') && !finalSrc.startsWith('blob:')) {
                     finalSrc = `file://${finalSrc.startsWith('/') ? '' : '/'}${finalSrc}`;
                 }
-
                 return (
                     <img
                         key={previewKey}
@@ -134,7 +147,6 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
             }
         }
 
-        // 2. Text
         if (track.type === 'text') {
             return (
                 <div
@@ -145,7 +157,6 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
                         backgroundColor: 'transparent',
                         color: track.props.color || 'white',
                         fontFamily: track.props.fontFamily || 'sans-serif',
-                        // Scale down generic font size to fit preview
                         fontSize: (track.props.fontSize || 40) * 0.5,
                         textShadow: track.props.textShadow
                     }}
@@ -155,7 +166,6 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
             );
         }
 
-        // Fallback
         return (
             <div
                 key={previewKey}
@@ -167,10 +177,8 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
         );
     };
 
-
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            {/* Inject CSS Keyframes for the Preview */}
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -185,7 +193,6 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
             `}</style>
 
             <div className="w-[600px] h-[450px] bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                {/* Header */}
                 <div className="h-12 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-950">
                     <h3 className="font-bold text-zinc-200">Transition Editor</h3>
                     <button onClick={handleCancel} className="text-zinc-500 hover:text-zinc-300">
@@ -193,10 +200,7 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
                     </button>
                 </div>
 
-                {/* Body: Split View (Options | Preview) */}
                 <div className="flex-1 flex overflow-hidden">
-
-                    {/* Left: Options List */}
                     <div className="w-1/2 p-4 flex flex-col gap-4 border-r border-zinc-800 overflow-y-auto">
                         <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Effect Type</div>
                         <div className="grid grid-cols-1 gap-1">
@@ -204,35 +208,26 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
                                 <button
                                     key={opt.value}
                                     onClick={() => handleSelect(opt.value)}
-                                    // onMouseEnter={() => { setPreviewAnimation(opt.value); setPreviewKey(k => k + 1); }} // Optional: Preview on hover?
-                                    className={`px-3 py-2 rounded text-sm text-left transition-all flex items-center justify-between group ${track.animation === opt.value
-                                        ? 'bg-purple-900/30 border border-purple-500/50 text-purple-300'
-                                        : 'border border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                                    className={`px-3 py-2 rounded text-sm text-left transition-all flex items-center justify-between group ${currentSelection === opt.value
+                                            ? 'bg-purple-900/30 border border-purple-500/50 text-purple-300'
+                                            : 'border border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                                         }`}
                                 >
                                     <span>{opt.label}</span>
-                                    {track.animation === opt.value && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                                    {currentSelection === opt.value && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Right: Preview & Settings */}
                     <div className="w-1/2 p-4 flex flex-col gap-6 bg-zinc-950/30">
-
-                        {/* 1. Visual Preview Box */}
                         <div>
                             <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Sample Preview</div>
                             <div className="w-full aspect-video bg-zinc-800 rounded-lg border border-zinc-700 overflow-hidden relative flex items-center justify-center shadow-inner">
-                                {/* Grid Background pattern */}
                                 <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #555 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-
-                                {/* The "Clip" being animated */}
                                 <div className="absolute inset-2 flex items-center justify-center overflow-hidden">
                                     {renderPreviewContent()}
                                 </div>
-
-                                {/* "Replay" indicator */}
                                 <button
                                     onClick={() => setPreviewKey(k => k + 1)}
                                     className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/50 text-white/50 hover:bg-black hover:text-white transition-colors z-10"
@@ -243,40 +238,33 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
                             </div>
                         </div>
 
-                        {/* 2. Duration Slider */}
                         <div className="flex flex-col gap-3">
                             <div className="flex justify-between items-end">
                                 <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</span>
                                 <span className="text-xs text-purple-400 font-mono bg-purple-500/10 px-2 py-0.5 rounded">
-                                    {((track.props.transitionDuration || 15) / 30).toFixed(1)}s
+                                    {((track.entranceDuration || 30) / 30).toFixed(1)}s
                                 </span>
                             </div>
                             <div className="relative h-6 flex items-center">
                                 <input
                                     type="range"
-                                    min={1} max={150} step={1} // 1 frame to 5 seconds
-                                    value={track.props.transitionDuration || 15}
+                                    min={5} max={150} step={1}
+                                    value={track.entranceDuration || 30}
                                     onChange={(e) => {
-                                        updateTrack(trackId, { props: { ...track.props, transitionDuration: Number(e.target.value) } });
-                                        // Trigger replay on slide end? Or live? Live is fine, but need to re-key to see effect speed change?
-                                        // Probably only need to re-key when dragging stops, but simpler to just manual replay.
-                                        // For dynamic CSS update, the `getPreviewStyle` runs on render, so it should auto-update duration.
-                                        // BUT: modifying animation-duration mid-animation can be glitchy.
+                                        updateTrack(trackId, { entranceDuration: Number(e.target.value) });
                                         setPreviewKey(k => k + 1);
                                     }}
                                     className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:accent-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
                                 />
                             </div>
                             <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
-                                <span>0s</span>
+                                <span>0.2s</span>
                                 <span>5s</span>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="h-14 border-t border-zinc-800 flex items-center justify-end px-4 gap-2 bg-zinc-950">
                     <button onClick={handleCancel} className="px-4 py-1.5 rounded text-sm text-zinc-400 hover:text-white transition-colors">Cancel</button>
                     <button onClick={handleApply} className="px-4 py-1.5 rounded text-sm bg-purple-600 text-white font-medium hover:bg-purple-500 shadow-lg shadow-purple-900/20 transition-all active:scale-95">Apply Transition</button>

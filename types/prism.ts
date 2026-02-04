@@ -83,10 +83,18 @@ export interface PrismTrack {
     // Visual properties directly mapped to CSS/Remotion style props
     props: LayerProps;
 
-    // Animation preset identifier (e.g., 'fade_in', 'slide_up')
-    // The Renderer will map this string to a concrete transition function
+    // Unified Animation System
+    // Entrance (Transitions)
+    entrance?: string; // 'fade_in', 'slide_left', 'zoom_in', etc.
+    entranceDuration?: number; // Frames (default 30)
+
+    // Motion (Looping)
+    motion?: string; // 'pulse', 'shake', 'wiggle', 'spin', 'ken_burns'
+    motionSpeed?: number; // Duration of 1 cycle in frames (default 60 or 90)
+    motionRepeat?: number; // 0 = infinite, 1 = once, 2 = twice, etc.
+
+    // Legacy (Deprecated) - kept for backward compatibility if needed
     animation?: string;
-    // Animation Duration in frames
     transitionDuration?: number;
 }
 

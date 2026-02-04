@@ -95,16 +95,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
         ],
     })), [project.tracks, assets, fps]);
 
-    // Helper for Row Header Icons
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'audio': return <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
-            case 'text': return <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>;
-            case 'image': return <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
-            case 'shape': return <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" /></svg>; // Square
-            default: return <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
-        }
-    }
+
 
     const getTrackBackground = (type: string, isSelected: boolean) => {
         const base = isSelected ? "bg-opacity-40" : "bg-opacity-20";
@@ -625,8 +616,8 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                                         e.stopPropagation();
                                                         setEditingTransitionTrackId(track.id);
                                                     }}
-                                                    className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 transition-all ${track.animation ? 'text-purple-400 border-purple-500/50 bg-purple-900/20' : 'text-zinc-500 hover:text-purple-300'}`}
-                                                    title={track.animation ? `Transition: ${track.animation}` : "Edit Transition"}
+                                                    className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 transition-all ${track.entrance || track.animation ? 'text-purple-400 border-purple-500/50 bg-purple-900/20' : 'text-zinc-500 hover:text-purple-300'}`}
+                                                    title={track.entrance || track.animation ? `Transition: ${track.entrance || track.animation}` : "Edit Transition"}
                                                 >
                                                     <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                                                 </button>
