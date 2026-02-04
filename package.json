@@ -1,5 +1,7 @@
 {
   "name": "prism",
+  "productName": "Prism",
+  "appId": "com.saytoonz.prism",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -12,6 +14,7 @@
     "@remotion/renderer": "4.0.412",
     "@remotion/shapes": "4.0.412",
     "@xzdarcy/react-timeline-editor": "^1.0.0",
+    "adm-zip": "^0.5.16",
     "ag-psd": "^30.1.0",
     "bullmq": "^5.67.2",
     "next": "16.0.10",
@@ -28,6 +31,8 @@
     "@next/eslint-plugin-next": "15.1.6",
     "@remotion/eslint-config-flat": "4.0.412",
     "@remotion/eslint-plugin": "4.0.412",
+    "@types/adm-zip": "^0.5.7",
+    "electron-builder": "^24.13.3",
     "@types/node": "20.12.14",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
@@ -57,7 +62,38 @@
     "render": "remotion render",
     "deploy": "node deploy.mjs",
     "electron:build": "tsc -p tsconfig.electron.json",
-    "e": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\""
+    "e": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.saytoonz.prism",
+    "productName": "Prism",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "out/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "resources/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "resources"
+    }
   },
   "main": "dist-electron/main.js",
   "overrides": {

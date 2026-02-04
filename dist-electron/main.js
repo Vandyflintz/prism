@@ -37,6 +37,9 @@ const electron_1 = require("electron");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
+const menu_1 = require("./menu");
+// Set App Name
+electron_1.app.name = 'Prism';
 let mainWindow = null;
 function createWindow() {
     mainWindow = new electron_1.BrowserWindow({
@@ -46,17 +49,25 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
+            webSecurity: false // Allow loading local resources (file://)
         },
         titleBarStyle: 'hiddenInset', // Mac style
         backgroundColor: '#09090b', // Zinc-950
+        icon: path.join(__dirname, '../resources/icon.png') // Linux/Windows fallback (Mac uses .icns in build)
     });
+    (0, menu_1.createAppMenu)(mainWindow);
     const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
     mainWindow.loadURL(startUrl);
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
 }
-electron_1.app.on('ready', createWindow);
+electron_1.app.on('ready', () => {
+    createWindow();
+    if (process.platform === 'darwin') {
+        electron_1.app.dock?.setIcon(path.join(__dirname, '../resources/icon.png'));
+    }
+});
 electron_1.app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         electron_1.app.quit();
@@ -107,6 +118,7 @@ electron_1.ipcMain.handle('fs:readFile', async (event, filePath) => {
     }
 });
 // Render Composition
+// Render Composition
 const render_1 = require("./render");
 electron_1.ipcMain.handle('render-composition', async (event, data) => {
     return new Promise((resolve, reject) => {
@@ -120,4 +132,33 @@ electron_1.ipcMain.handle('render-composition', async (event, data) => {
             .then((output) => resolve(output))
             .catch((err) => reject(err));
     });
+});
+// Persistence
+const persistence_1 = require("./persistence");
+electron_1.ipcMain.handle('project:save', async (event, { data, filePath }) => {
+    let targetPath = filePath;
+    if (!targetPath) {
+        const { canceled, filePath: savePath } = await electron_1.dialog.showSaveDialog({
+            title: 'Save Project',
+            defaultPath: 'Untitled.prsm',
+            filters: [{ name: 'Prism Project', extensions: ['prsm'] }]
+        });
+        if (canceled || !savePath)
+            return null;
+        targetPath = savePath;
+    }
+    await (0, persistence_1.saveProjectPackage)(targetPath, data);
+    return targetPath;
+});
+electron_1.ipcMain.handle('project:open', async () => {
+    const { canceled, filePaths } = await electron_1.dialog.showOpenDialog({
+        title: 'Open Project',
+        properties: ['openFile'],
+        filters: [{ name: 'Prism Project', extensions: ['prsm'] }]
+    });
+    if (canceled || filePaths.length === 0)
+        return null;
+    const filePath = filePaths[0];
+    const data = await (0, persistence_1.loadProjectPackage)(filePath);
+    return { filePath, data };
 });

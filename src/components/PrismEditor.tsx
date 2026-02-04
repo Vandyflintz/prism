@@ -134,8 +134,92 @@ export const PrismEditor: React.FC = () => {
     const [exportStatus, setExportStatus] = React.useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
     const [exportOutput, setExportOutput] = React.useState('');
 
+    // Persistence State
+    const [currentFilePath, setCurrentFilePath] = React.useState<string | null>(null);
+
+    const stageAssetsForPersistence = async (currentAssets: Record<string, any>) => {
+        const stagedAssets: Record<string, any> = {};
+        const assetIds = Object.keys(currentAssets);
+
+        for (const id of assetIds) {
+            const asset = currentAssets[id];
+            const stagedAsset = { ...asset };
+
+            if (asset.src.startsWith('blob:') || asset.src.startsWith('http')) {
+                try {
+                    const response = await fetch(asset.src);
+                    const blob = await response.blob();
+                    const buffer = await blob.arrayBuffer();
+                    const ext = asset.type === 'video' ? 'mp4' : asset.type === 'audio' ? 'mp3' : 'png';
+                    const filename = `${id}.${ext}`;
+                    const tempPath = await window.electron.saveTempFile(filename, buffer);
+                    stagedAsset.src = `file://${tempPath}`;
+                } catch (err) {
+                    console.error(`[Persistence] Failed to stage asset ${id}`, err);
+                }
+            }
+            stagedAssets[id] = stagedAsset;
+        }
+        return stagedAssets;
+    };
+
+    const handleSaveProject = React.useCallback(async (saveAs: boolean) => {
+        if (!window.electron) return;
+        try {
+            const state = usePrismStore.getState();
+            const stagedAssets = await stageAssetsForPersistence(state.assets);
+
+            // Use the ref-tracked currentFilePath or pass it in? 
+            // We can't access 'currentFilePath' state inside useCallback easily without dep.
+            // Actually we can use a ref for currentFilePath or just let it depend on it.
+            // If we depend on currentFilePath, it updates when path changes (rare).
+            // But 'project' and 'assets' change often. Using getState() solves that.
+
+            // Wait, we need the CURRENT file path state.
+            // Let's rely on the arguments or state.
+            // Since we need to read 'currentFilePath' which is local state, we should add it to deps
+            // OR use a ref for it.
+
+            const savedPath = await window.electron.saveProject(
+                { project: state.project, assets: stagedAssets },
+                saveAs ? null : currentFilePathRef.current
+            );
+
+            if (savedPath) {
+                setCurrentFilePath(savedPath);
+                currentFilePathRef.current = savedPath; // Update ref
+                alert('Project saved!');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Failed to save project.');
+        }
+    }, []); // Empty deps because we use getState() and refs
+
+    // We need a ref for currentFilePath to avoid re-creating handleSaveProject
+    const currentFilePathRef = React.useRef<string | null>(null);
+    useEffect(() => { currentFilePathRef.current = currentFilePath; }, [currentFilePath]);
+
+    const handleOpenProject = React.useCallback(async () => {
+        if (!window.electron) return;
+        try {
+            const result = await window.electron.openProject();
+            if (result) {
+                const { filePath, data } = result;
+                setProject(data.project);
+                // @ts-ignore
+                if (data.assets) hydrateAssets(Object.values(data.assets));
+                setCurrentFilePath(filePath);
+                currentFilePathRef.current = filePath;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Failed to open project.');
+        }
+    }, [setProject, hydrateAssets]);
+
     // Export Handler
-    const handleExport = async () => {
+    const handleExport = React.useCallback(async () => {
         if (!window.electron) {
             alert("Export is only available in the desktop app.");
             return;
@@ -154,10 +238,12 @@ export const PrismEditor: React.FC = () => {
             console.log("Preparing export assets (Debug Mode)...");
 
             // Process all assets in the project
-            const assetIds = Object.keys(assets);
+            // Use current state assets
+            const currentAssets = usePrismStore.getState().assets;
+            const assetIds = Object.keys(currentAssets);
 
             for (const id of assetIds) {
-                const asset = assets[id];
+                const asset = currentAssets[id];
                 const stagedAsset = { ...asset };
 
                 // If it's a blob URL
@@ -188,8 +274,9 @@ export const PrismEditor: React.FC = () => {
 
             // 2. RENDER
             // Pass the modified assets map
+            const currentProject = usePrismStore.getState().project;
             const output = await window.electron.renderComposition({
-                project,
+                project: currentProject,
                 assets: stagedAssets
             });
 
@@ -200,7 +287,9 @@ export const PrismEditor: React.FC = () => {
             setExportStatus('error');
             setExportOutput(error.message || "Unknown error");
         }
-    };
+    }, []);
+
+
 
     // Listen for Progress
     useEffect(() => {
@@ -330,7 +419,7 @@ export const PrismEditor: React.FC = () => {
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    const openFile = async () => {
+    const importPsd = async () => {
         if (window.electron) {
             try {
                 const filePath = await window.electron.openFile();
@@ -378,6 +467,76 @@ export const PrismEditor: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        if (window.electron) {
+            const unsub = window.electron.onMenuAction((action) => {
+                console.log(`[Menu] ${action}`);
+                switch (action) {
+                    case 'menu:open-project':
+                        handleOpenProject();
+                        break;
+                    case 'menu:save-project':
+                        handleSaveProject(false);
+                        break;
+                    case 'menu:save-project-as':
+                        handleSaveProject(true);
+                        break;
+                    case 'menu:import-psd':
+                        importPsd();
+                        break;
+                    case 'menu:toggle-left-panel':
+                        setShowLeftPanel(prev => !prev);
+                        break;
+                    case 'menu:toggle-right-panel':
+                        setShowRightPanel(prev => !prev);
+                        break;
+                    case 'menu:export-video':
+                        handleExport();
+                        break;
+                    case 'menu:undo':
+                        // @ts-ignore
+                        usePrismStore.temporal?.getState().undo();
+                        break;
+                    case 'menu:redo':
+                        // @ts-ignore
+                        usePrismStore.temporal?.getState().redo();
+                        break;
+                    case 'menu:split-track':
+                        const selectedId = usePrismStore.getState().selectedTrackId;
+                        if (selectedId) usePrismStore.getState().splitTrack(selectedId);
+                        break;
+                    case 'menu:align-tracks':
+                        usePrismStore.getState().alignTracksToStart();
+                        break;
+                    case 'menu:clear-timeline':
+                        if (confirm('Clear entire timeline?')) {
+                            usePrismStore.getState().clearTimeline();
+                        }
+                        break;
+                    case 'menu:reset-project':
+                        if (confirm('Reset project settings and timeline?')) {
+                            usePrismStore.getState().resetProject();
+                        }
+                        break;
+                    case 'menu:shortcuts':
+                        alert(`
+Keyboard Shortcuts:
+-------------------
+Save: Cmd+S
+Open: Cmd+O
+Split: Cmd+B
+Undo: Cmd+Z
+Redo: Cmd+Shift+Z
+Play/Pause: Space
+Delete: Backspace / Delete
+                        `.trim());
+                        break;
+                }
+            });
+            return () => unsub();
+        }
+    }, [handleExport, importPsd, handleSaveProject, handleOpenProject]);
+
     if (!project) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-[#09090b] text-zinc-400 font-mono gap-4">
@@ -422,8 +581,8 @@ export const PrismEditor: React.FC = () => {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
 
                     <div className="flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800">
-                        <button onClick={openFile} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
-                            Open PSD
+                        <button onClick={importPsd} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
+                            Import PSD
                         </button>
                         <div className="w-[1px] h-3 bg-zinc-800 mx-1"></div>
                         <button onClick={loadSample} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
