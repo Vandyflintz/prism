@@ -1,7 +1,7 @@
 'use client';
 
 
-import PrismEditor from '../components/PrismEditor';
+import { PrismEditor } from '../components/PrismEditor';
 
 export default function Home() {
   return (

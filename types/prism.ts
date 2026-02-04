@@ -46,6 +46,7 @@ export interface PrismAsset {
         psdProject?: PrismProject;
         // Internal assets (e.g. PSD layers) hidden from library
         isInternal?: boolean;
+        createdAt?: number;
     };
 }
 

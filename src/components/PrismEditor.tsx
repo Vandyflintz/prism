@@ -7,9 +7,10 @@ import { PrismTimeline } from './PrismTimeline';
 import { usePrismStore } from '../store/usePrismStore';
 import { PrismProject } from '../../types/prism';
 import { PropertySidebar } from './PropertySidebar';
-import { parsePsd } from '../../lib/psd-to-json';
+import { parsePsd, getLayersFromPsd, getPsdPreview } from '../../lib/psd-to-json';
 import { TimelineSettingsModal } from './TimelineSettingsModal';
 import { ResourcePanel } from './ResourcePanel';
+import { AssetStorage } from '../lib/AssetStorage';
 
 const MOCK_PROJECT: PrismProject = {
     id: 'mock-1',
@@ -57,11 +58,67 @@ const MOCK_PROJECT: PrismProject = {
     ]
 };
 
-export default function PrismEditor() {
-    const project = usePrismStore((state) => state.project);
-    const setProject = usePrismStore((state) => state.setProject);
-    const isPlaying = usePrismStore((state) => state.isPlaying);
-    const setCurrentTime = usePrismStore((state) => state.setCurrentTime);
+export const PrismEditor: React.FC = () => {
+    const {
+        project, setProject, isPlaying, setCurrentTime,
+        hydrateAssets
+    } = usePrismStore();
+
+    const [isRestoring, setIsRestoring] = React.useState(true);
+
+    // Hydrate Assets on Mount
+    useEffect(() => {
+        const loadAssets = async () => {
+            try {
+                await AssetStorage.init();
+                const stored = await AssetStorage.getAllAssets();
+
+                const hydratedAssets = await Promise.all(stored.map(async (s) => {
+                    const asset = { ...s.asset };
+
+                    // Create URL for the main asset file
+                    if (s.blob) {
+                        asset.src = URL.createObjectURL(s.blob);
+
+                        // Re-parse PSDs to get fresh Layer Blob URLs
+                        if (asset.type === 'psd') {
+                            try {
+                                const buffer = await s.blob.arrayBuffer();
+                                const [layers, psdProject, previewUrl] = await Promise.all([
+                                    getLayersFromPsd(buffer),
+                                    parsePsd(buffer),
+                                    getPsdPreview(buffer)
+                                ]);
+
+                                // Update metadata with fresh URLs
+                                asset.metadata = {
+                                    ...asset.metadata,
+                                    layers,
+                                    psdProject,
+                                };
+                                // Update Preview URL if available
+                                if (previewUrl) asset.src = previewUrl;
+
+                            } catch (err) {
+                                console.error("Failed to re-hydrate PSD:", asset.id, err);
+                            }
+                        }
+                    }
+                    return asset;
+                }));
+
+                if (hydratedAssets.length > 0) {
+                    hydrateAssets(hydratedAssets);
+                }
+            } catch (e) {
+                console.error("Failed to load persistent assets:", e);
+            } finally {
+                // Minimum splash time to prevent flicker
+                setTimeout(() => setIsRestoring(false), 800);
+            }
+        };
+        loadAssets();
+    }, []);
 
     // Use state instead of ref to ensure we react when the player is mounted/ready
     const [player, setPlayer] = React.useState<PlayerRef | null>(null);
@@ -228,7 +285,14 @@ export default function PrismEditor() {
         }
     };
 
-    if (!project) return <div className="text-zinc-500 flex items-center justify-center h-screen bg-[#09090b] text-xs font-mono">INITIALIZING PRISM ENGINE...</div>;
+    if (!project) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-[#09090b] text-zinc-400 font-mono gap-4">
+                <div className="w-8 h-8 pointer-events-none border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                <div className="text-xs animate-pulse">INITIALIZING PRISM...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-screen bg-[#09090b] text-zinc-200 overflow-hidden font-sans selection:bg-indigo-500/30">
@@ -289,7 +353,7 @@ export default function PrismEditor() {
 
                     {/* Left: Resources */}
                     <div style={{ display: showLeftPanel ? 'block' : 'none' }}>
-                        <ResourcePanel />
+                        <ResourcePanel isLoading={isRestoring} />
                     </div>
 
                     {/* Center: Stage */}

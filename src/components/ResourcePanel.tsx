@@ -3,6 +3,7 @@ import { usePrismStore } from '../store/usePrismStore';
 import { PrismAsset, PsdLayerSummary } from '../../types/prism';
 import { getLayersFromPsd, getPsdPreview, parsePsd } from '../../lib/psd-to-json';
 import { getAvailableFonts } from '@remotion/google-fonts';
+import { AssetStorage } from '../lib/AssetStorage';
 
 const SYSTEM_FONTS = [
     'Arial',
@@ -17,8 +18,8 @@ const SYSTEM_FONTS = [
     'Brush Script MT'
 ];
 
-export const ResourcePanel: React.FC = () => {
-    const { project, addAsset } = usePrismStore();
+export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
+    const { project, addAsset, deleteAsset } = usePrismStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
@@ -147,9 +148,14 @@ export const ResourcePanel: React.FC = () => {
                     psdProject: startProjectData,
                     duration,
                     width,
-                    height
+                    height,
+                    createdAt: Date.now()
                 }
             };
+
+            // Persist to IndexedDB
+            AssetStorage.saveAsset(newAsset, file).catch((err: any) => console.error("Failed to save asset persistence:", err));
+
             addAsset(newAsset);
         }
         setIsImporting(false);
@@ -170,15 +176,21 @@ export const ResourcePanel: React.FC = () => {
     // Filter Assets
     const filteredAssets = useMemo(() => {
         if (!project) return [];
-        return Object.values(project.assets).reverse().filter(asset => {
-            // Hide internal assets (generated from PSD layers)
-            if (asset.metadata?.isInternal) return false;
+        return Object.values(project.assets)
+            .filter(asset => {
+                // Hide internal assets (generated from PSD layers)
+                if (asset.metadata?.isInternal) return false;
 
-            if (searchQuery) {
-                return asset.metadata?.originalName?.toLowerCase().includes(searchQuery.toLowerCase());
-            }
-            return true;
-        });
+                if (searchQuery) {
+                    return asset.metadata?.originalName?.toLowerCase().includes(searchQuery.toLowerCase());
+                }
+                return true;
+            })
+            .sort((a, b) => { // Sort by createdAt Descending
+                const timeA = a.metadata?.createdAt || 0;
+                const timeB = b.metadata?.createdAt || 0;
+                return timeB - timeA;
+            });
     }, [project, searchQuery]);
 
     // Render Grid Items with Denser Layout
@@ -187,6 +199,18 @@ export const ResourcePanel: React.FC = () => {
             type: 'asset',
             assetId: asset.id,
             assetType: asset.type
+        };
+
+        const handleDelete = async (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (confirm('Delete this asset?')) {
+                try {
+                    await AssetStorage.deleteAsset(asset.id);
+                    deleteAsset(asset.id);
+                } catch (err) {
+                    console.error("Failed to delete asset:", err);
+                }
+            }
         };
 
         return (
@@ -205,10 +229,19 @@ export const ResourcePanel: React.FC = () => {
                     }
                 }}
             >
+                {/* Delete Button (Visible on Hover) */}
+                <button
+                    onClick={handleDelete}
+                    className="absolute top-1 right-1 z-20 p-1 bg-black/60 hover:bg-red-500/80 rounded text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                    title="Delete Asset"
+                >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+
                 {asset.type === 'video' && (
                     <>
                         <video src={asset.src} className="w-full h-full object-cover pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-zinc-300 pointer-events-none border border-white/10">VID</div>
+                        <div className="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-zinc-300 pointer-events-none border border-white/10">VID</div>
                     </>
                 )}
                 {asset.type === 'image' && (
@@ -220,13 +253,13 @@ export const ResourcePanel: React.FC = () => {
                         <img src={asset.src} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
 
                         {/* Badge */}
-                        <div className="absolute top-1 right-1 bg-[#31a8ff]/80 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-bold text-white pointer-events-none shadow-sm">PSD</div>
+                        <div className="absolute top-1 left-1 bg-[#31a8ff]/80 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-bold text-white pointer-events-none shadow-sm">PSD</div>
                     </div>
                 )}
                 {asset.type === 'audio' && (
                     <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                         <svg className="w-6 h-6 text-emerald-500 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                        <div className="absolute top-1 right-1 bg-emerald-900/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-emerald-400 pointer-events-none border border-emerald-500/20">AUD</div>
+                        <div className="absolute top-1 left-1 bg-emerald-900/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-emerald-400 pointer-events-none border border-emerald-500/20">AUD</div>
                     </div>
                 )}
 
@@ -346,6 +379,12 @@ export const ResourcePanel: React.FC = () => {
                         }
                     }}
                 >
+                    {isLoading && (
+                        <div className="absolute inset-0 z-50 bg-[#09090b]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                            <span className="text-[9px] font-mono text-zinc-400 animate-pulse">RESTORING...</span>
+                        </div>
+                    )}
                     {activeTab === 'media' && !currentPsdStack && (
                         <>
                             <input

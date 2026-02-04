@@ -38,6 +38,8 @@ interface PrismState {
     // Tools
     splitTrack: (trackId: string) => void;
     deleteTrack: (trackId: string) => void;
+    deleteAsset: (assetId: string) => void;
+    hydrateAssets: (assets: PrismAsset[]) => void;
 }
 
 export const usePrismStore = create<PrismState>()(
@@ -172,6 +174,24 @@ export const usePrismStore = create<PrismState>()(
                     project: { ...state.project, tracks },
                     selectedTrackId: state.selectedTrackId === trackId ? null : state.selectedTrackId
                 };
+            }),
+
+            deleteAsset: (assetId: string) => set((state) => {
+                if (!state.project) return state;
+                const { [assetId]: deleted, ...remainingAssets } = state.project.assets;
+                return {
+                    project: { ...state.project, assets: remainingAssets }
+                };
+            }),
+
+            hydrateAssets: (assets: PrismAsset[]) => set((state) => {
+                if (!state.project) return state;
+                // Merge loaded assets with existing (if any)
+                const newAssets = { ...state.project.assets };
+                assets.forEach((a: PrismAsset) => {
+                    newAssets[a.id] = a;
+                });
+                return { project: { ...state.project, assets: newAssets } };
             }),
         }),
         {
