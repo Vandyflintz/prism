@@ -32,10 +32,13 @@ export const RemotionRoot: React.FC = () => {
       // IMPORTANT: Calculate metadata dynamically if needed, 
       // but for simple exports we pass the duration in the input props
       calculateMetadata={async ({ props }) => {
+        // Use the explicit project duration if available, otherwise fallback to track max or default
+        let duration = props.project?.durationInFrames;
+        if (!duration && props.project?.tracks?.length > 0) {
+          duration = Math.max(...props.project.tracks.map(t => t.startFrame + t.durationInFrames));
+        }
         return {
-          durationInFrames: props.project?.tracks?.length > 0
-            ? Math.max(...props.project.tracks.map(t => t.startFrame + t.durationInFrames))
-            : 300,
+          durationInFrames: duration || 300,
           width: props.project?.width || 1920,
           height: props.project?.height || 1080,
           fps: props.project?.fps || 30
