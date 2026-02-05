@@ -14,7 +14,10 @@ const createAppMenu = (mainWindow) => {
         ...(isMac ? [{
                 label: electron_1.app.name,
                 submenu: [
-                    { role: 'about' },
+                    {
+                        label: 'About Prism',
+                        click: () => send('menu:open-about')
+                    },
                     { type: 'separator' },
                     { role: 'services' },
                     { type: 'separator' },

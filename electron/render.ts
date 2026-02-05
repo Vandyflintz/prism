@@ -1,3 +1,4 @@
+import { app } from 'electron';
 import { bundle } from "@remotion/bundler";
 import { getCompositions, renderMedia } from "@remotion/renderer";
 import path from "path";
@@ -12,12 +13,29 @@ export const renderComposition = async (
 ): Promise<string> => {
     console.log("Starting render process...");
 
+    // FIX: Remotion tries to write to ~/.remotion, which might fail or resolve to / in some contexts.
+    // We explicitly set the cache directory to a writable user data path.
+    const cacheDir = path.join(app.getPath('userData'), 'remotion-cache');
+    if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+    }
+    process.env.REMOTION_CACHE_DIR = cacheDir;
+    console.log(`[Render] Set REMOTION_CACHE_DIR to ${cacheDir}`);
+
     // 1. Bundle the project
-    const entryPoint = path.join(process.cwd(), "src", "remotion", "index.ts");
-    console.log("Bundling...", entryPoint);
-    const bundleLocation = await bundle({
-        entryPoint,
-    });
+    // 1. Bundle the project
+    let bundleLocation: string;
+
+    if (app.isPackaged) {
+        bundleLocation = path.join(process.resourcesPath, 'remotion-bundle');
+        console.log("Using pre-bundled Remotion assets:", bundleLocation);
+    } else {
+        const entryPoint = path.join(process.cwd(), "src", "remotion", "index.ts");
+        console.log("Bundling...", entryPoint);
+        bundleLocation = await bundle({
+            entryPoint,
+        });
+    }
 
     // --- START LOCAL ASSET SERVER ---
     // Access local assets via HTTP to avoid file:// restrictions in Chrome

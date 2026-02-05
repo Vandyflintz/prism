@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.renderComposition = void 0;
+const electron_1 = require("electron");
 const bundler_1 = require("@remotion/bundler");
 const renderer_1 = require("@remotion/renderer");
 const path_1 = __importDefault(require("path"));
@@ -12,12 +13,28 @@ const http_1 = __importDefault(require("http"));
 const fs_1 = __importDefault(require("fs"));
 const renderComposition = async (data, onProgress) => {
     console.log("Starting render process...");
+    // FIX: Remotion tries to write to ~/.remotion, which might fail or resolve to / in some contexts.
+    // We explicitly set the cache directory to a writable user data path.
+    const cacheDir = path_1.default.join(electron_1.app.getPath('userData'), 'remotion-cache');
+    if (!fs_1.default.existsSync(cacheDir)) {
+        fs_1.default.mkdirSync(cacheDir, { recursive: true });
+    }
+    process.env.REMOTION_CACHE_DIR = cacheDir;
+    console.log(`[Render] Set REMOTION_CACHE_DIR to ${cacheDir}`);
     // 1. Bundle the project
-    const entryPoint = path_1.default.join(process.cwd(), "src", "remotion", "index.ts");
-    console.log("Bundling...", entryPoint);
-    const bundleLocation = await (0, bundler_1.bundle)({
-        entryPoint,
-    });
+    // 1. Bundle the project
+    let bundleLocation;
+    if (electron_1.app.isPackaged) {
+        bundleLocation = path_1.default.join(process.resourcesPath, 'remotion-bundle');
+        console.log("Using pre-bundled Remotion assets:", bundleLocation);
+    }
+    else {
+        const entryPoint = path_1.default.join(process.cwd(), "src", "remotion", "index.ts");
+        console.log("Bundling...", entryPoint);
+        bundleLocation = await (0, bundler_1.bundle)({
+            entryPoint,
+        });
+    }
     // --- START LOCAL ASSET SERVER ---
     // Access local assets via HTTP to avoid file:// restrictions in Chrome
     const tempDir = path_1.default.join(os_1.default.tmpdir(), 'prism-export-assets');

@@ -317,12 +317,12 @@ export const PrismEditor: React.FC = () => {
         if (player) {
             if (isPlaying) {
                 if (!player.isPlaying()) {
-                    console.log('Force Play');
+                    // console.log('Force Play');
                     player.play();
                 }
             } else {
                 if (player.isPlaying()) {
-                    console.log('Force Pause');
+                    // console.log('Force Pause');
                     player.pause();
                 }
             }
@@ -359,7 +359,7 @@ export const PrismEditor: React.FC = () => {
             setCurrentTime(e.detail.frame);
         };
 
-        console.log('Adding frameupdate listener to player');
+        // console.log('Adding frameupdate listener to player');
         player.addEventListener('frameupdate', onFrame);
         return () => {
             player.removeEventListener('frameupdate', onFrame);
@@ -518,19 +518,8 @@ export const PrismEditor: React.FC = () => {
                             usePrismStore.getState().resetProject();
                         }
                         break;
-                    case 'menu:shortcuts':
-                        alert(`
-Keyboard Shortcuts:
--------------------
-Save: Cmd+S
-Open: Cmd+O
-Split: Cmd+B
-Undo: Cmd+Z
-Redo: Cmd+Shift+Z
-Play/Pause: Space
-Delete: Backspace / Delete
-                        `.trim());
-                        break;
+                    // case 'menu:shortcuts': Handled in page.tsx now
+                    //    break;
                 }
             });
             return () => unsub();

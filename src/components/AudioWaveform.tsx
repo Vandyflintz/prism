@@ -40,7 +40,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({ src, width, height
                 // 100 samples per second is decent for zoom.
 
                 const channelData = audioBuffer.getChannelData(0); // Left channel
-                const samples = 1000; // Fixed resolution for now? Or depends on duration?
+                // const samples = 1000; // Fixed resolution for now? Or depends on duration?
                 // Let's create a fixed size buffer for the visualizer, e.g., 200 points per second of audio
                 const pointsPerSecond = 50;
                 const totalPoints = Math.ceil(audioBuffer.duration * pointsPerSecond);
@@ -101,8 +101,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({ src, width, height
         // Simple approach: Iterate pixels 0..width
         // Map pixel x to peaks index
 
-        const centerY = height / 2;
-        const scaleY = height / 2 * 0.9; // Leave 10% margin
+        // const centerY = height / 2;
+        // const scaleY = height / 2 * 0.9; // Leave 10% margin
 
         ctx.beginPath();
 

@@ -24,7 +24,7 @@ export const TimelineSettingsModal: React.FC<TimelineSettingsModalProps> = ({ on
     const [bgColor, setBgColor] = React.useState(project?.backgroundColor || '#000000');
 
     // Derived state for ratio label
-    const activeRatio = PRESET_RATIOS.find(r => r.w === width && r.h === height)?.label || 'Custom';
+    // const activeRatio = PRESET_RATIOS.find(r => r.w === width && r.h === height)?.label || 'Custom';
 
     const handleApply = () => {
         updateProjectSettings({

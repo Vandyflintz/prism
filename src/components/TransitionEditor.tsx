@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePrismStore } from '../store/usePrismStore';
-import { PrismTrack } from '../../types/prism';
+// import { PrismTrack } from '../../types/prism';
 
 interface TransitionEditorProps {
     trackId: string;
@@ -209,8 +209,8 @@ export const TransitionEditor: React.FC<TransitionEditorProps> = ({ trackId, onC
                                     key={opt.value}
                                     onClick={() => handleSelect(opt.value)}
                                     className={`px-3 py-2 rounded text-sm text-left transition-all flex items-center justify-between group ${currentSelection === opt.value
-                                            ? 'bg-purple-900/30 border border-purple-500/50 text-purple-300'
-                                            : 'border border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                                        ? 'bg-purple-900/30 border border-purple-500/50 text-purple-300'
+                                        : 'border border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                                         }`}
                                 >
                                     <span>{opt.label}</span>

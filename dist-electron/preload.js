@@ -17,7 +17,7 @@ electron_1.contextBridge.exposeInMainWorld('electron', {
         return () => electron_1.ipcRenderer.removeListener('render-progress', subscription);
     },
     onMenuAction: (callback) => {
-        const subscription = (_event, action) => callback(action);
+        // const subscription = (_event: any, action: string) => callback(action);
         // We listen for multiple channels or just one 'menu-action' channel?
         // Actually, in menu.ts we sent 'menu:open-psd' etc.
         // It's cleaner to listen to all of them or have a single channel.
@@ -28,7 +28,7 @@ electron_1.contextBridge.exposeInMainWorld('electron', {
             'menu:open-project', 'menu:save-project', 'menu:save-project-as', 'menu:import-psd',
             'menu:export-video', 'menu:undo', 'menu:redo',
             'menu:split-track', 'menu:align-tracks', 'menu:clear-timeline', 'menu:reset-project', 'menu:shortcuts',
-            'menu:toggle-left-panel', 'menu:toggle-right-panel'
+            'menu:toggle-left-panel', 'menu:toggle-right-panel', 'menu:open-about'
         ];
         const listeners = {};
         actions.forEach(act => {

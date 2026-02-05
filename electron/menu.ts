@@ -14,7 +14,10 @@ export const createAppMenu = (mainWindow: BrowserWindow) => {
         ...(isMac ? [{
             label: app.name,
             submenu: [
-                { role: 'about' },
+                {
+                    label: 'About Prism',
+                    click: () => send('menu:open-about')
+                },
                 { type: 'separator' },
                 { role: 'services' },
                 { type: 'separator' },

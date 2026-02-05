@@ -31,7 +31,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
     project,
     assets
 }) => {
-    const { props, type, animation } = track;
+    const { props, type } = track;
     const {
         x, y, width, height, opacity, rotation, scale,
         content, color, fontSize, fontFamily, assetId, textAlign, isRasterized,
@@ -329,10 +329,10 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         // Create the image element with appropriate styles
         const fitMode = props.objectFit || 'cover';
 
-        let imageStyle: React.CSSProperties = {
-            ...style, // Inherits x, y, w, h, rotation, opacity
-            objectFit: fitMode as any,
-        };
+        // let imageStyle: React.CSSProperties = {
+        //     ...style, // Inherits x, y, w, h, rotation, opacity
+        //     objectFit: fitMode as any,
+        // };
 
         if (fitMode === 'none') {
             // Manual Mode ("Crop")

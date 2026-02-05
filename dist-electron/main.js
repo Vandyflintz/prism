@@ -32,12 +32,23 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
+// import * as os from 'os';
+const electron_serve_1 = __importDefault(require("electron-serve"));
 const menu_1 = require("./menu");
+const loadURL = (0, electron_serve_1.default)({ directory: 'out' }); // 'out' is in project root, relative to app execution? 
+// When packaged: 'out' is in Resources/app/out ? 
+// electron-serve handles relative paths from app root.
+// NOTE: We need to verify 'out' location in packaged app. 
+// Files are copied to 'resources/app' usually.
+// So 'out' should be at root of app.
 // Set App Name
 electron_1.app.name = 'Prism';
 let mainWindow = null;
@@ -56,8 +67,28 @@ function createWindow() {
         icon: path.join(__dirname, '../resources/icon.png') // Linux/Windows fallback (Mac uses .icns in build)
     });
     (0, menu_1.createAppMenu)(mainWindow);
-    const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
-    mainWindow.loadURL(startUrl);
+    // Load App
+    const startUrl = process.env.ELECTRON_START_URL;
+    if (startUrl && !electron_1.app.isPackaged) {
+        mainWindow.loadURL(startUrl);
+    }
+    else {
+        // Production: Load via electron-serve
+        console.log('[Main] Loading production app via electron-serve...');
+        loadURL(mainWindow)
+            .then(() => {
+            console.log('[Main] electron-serve loaded successfully.');
+        })
+            .catch((err) => {
+            console.error('[Main] electron-serve failed to load:', err);
+            electron_1.dialog.showMessageBox(mainWindow, {
+                type: 'error',
+                title: 'Load Error',
+                message: 'Failed to load app via electron-serve',
+                detail: err.toString()
+            });
+        });
+    }
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
@@ -65,7 +96,10 @@ function createWindow() {
 electron_1.app.on('ready', () => {
     createWindow();
     if (process.platform === 'darwin') {
-        electron_1.app.dock?.setIcon(path.join(__dirname, '../resources/icon.png'));
+        const iconPath = path.join(__dirname, '../resources/icon.png');
+        if (fs.existsSync(iconPath)) {
+            electron_1.app.dock?.setIcon(iconPath);
+        }
     }
 });
 electron_1.app.on('window-all-closed', () => {

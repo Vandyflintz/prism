@@ -92,7 +92,7 @@ export const usePrismStore = create<PrismState>()(
             }),
 
             reorderTracks: (orderedTrackIds: string[]) => set((state) => {
-                console.log('reorderTracks called with:', orderedTrackIds);
+                // console.log('reorderTracks called with:', orderedTrackIds);
                 if (!state.project) return state;
                 const trackMap = new Map(state.project.tracks.map(t => [t.id, t]));
                 const tracks = orderedTrackIds.map(id => trackMap.get(id)).filter((t): t is PrismTrack => !!t);

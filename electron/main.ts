@@ -2,7 +2,17 @@ import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent } from 'electro
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+// import * as os from 'os';
+import serve from 'electron-serve';
 import { createAppMenu } from './menu';
+
+const loadURL = serve({ directory: 'out' }); // 'out' is in project root, relative to app execution? 
+// When packaged: 'out' is in Resources/app/out ? 
+// electron-serve handles relative paths from app root.
+// NOTE: We need to verify 'out' location in packaged app. 
+// Files are copied to 'resources/app' usually.
+// So 'out' should be at root of app.
+
 
 // Set App Name
 app.name = 'Prism';
@@ -26,8 +36,30 @@ function createWindow() {
 
     createAppMenu(mainWindow);
 
-    const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
-    mainWindow.loadURL(startUrl);
+    // Load App
+    const startUrl = process.env.ELECTRON_START_URL;
+
+    if (startUrl && !app.isPackaged) {
+        mainWindow.loadURL(startUrl);
+    } else {
+        // Production: Load via electron-serve
+        console.log('[Main] Loading production app via electron-serve...');
+        loadURL(mainWindow)
+            .then(() => {
+                console.log('[Main] electron-serve loaded successfully.');
+            })
+            .catch((err) => {
+                console.error('[Main] electron-serve failed to load:', err);
+                dialog.showMessageBox(mainWindow!, {
+                    type: 'error',
+                    title: 'Load Error',
+                    message: 'Failed to load app via electron-serve',
+                    detail: err.toString()
+                });
+            });
+    }
+
+
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -37,7 +69,10 @@ function createWindow() {
 app.on('ready', () => {
     createWindow();
     if (process.platform === 'darwin') {
-        app.dock?.setIcon(path.join(__dirname, '../resources/icon.png'));
+        const iconPath = path.join(__dirname, '../resources/icon.png');
+        if (fs.existsSync(iconPath)) {
+            app.dock?.setIcon(iconPath);
+        }
     }
 });
 
