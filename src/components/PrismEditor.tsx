@@ -445,7 +445,7 @@ export const PrismEditor: React.FC = () => {
         let fitScale = 1;
 
         if (containerSize.width > 0 && containerSize.height > 0) {
-            const padding = 120; // Enough padding to ensure scrollbars don't clip comfortably
+            const padding = 164; // CSS uses p-[80px] = 160px total padding + 4px mathematical buffer
             const availableW = Math.max(10, containerSize.width - padding);
             const availableH = Math.max(10, containerSize.height - padding);
             const scaleW = availableW / project.width;
