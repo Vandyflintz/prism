@@ -128,6 +128,58 @@ export const PrismEditor: React.FC = () => {
     const [showLeftPanel, setShowLeftPanel] = React.useState(true);
     const [showRightPanel, setShowRightPanel] = React.useState(true);
 
+    // Resize states
+    const [leftPanelWidth, setLeftPanelWidth] = React.useState(280);
+    const [rightPanelWidth, setRightPanelWidth] = React.useState(320);
+    const [isDraggingLeft, setIsDraggingLeft] = React.useState(false);
+    const [isDraggingRight, setIsDraggingRight] = React.useState(false);
+
+    const handleLeftResizeDown = (e: React.PointerEvent) => {
+        e.preventDefault();
+        setIsDraggingLeft(true);
+        const startX = e.clientX;
+        const startWidth = leftPanelWidth;
+        const onMove = (me: PointerEvent) => {
+            setLeftPanelWidth(Math.max(200, Math.min(600, startWidth + (me.clientX - startX))));
+        };
+        const onUp = () => {
+            setIsDraggingLeft(false);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            // Save after drag finishes
+            setLeftPanelWidth(val => { localStorage.setItem('prism:leftWidth', val.toString()); return val; });
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    };
+
+    const handleRightResizeDown = (e: React.PointerEvent) => {
+        e.preventDefault();
+        setIsDraggingRight(true);
+        const startX = e.clientX;
+        const startWidth = rightPanelWidth;
+        const onMove = (me: PointerEvent) => {
+            setRightPanelWidth(Math.max(240, Math.min(800, startWidth - (me.clientX - startX))));
+        };
+        const onUp = () => {
+            setIsDraggingRight(false);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            // Save after drag finishes
+            setRightPanelWidth(val => { localStorage.setItem('prism:rightWidth', val.toString()); return val; });
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    };
+
+    // Restore widths on mount
+    React.useEffect(() => {
+        const savedLeft = localStorage.getItem('prism:leftWidth');
+        if (savedLeft) setLeftPanelWidth(parseInt(savedLeft, 10));
+        const savedRight = localStorage.getItem('prism:rightWidth');
+        if (savedRight) setRightPanelWidth(parseInt(savedRight, 10));
+    }, []);
+
     // Export State
     const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
     const [exportProgress, setExportProgress] = React.useState(0);
@@ -516,6 +568,13 @@ export const PrismEditor: React.FC = () => {
             return () => unsub();
         }
     }, [handleExport, importPsd, handleSaveProject, handleOpenProject]);
+    const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (window.electron?.onFullscreenChange) {
+            return window.electron.onFullscreenChange(setIsFullscreen);
+        }
+    }, []);
 
     if (!project) {
         return (
@@ -531,7 +590,7 @@ export const PrismEditor: React.FC = () => {
 
             {/* Application Header */}
             <header 
-                className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 pl-[76px] border-b border-zinc-900 bg-[#09090b] select-none"
+                className={`h-10 grow-0 shrink-0 flex items-center justify-between px-3 ${isFullscreen ? 'pl-3' : 'pl-[90px]'} border-b border-zinc-900 bg-[#09090b] select-none transition-all duration-300`}
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             >
                 <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
@@ -561,8 +620,13 @@ export const PrismEditor: React.FC = () => {
                 <div className="flex-1 flex min-h-0">
 
                     {/* Left: Resources */}
-                    <div style={{ display: showLeftPanel ? 'block' : 'none' }}>
+                    <div style={{ display: showLeftPanel ? 'block' : 'none', width: leftPanelWidth }} className="shrink-0 h-full relative">
                         <ResourcePanel isLoading={isRestoring} />
+                        {/* RESIZER */}
+                        <div 
+                            onPointerDown={handleLeftResizeDown}
+                            className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/40 transition-colors z-40 translate-x-1/2"
+                        />
                     </div>
 
                     {/* Left Panel Floating Toggle */}
@@ -582,6 +646,11 @@ export const PrismEditor: React.FC = () => {
 
                     {/* Center: Stage */}
                     <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden border-x border-zinc-900" ref={containerRef}>
+                        {/* Pointer Events Shield during structural resize */}
+                        {(isDraggingLeft || isDraggingRight) && (
+                            <div className="absolute inset-0 z-50 cursor-col-resize" />
+                        )}
+
                         {/* Dot Grid Background */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
                             backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
@@ -661,7 +730,12 @@ export const PrismEditor: React.FC = () => {
                     </div>
 
                     {/* Right: Inspector */}
-                    <div style={{ display: showRightPanel ? 'block' : 'none' }}>
+                    <div style={{ display: showRightPanel ? 'block' : 'none', width: rightPanelWidth }} className="shrink-0 h-full relative">
+                        {/* RESIZER */}
+                        <div 
+                            onPointerDown={handleRightResizeDown}
+                            className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/40 transition-colors z-40 -translate-x-1/2"
+                        />
                         <PropertySidebar />
                     </div>
                 </div>

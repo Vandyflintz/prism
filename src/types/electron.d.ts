@@ -5,6 +5,7 @@ export interface ElectronAPI {
     saveTempFile: (filename: string, buffer: ArrayBuffer) => Promise<string>;
     saveProject: (data: any, filePath: string | null) => Promise<string | null>;
     openProject: () => Promise<{ filePath: string, data: any } | null>;
+    onFullscreenChange: (callback: (isFullscreen: boolean) => void) => () => void;
     onRenderProgress: (callback: (progress: number) => void) => () => void;
     onMenuAction: (callback: (action: string) => void) => () => void;
 }

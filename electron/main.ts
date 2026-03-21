@@ -65,6 +65,14 @@ function createWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
+
+    mainWindow.on('enter-full-screen', () => {
+        mainWindow?.webContents.send('window:fullscreen', true);
+    });
+
+    mainWindow.on('leave-full-screen', () => {
+        mainWindow?.webContents.send('window:fullscreen', false);
+    });
 }
 
 app.on('ready', () => {
@@ -164,6 +172,7 @@ ipcMain.handle('project:save', async (event, { data, filePath }) => {
     }
 
     await saveProjectPackage(targetPath, data);
+    app.addRecentDocument(targetPath);
     return targetPath;
 });
 
@@ -178,6 +187,8 @@ ipcMain.handle('project:open', async () => {
 
     const filePath = filePaths[0];
     const data = await loadProjectPackage(filePath);
+    
+    app.addRecentDocument(filePath);
 
     return { filePath, data };
 });

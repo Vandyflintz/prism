@@ -332,7 +332,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
     };
 
     return (
-        <div className="w-[280px] flex flex-col border-r border-zinc-800 bg-[#09090b] h-full shrink-0">
+        <div className="w-full flex flex-col border-r border-zinc-800 bg-[#09090b] h-full shrink-0">
             {/* COMPACT TABS */}
             <div className="flex items-center border-b border-zinc-800 bg-[#09090b] px-1 shrink-0">
                 <button onClick={() => setActiveTab('media')} className={`flex-1 py-2.5 flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'media' ? 'border-indigo-500 text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>

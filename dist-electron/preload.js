@@ -10,6 +10,11 @@ electron_1.contextBridge.exposeInMainWorld('electron', {
     // Project Persistence
     saveProject: (data, filePath) => electron_1.ipcRenderer.invoke('project:save', { data, filePath }),
     openProject: () => electron_1.ipcRenderer.invoke('project:open'),
+    onFullscreenChange: (callback) => {
+        const listener = (_e, isFs) => callback(isFs);
+        electron_1.ipcRenderer.on('window:fullscreen', listener);
+        return () => electron_1.ipcRenderer.removeListener('window:fullscreen', listener);
+    },
     onRenderProgress: (callback) => {
         const subscription = (_event, progress) => callback(progress);
         electron_1.ipcRenderer.on('render-progress', subscription);

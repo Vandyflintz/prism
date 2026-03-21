@@ -62,7 +62,8 @@ function createWindow() {
             contextIsolation: true,
             webSecurity: false // Allow loading local resources (file://)
         },
-        titleBarStyle: 'hiddenInset', // Mac style
+        titleBarStyle: 'hidden', // Mac style
+        trafficLightPosition: { x: 16, y: 13 }, // Vertically center in 40px header
         backgroundColor: '#09090b', // Zinc-950
         icon: path.join(__dirname, '../resources/icon.png') // Linux/Windows fallback (Mac uses .icns in build)
     });
@@ -91,6 +92,12 @@ function createWindow() {
     }
     mainWindow.on('closed', () => {
         mainWindow = null;
+    });
+    mainWindow.on('enter-full-screen', () => {
+        mainWindow?.webContents.send('window:fullscreen', true);
+    });
+    mainWindow.on('leave-full-screen', () => {
+        mainWindow?.webContents.send('window:fullscreen', false);
     });
 }
 electron_1.app.on('ready', () => {
@@ -182,6 +189,7 @@ electron_1.ipcMain.handle('project:save', async (event, { data, filePath }) => {
         targetPath = savePath;
     }
     await (0, persistence_1.saveProjectPackage)(targetPath, data);
+    electron_1.app.addRecentDocument(targetPath);
     return targetPath;
 });
 electron_1.ipcMain.handle('project:open', async () => {
@@ -194,5 +202,6 @@ electron_1.ipcMain.handle('project:open', async () => {
         return null;
     const filePath = filePaths[0];
     const data = await (0, persistence_1.loadProjectPackage)(filePath);
+    electron_1.app.addRecentDocument(filePath);
     return { filePath, data };
 });

@@ -11,6 +11,12 @@ contextBridge.exposeInMainWorld('electron', {
     saveProject: (data: any, filePath: string | null) => ipcRenderer.invoke('project:save', { data, filePath }),
     openProject: () => ipcRenderer.invoke('project:open'),
 
+    onFullscreenChange: (callback: (isFullscreen: boolean) => void) => {
+        const listener = (_e: any, isFs: boolean) => callback(isFs);
+        ipcRenderer.on('window:fullscreen', listener);
+        return () => ipcRenderer.removeListener('window:fullscreen', listener);
+    },
+
     onRenderProgress: (callback: (progress: number) => void) => {
         const subscription = (_event: any, progress: number) => callback(progress);
         ipcRenderer.on('render-progress', subscription);

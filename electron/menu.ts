@@ -37,13 +37,19 @@ export const createAppMenu = (mainWindow: BrowserWindow) => {
                     accelerator: 'CmdOrCtrl+O',
                     click: () => send('menu:open-project')
                 },
-                {
-                    label: 'Open Recent',
+                ...(isMac ? [{
+                    role: 'recentDocuments',
                     submenu: [
-                        { label: 'No Recent Files', enabled: false }
-                        // TODO: Implement dynamic recent files list
+                        { role: 'clearRecentDocuments' }
                     ]
-                },
+                } as MenuItemConstructorOptions] : [
+                    {
+                        label: 'Open Recent',
+                        submenu: [
+                            { label: 'No Recent Files', enabled: false }
+                        ]
+                    }
+                ]),
                 { type: 'separator' },
                 {
                     label: 'Save Project',

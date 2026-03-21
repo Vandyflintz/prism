@@ -17,7 +17,7 @@ export const PropertySidebar: React.FC = () => {
     };
 
     return (
-        <div className="w-80 h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-20 shadow-xl overflow-hidden">
+        <div className="w-full h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-20 shadow-xl overflow-hidden">
             {/* Sidebar Header */}
             <div className="h-14 flex items-center px-4 border-b border-zinc-800 glass">
                 <span className="font-semibold text-sm tracking-wide text-zinc-300">Inspector</span>
