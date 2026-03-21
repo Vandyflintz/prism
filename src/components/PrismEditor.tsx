@@ -445,7 +445,7 @@ export const PrismEditor: React.FC = () => {
         let fitScale = 1;
 
         if (containerSize.width > 0 && containerSize.height > 0) {
-            const padding = 164; // CSS uses p-[80px] = 160px total padding + 4px mathematical buffer
+            const padding = 68; // CSS uses p-8 = 64px total padding (32px each side) + 4px mathematical buffer
             const availableW = Math.max(10, containerSize.width - padding);
             const availableH = Math.max(10, containerSize.height - padding);
             const scaleW = availableW / project.width;
@@ -680,7 +680,7 @@ export const PrismEditor: React.FC = () => {
 
                         {/* Scrollable Canvas Area */}
                         <div className="absolute inset-0 overflow-auto custom-scrollbar">
-                            <div className="w-max h-max min-w-full min-h-full flex p-[80px]">
+                            <div className="w-max h-max min-w-full min-h-full flex p-8">
                                 {/* Player Container */}
                                 <div
                                     className="m-auto relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black transition-all duration-200 ease-out shrink-0"
