@@ -731,7 +731,7 @@ export const PrismEditor: React.FC = () => {
                             {/* Scale Slider Control */}
                             <div className="flex items-center gap-2 pr-1">
                                 <button 
-                                    className={`px-2 py-1 rounded uppercase font-bold text-[9px] tracking-wider transition-all ${zoomLevel === 0 ? 'bg-indigo-500 text-white hover:bg-indigo-400' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'}`}
+                                    className={`px-1.5 py-0.5 rounded text-[9px] font-medium tracking-wide transition-all ${zoomLevel === 0 ? 'text-zinc-200 bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
                                     onClick={() => setZoomLevel(0)}
                                 >
                                     FIT
@@ -743,9 +743,9 @@ export const PrismEditor: React.FC = () => {
                                     step="0.05" 
                                     value={zoomLevel === 0 ? playerStyle.fitScale : zoomLevel} 
                                     onChange={(e) => setZoomLevel(parseFloat(e.target.value))} 
-                                    className="w-24 h-1.5 bg-zinc-700 rounded-lg cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all focus:outline-none" 
+                                    className="w-16 h-1 bg-zinc-800 rounded-lg cursor-pointer accent-zinc-500 hover:accent-zinc-400 transition-all focus:outline-none" 
                                 />
-                                <span className="font-mono text-[10px] w-8 text-right select-none text-zinc-200 font-medium">
+                                <span className="font-mono text-[10px] w-8 text-right select-none text-zinc-500">
                                     {Math.round(playerStyle.scale * 100)}%
                                 </span>
                             </div>
