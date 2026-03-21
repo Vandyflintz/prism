@@ -19,7 +19,7 @@ const SYSTEM_FONTS = [
 ];
 
 export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
-    const { assets, addAsset, deleteAsset, addTrack } = usePrismStore();
+    const { assets, addAsset, deleteAsset, addTrack, project, updateProjectSettings, hasModifiedCanvas } = usePrismStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
@@ -374,18 +374,42 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                             const handleAddToTimeline = () => {
                                 if (!asset) return;
                                 
+                                let canvasW = project?.width || 1080;
+                                let canvasH = project?.height || 1920;
+
+                                // SMART RESIZE PROMPT
+                                if (!hasModifiedCanvas && asset.metadata?.width && asset.metadata?.height && project) {
+                                    if (asset.metadata.width !== canvasW || asset.metadata.height !== canvasH) {
+                                        if (confirm(`Your project is currently ${canvasW}x${canvasH}. Would you like to update the canvas to match the dimensions of this asset (${asset.metadata.width}x${asset.metadata.height})?`)) {
+                                            canvasW = asset.metadata.width;
+                                            canvasH = asset.metadata.height;
+                                            updateProjectSettings({ width: canvasW, height: canvasH });
+                                        }
+                                    }
+                                }
+
                                 const trackId = crypto.randomUUID();
                                 const duration = asset.metadata?.duration || 150 ; // Default to 5s if unknown
                                 
+                                // Calculate centering if asset smaller than canvas
+                                let x = 0;
+                                let y = 0;
+                                if (asset.metadata?.width && asset.metadata?.height) {
+                                    if (asset.metadata.width < canvasW || asset.metadata.height < canvasH) {
+                                        x = (canvasW - asset.metadata.width) / 2;
+                                        y = (canvasH - asset.metadata.height) / 2;
+                                    }
+                                }
+
                                 const newTrack = {
                                     id: trackId,
                                     type: asset.type as any,
                                     startFrame: 0,
                                     durationInFrames: Math.ceil(duration * 30), // Assume 30fps
                                     props: {
-                                        x: 0, y: 0,
-                                        width: asset.metadata?.width || 1080,
-                                        height: asset.metadata?.height || 1920,
+                                        x, y,
+                                        width: asset.metadata?.width || canvasW,
+                                        height: asset.metadata?.height || canvasH,
                                         opacity: 1, rotation: 0, scale: 1,
                                         src: asset.src,
                                         assetId: asset.id

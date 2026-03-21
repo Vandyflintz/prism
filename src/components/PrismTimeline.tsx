@@ -41,7 +41,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const {
         project, assets, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
-        isMagnetEnabled, toggleMagnet, addTrack, addAsset,
+        isMagnetEnabled, toggleMagnet, addTrack, addAsset, hasModifiedCanvas, updateProjectSettings,
         alignTracksToStart, clearTimeline, resetProject
     } = usePrismStore();
 
@@ -307,6 +307,17 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             if (data.assetType === 'psd') {
                                 const asset = assets[data.assetId];
 
+                                // SMART RESIZE PROMPT for PSD
+                                if (!hasModifiedCanvas && asset && asset.metadata?.width && asset.metadata?.height) {
+                                    const canvasW = project?.width || 1080;
+                                    const canvasH = project?.height || 1920;
+                                    if (asset.metadata.width !== canvasW || asset.metadata.height !== canvasH) {
+                                        if (confirm(`This PSD is ${asset.metadata.width}x${asset.metadata.height}. Would you like to update the canvas to match?`)) {
+                                            updateProjectSettings({ width: asset.metadata.width, height: asset.metadata.height });
+                                        }
+                                    }
+                                }
+
                                 // High-Fidelity Import (using pre-parsed project)
                                 if (asset?.metadata?.psdProject) {
                                     const psdProject = asset.metadata.psdProject as PrismProject;
@@ -398,8 +409,22 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             } else if (data.assetType === 'video' || data.assetType === 'image') {
                                 // Default dimensions: Asset native size or Project size
                                 const asset = assets[assetId];
-                                let width = project?.width || 1920;
-                                let height = project?.height || 1080;
+                                let canvasW = project?.width || 1080;
+                                let canvasH = project?.height || 1920;
+
+                                // SMART RESIZE PROMPT
+                                if (!hasModifiedCanvas && asset && asset.metadata?.width && asset.metadata?.height) {
+                                    if (asset.metadata.width !== canvasW || asset.metadata.height !== canvasH) {
+                                        if (confirm(`Your project is currently ${canvasW}x${canvasH}. Would you like to update the canvas to match the dimensions of this asset (${asset.metadata.width}x${asset.metadata.height})?`)) {
+                                            canvasW = asset.metadata.width;
+                                            canvasH = asset.metadata.height;
+                                            updateProjectSettings({ width: canvasW, height: canvasH });
+                                        }
+                                    }
+                                }
+
+                                let width = canvasW;
+                                let height = canvasH;
                                 let x = 0;
                                 let y = 0;
 
@@ -408,17 +433,10 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                         width = asset.metadata.width;
                                         height = asset.metadata.height;
 
-                                        // Center if smaller than canvas
-                                        const canvasW = project?.width || 1920;
-                                        const canvasH = project?.height || 1080;
-
                                         if (width < canvasW || height < canvasH) {
                                             x = (canvasW - width) / 2;
                                             y = (canvasH - height) / 2;
                                         }
-
-                                        // Optional: Scale down if larger? 
-                                        // For now, let's keep native resolution as requested "strict to take small area" implied they want full size.
                                     }
                                 }
 

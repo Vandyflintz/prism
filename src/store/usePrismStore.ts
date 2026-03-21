@@ -35,6 +35,7 @@ interface PrismState {
     toggleTrackLock: (trackId: string) => void;
     toggleTrackVisibility: (trackId: string) => void;
     toggleTrackMute: (trackId: string) => void;
+    hasModifiedCanvas: boolean; // Flag to track if user has manually changed project settings
 
     // Tools
     splitTrack: (trackId: string) => void;
@@ -57,13 +58,19 @@ export const usePrismStore = create<PrismState>()(
             currentTime: 0,
             isPlaying: false,
             isMagnetEnabled: true,
+            hasModifiedCanvas: false,
 
-            setProject: (project) => set({ project }),
+            setProject: (project) => set((state) => ({ 
+                project,
+                hasModifiedCanvas: project.id !== 'default-project'
+            })),
 
             updateProjectSettings: (settings) => set((state) => {
                 if (!state.project) return state;
+                const isDimensionChange = settings.width !== undefined || settings.height !== undefined;
                 return {
-                    project: { ...state.project, ...settings }
+                    project: { ...state.project, ...settings },
+                    hasModifiedCanvas: state.hasModifiedCanvas || isDimensionChange
                 };
             }),
 
@@ -215,8 +222,9 @@ export const usePrismStore = create<PrismState>()(
                         fps: 30,
                         durationInFrames: 300,
                         backgroundColor: '#000000',
-                        tracks: [] // Reset also clears? Or just settings? "Reset Timeline" implies starting over.
+                        tracks: [] 
                     },
+                    hasModifiedCanvas: false,
                     selectedTrackId: null,
                     currentTime: 0
                 };
