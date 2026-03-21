@@ -2,8 +2,8 @@ import "./globals.css";
 import { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Remotion and Next.js",
-  description: "Remotion and Next.js",
+  title: "Prism",
+  description: "A browser based motion design tool.",
 };
 
 export const viewport: Viewport = {

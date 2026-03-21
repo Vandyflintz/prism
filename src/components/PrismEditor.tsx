@@ -456,16 +456,7 @@ export const PrismEditor: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const loadSample = async () => {
-        try {
-            const res = await fetch('/sample-project.json');
-            const data = await res.json();
-            setProject(data);
-        } catch (e) {
-            console.error(e);
-            alert('Failed to load sample project');
-        }
-    };
+
 
     useEffect(() => {
         if (window.electron) {
@@ -539,10 +530,16 @@ export const PrismEditor: React.FC = () => {
         <div className="flex flex-col h-screen bg-[#09090b] text-zinc-200 overflow-hidden font-sans selection:bg-indigo-500/30">
 
             {/* Application Header */}
-            <header className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 border-b border-zinc-900 bg-[#09090b] select-none">
+            <header 
+                className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 pl-[76px] border-b border-zinc-900 bg-[#09090b] select-none"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            >
                 <div className="flex items-center gap-3">
-                    {/* Collapse Toggles */}
-                    <div className="flex items-center gap-1 border-r border-zinc-800 pr-3 mr-1">
+                    {/* Collapse Toggles (Exclude from drag) */}
+                    <div 
+                        className="flex items-center gap-1 border-r border-zinc-800 pr-3 mr-1"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    >
                         <button
                             onClick={() => setShowLeftPanel(!showLeftPanel)}
                             className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${showLeftPanel ? 'text-zinc-100' : 'text-zinc-600'}`}
@@ -569,18 +566,9 @@ export const PrismEditor: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
 
-                    <div className="flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800">
-                        <button onClick={importPsd} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
-                            Import PSD
-                        </button>
-                        <div className="w-[1px] h-3 bg-zinc-800 mx-1"></div>
-                        <button onClick={loadSample} className="px-3 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors">
-                            Load Sample
-                        </button>
-                    </div>
-
                     <button
                         onClick={handleExport}
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                         className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded shadow-sm shadow-indigo-500/20 transition-all active:scale-95 ml-2"
                     >
                         <span>Export</span>
