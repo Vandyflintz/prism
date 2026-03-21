@@ -19,8 +19,55 @@ const renderComposition = async (data, onProgress) => {
     if (!fs_1.default.existsSync(cacheDir)) {
         fs_1.default.mkdirSync(cacheDir, { recursive: true });
     }
-    process.env.REMOTION_CACHE_DIR = cacheDir;
     console.log(`[Render] Set REMOTION_CACHE_DIR to ${cacheDir}`);
+    let binariesDirectory;
+    if (electron_1.app.isPackaged) {
+        // FIX: Ensure binaries in app.asar.unpacked are executable.
+        // Remotion tries to chmod the files via the ASAR path, which fails.
+        // We chmod the actual unpacked files first.
+        try {
+            const unpackedNodeModules = path_1.default.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules');
+            const platform = process.platform;
+            const arch = process.arch;
+            let compositorPackage = '';
+            if (platform === 'darwin' && arch === 'arm64')
+                compositorPackage = '@remotion/compositor-darwin-arm64';
+            else if (platform === 'darwin' && arch === 'x64')
+                compositorPackage = '@remotion/compositor-darwin-x64';
+            else if (platform === 'linux' && arch === 'x64')
+                compositorPackage = '@remotion/compositor-linux-x64';
+            else if (platform === 'win32' && arch === 'x64')
+                compositorPackage = '@remotion/compositor-win32-x64';
+            if (compositorPackage) {
+                const base = path_1.default.join(unpackedNodeModules, compositorPackage);
+                binariesDirectory = base;
+                console.log(`[Render] Looking for binaries in: ${base}`);
+                const remotionBin = path_1.default.join(base, 'remotion');
+                const ffmpegBin = path_1.default.join(base, 'ffmpeg');
+                const ffprobeBin = path_1.default.join(base, 'ffprobe');
+                if (fs_1.default.existsSync(remotionBin)) {
+                    fs_1.default.chmodSync(remotionBin, 0o755);
+                    process.env.REMOTION_COMPOSITOR_BIN = remotionBin;
+                    console.log(`[Render] Set REMOTION_COMPOSITOR_BIN to ${remotionBin}`);
+                }
+                else {
+                    console.error(`[Render] Binary not found: ${remotionBin}`);
+                }
+                if (fs_1.default.existsSync(ffmpegBin)) {
+                    fs_1.default.chmodSync(ffmpegBin, 0o755);
+                    // Remotion might pick this up or we might need another way, 
+                    // but setting execution permission is Step 1.
+                    // Some ffmpeg wrappers check FFMPEG_PATH.
+                }
+                if (fs_1.default.existsSync(ffprobeBin)) {
+                    fs_1.default.chmodSync(ffprobeBin, 0o755);
+                }
+            }
+        }
+        catch (e) {
+            console.error('[Render] Failed to chmod binaries:', e);
+        }
+    }
     // 1. Bundle the project
     // 1. Bundle the project
     let bundleLocation;
@@ -129,6 +176,7 @@ const renderComposition = async (data, onProgress) => {
         // 2. Resolve Composition
         const compositions = await (0, renderer_1.getCompositions)(bundleLocation, {
             inputProps: modifiedData,
+            ...(binariesDirectory ? { binariesDirectory } : {})
         });
         const composition = compositions.find((c) => c.id === "PrismComposition");
         if (!composition) {
@@ -143,6 +191,7 @@ const renderComposition = async (data, onProgress) => {
             codec: "h264",
             outputLocation,
             inputProps: modifiedData,
+            ...(binariesDirectory ? { binariesDirectory } : {}),
             onProgress: ({ progress }) => {
                 onProgress(progress);
             },

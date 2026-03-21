@@ -1,0 +1,73 @@
+{
+    "id": "sample-project-1",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "durationInFrames": 300,
+    "assets": {
+        "asset-audio-1": {
+            "id": "asset-audio-1",
+            "type": "audio",
+            "src": "https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg"
+        },
+        "asset-image-1": {
+            "id": "asset-image-1",
+            "type": "image",
+            "src": "https://placehold.co/1080x1920/png"
+        }
+    },
+    "tracks": [
+        {
+            "id": "track-bg",
+            "type": "image",
+            "startFrame": 0,
+            "durationInFrames": 300,
+            "props": {
+                "x": 0,
+                "y": 0,
+                "width": 1080,
+                "height": 1920,
+                "opacity": 1,
+                "rotation": 0,
+                "scale": 1,
+                "assetId": "asset-image-1"
+            }
+        },
+        {
+            "id": "track-audio",
+            "type": "audio",
+            "startFrame": 0,
+            "durationInFrames": 300,
+            "props": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "opacity": 0,
+                "rotation": 0,
+                "scale": 1,
+                "volume": 0.5
+            }
+        },
+        {
+            "id": "track-text",
+            "type": "text",
+            "startFrame": 30,
+            "durationInFrames": 150,
+            "props": {
+                "x": 100,
+                "y": 500,
+                "width": 880,
+                "height": 200,
+                "opacity": 1,
+                "rotation": 0,
+                "scale": 1,
+                "content": "Change My Color",
+                "fontSize": 80,
+                "color": "#ffffff",
+                "fontFamily": "Inter",
+                "textAlign": "center"
+            }
+        }
+    ]
+}
