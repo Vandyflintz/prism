@@ -438,34 +438,34 @@ export const PrismEditor: React.FC = () => {
         return () => resizeObserver.disconnect();
     }, []);
 
-    // Calculate Fit Scale
     const playerStyle = React.useMemo(() => {
-        if (!project) return { width: '100%', height: '100%', scale: 1 };
+        if (!project) return { width: 1920, height: 1080, scale: 1, fitScale: 1 };
 
         let finalScale = 1;
+        let fitScale = 1;
+
+        if (containerSize.width > 0 && containerSize.height > 0) {
+            const padding = 120; // Enough padding to ensure scrollbars don't clip comfortably
+            const availableW = Math.max(10, containerSize.width - padding);
+            const availableH = Math.max(10, containerSize.height - padding);
+            const scaleW = availableW / project.width;
+            const scaleH = availableH / project.height;
+            fitScale = Math.min(scaleW, scaleH);
+        } else {
+            fitScale = 0.5;
+        }
 
         if (zoomLevel > 0) {
-            // Manual Zoom
             finalScale = zoomLevel;
         } else {
-            // Fit Logic
-            if (containerSize.width > 0 && containerSize.height > 0) {
-                const padding = 60;
-                const availableW = Math.max(10, containerSize.width - padding);
-                const availableH = Math.max(10, containerSize.height - padding);
-                const scaleW = availableW / project.width;
-                const scaleH = availableH / project.height;
-                finalScale = Math.min(scaleW, scaleH);
-            } else {
-                // If container not ready, estimate or default to reasonable small scale
-                finalScale = 0.5;
-            }
+            finalScale = fitScale;
         }
 
         return {
-            width: `${project.width * finalScale}px`,
-            height: `${project.height * finalScale}px`,
-            scale: finalScale
+            width: project.width * finalScale,
+            height: project.height * finalScale,
+            scale: finalScale,
+            fitScale
         };
     }, [project, containerSize, zoomLevel]);
 
@@ -576,6 +576,23 @@ export const PrismEditor: React.FC = () => {
         }
     }, []);
 
+    const [showZoomOverlay, setShowZoomOverlay] = React.useState(true);
+    const zoomTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    const handleCanvasPointerMove = React.useCallback(() => {
+        setShowZoomOverlay(true);
+        if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+        zoomTimeoutRef.current = setTimeout(() => {
+            setShowZoomOverlay(false);
+        }, 1500);
+    }, []);
+
+    React.useEffect(() => {
+        return () => {
+             if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+        };
+    }, []);
+
     if (!project) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-[#09090b] text-zinc-400 font-mono gap-4">
@@ -640,76 +657,97 @@ export const PrismEditor: React.FC = () => {
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg> // Double Left Arrow
                             ) : (
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg> // Double Right Arrow
-                            )}
+            )}
                         </button>
                     </div>
 
                     {/* Center: Stage */}
-                    <div className="flex-1 bg-[#09090b] relative flex items-center justify-center overflow-hidden border-x border-zinc-900" ref={containerRef}>
-                        {/* Pointer Events Shield during structural resize */}
-                        {(isDraggingLeft || isDraggingRight) && (
-                            <div className="absolute inset-0 z-50 cursor-col-resize" />
-                        )}
-
+                    <div 
+                        className="flex-1 bg-[#09090b] relative overflow-hidden border-x border-zinc-900" 
+                        ref={containerRef}
+                        onPointerMove={handleCanvasPointerMove}
+                        onPointerLeave={() => {
+                            if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                            setShowZoomOverlay(false);
+                        }}
+                    >
+                        
                         {/* Dot Grid Background */}
                         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
                             backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
                             backgroundSize: '24px 24px'
                         }}></div>
 
-                        {/* Player Container */}
-                        <div
-                            className="relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black transition-all duration-200 ease-out"
-                            style={{
-                                width: playerStyle.width,
-                                height: playerStyle.height
-                            }}
-                        >
-                            <Player
-                                ref={setPlayer}
-                                component={PrismComposition}
-                                inputProps={{ project, assets }}
-                                durationInFrames={Math.max(1, project.durationInFrames)}
-                                fps={project.fps}
-                                compositionWidth={project.width}
-                                compositionHeight={project.height}
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                }}
-                                loop
-                                doubleClickToFullscreen
-                            />
+                        {/* Scrollable Canvas Area */}
+                        <div className="absolute inset-0 overflow-auto custom-scrollbar">
+                            <div className="w-max h-max min-w-full min-h-full flex p-[80px]">
+                                {/* Player Container */}
+                                <div
+                                    className="m-auto relative shadow-2xl shadow-black rounded-sm overflow-hidden ring-1 ring-zinc-800 bg-black transition-all duration-200 ease-out shrink-0"
+                                    style={{
+                                        width: `${playerStyle.width}px`,
+                                        height: `${playerStyle.height}px`
+                                    }}
+                                >
+                                    <Player
+                                        ref={setPlayer}
+                                        component={PrismComposition}
+                                        inputProps={{ project, assets }}
+                                        durationInFrames={Math.max(1, project.durationInFrames)}
+                                        fps={project.fps}
+                                        compositionWidth={project.width}
+                                        compositionHeight={project.height}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                        }}
+                                        loop
+                                        doubleClickToFullscreen
+                                    />
+                                </div>
+                            </div>
                         </div>
 
+                        {/* Pointer Events Shield during structural resize */}
+                        {(isDraggingLeft || isDraggingRight) && (
+                            <div className="absolute inset-0 z-50 cursor-col-resize" />
+                        )}
+
                         {/* Stage Info Overlay */}
-                        <div className="absolute bottom-2 right-3 flex gap-4 pointer-events-auto select-none items-center bg-zinc-900 border border-zinc-800 px-2 py-1 rounded shadow-lg">
-                            <div className="text-[10px] text-zinc-600 font-mono flex gap-2 border-r border-zinc-800 pr-2">
+                        <div 
+                            className={`absolute bottom-4 right-4 flex gap-3 select-none items-center bg-[#1c1c1f] border border-zinc-800/80 px-2 py-1.5 rounded-lg shadow-xl shadow-black/50 transition-opacity duration-500 ${showZoomOverlay ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                            onPointerEnter={() => {
+                                if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                                setShowZoomOverlay(true);
+                            }}
+                            onPointerLeave={handleCanvasPointerMove}
+                        >
+                            <div className="text-[10px] text-zinc-500 font-mono flex gap-2 border-r border-zinc-700/50 pr-3 items-center">
                                 <span>{project.width}x{project.height}</span>
-                                <span className="text-zinc-700">|</span>
+                                <span>|</span>
                                 <span>{project.fps} FPS</span>
                             </div>
 
-                            {/* Scale Control */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-zinc-500 font-medium">
-                                    {(playerStyle.scale * 100).toFixed(0)}%
-                                </span>
-                                <select
-                                    className="bg-transparent text-[10px] text-zinc-300 font-medium outline-none cursor-pointer"
-                                    value={zoomLevel} // 0 is Fit
-                                    onChange={(e) => setZoomLevel(Number(e.target.value))}
+                            {/* Scale Slider Control */}
+                            <div className="flex items-center gap-2 pr-1">
+                                <button 
+                                    className={`px-2 py-1 rounded uppercase font-bold text-[9px] tracking-wider transition-all ${zoomLevel === 0 ? 'bg-indigo-500 text-white hover:bg-indigo-400' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'}`}
+                                    onClick={() => setZoomLevel(0)}
                                 >
-                                    <option value={0} className="bg-zinc-900">Fit</option>
-                                    <option value={0.1} className="bg-zinc-900">10%</option>
-                                    <option value={0.20} className="bg-zinc-900">20%</option>
-                                    <option value={0.25} className="bg-zinc-900">25%</option>
-                                    <option value={0.5} className="bg-zinc-900">50%</option>
-                                    <option value={0.75} className="bg-zinc-900">75%</option>
-                                    <option value={1} className="bg-zinc-900">100%</option>
-                                    <option value={1.5} className="bg-zinc-900">150%</option>
-                                    <option value={2} className="bg-zinc-900">200%</option>
-                                </select>
+                                    FIT
+                                </button>
+                                <input 
+                                    type="range" 
+                                    min="0.1" 
+                                    max="4" 
+                                    step="0.05" 
+                                    value={zoomLevel === 0 ? playerStyle.fitScale : zoomLevel} 
+                                    onChange={(e) => setZoomLevel(parseFloat(e.target.value))} 
+                                    className="w-24 h-1.5 bg-zinc-700 rounded-lg cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all focus:outline-none" 
+                                />
+                                <span className="font-mono text-[10px] w-8 text-right select-none text-zinc-200 font-medium">
+                                    {Math.round(playerStyle.scale * 100)}%
+                                </span>
                             </div>
                         </div>
                     </div>
