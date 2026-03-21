@@ -127,12 +127,16 @@ export const PrismEditor: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
     const [showLeftPanel, setShowLeftPanel] = React.useState(true);
     const [showRightPanel, setShowRightPanel] = React.useState(true);
+    const [showTimeline, setShowTimeline] = React.useState(true);
 
-    // Resize states
     const [leftPanelWidth, setLeftPanelWidth] = React.useState(280);
     const [rightPanelWidth, setRightPanelWidth] = React.useState(320);
+    const [timelineHeight, setTimelineHeight] = React.useState(320);
+    
+    // Resize states
     const [isDraggingLeft, setIsDraggingLeft] = React.useState(false);
     const [isDraggingRight, setIsDraggingRight] = React.useState(false);
+    const [isDraggingBottom, setIsDraggingBottom] = React.useState(false);
 
     const handleLeftResizeDown = (e: React.PointerEvent) => {
         e.preventDefault();
@@ -172,12 +176,40 @@ export const PrismEditor: React.FC = () => {
         window.addEventListener('pointerup', onUp);
     };
 
+    const handleBottomResizeDown = (e: React.PointerEvent) => {
+        e.preventDefault();
+        setIsDraggingBottom(true);
+        const startY = e.clientY;
+        const startHeight = timelineHeight;
+        const onMove = (me: PointerEvent) => {
+            setTimelineHeight(Math.max(100, Math.min(800, startHeight + (startY - me.clientY))));
+        };
+        const onUp = () => {
+            setIsDraggingBottom(false);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            // Save after drag finishes
+            setTimelineHeight(val => { localStorage.setItem('prism:timelineHeight', val.toString()); return val; });
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    };
+
     // Restore widths on mount
     React.useEffect(() => {
         const savedLeft = localStorage.getItem('prism:leftWidth');
         if (savedLeft) setLeftPanelWidth(parseInt(savedLeft, 10));
         const savedRight = localStorage.getItem('prism:rightWidth');
         if (savedRight) setRightPanelWidth(parseInt(savedRight, 10));
+        const savedBottom = localStorage.getItem('prism:timelineHeight');
+        if (savedBottom) setTimelineHeight(parseInt(savedBottom, 10));
+
+        const savedShowLeft = localStorage.getItem('prism:showLeft');
+        if (savedShowLeft) setShowLeftPanel(savedShowLeft === 'true');
+        const savedShowRight = localStorage.getItem('prism:showRight');
+        if (savedShowRight) setShowRightPanel(savedShowRight === 'true');
+        const savedShowTimeline = localStorage.getItem('prism:showTimeline');
+        if (savedShowTimeline) setShowTimeline(savedShowTimeline === 'true');
     }, []);
 
     // Export State
@@ -436,7 +468,7 @@ export const PrismEditor: React.FC = () => {
         });
         resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
-    }, []);
+    }, [project]); // Re-run when project loads to catch the mount event after loading screen is gone
 
     const playerStyle = React.useMemo(() => {
         if (!project) return { width: 1920, height: 1080, scale: 1, fitScale: 1 };
@@ -452,7 +484,7 @@ export const PrismEditor: React.FC = () => {
             const scaleH = availableH / project.height;
             fitScale = Math.min(scaleW, scaleH);
         } else {
-            fitScale = 0.5;
+            fitScale = 0.1; // Default to a tiny scale if no dimensions yet, to prevent sudden huge overflow
         }
 
         if (zoomLevel > 0) {
@@ -634,10 +666,10 @@ export const PrismEditor: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0">
 
                 {/* TOP AREA: Assets, Player, Inspector */}
-                <div className="flex-1 flex min-h-0">
+                <div className="flex-1 flex min-h-0 overflow-hidden relative">
 
                     {/* Left: Resources */}
-                    <div style={{ display: showLeftPanel ? 'block' : 'none', width: leftPanelWidth }} className="shrink-0 h-full relative">
+                    <div style={{ display: showLeftPanel ? 'block' : 'none', width: leftPanelWidth }} className="shrink-0 h-full relative overflow-hidden flex flex-col">
                         <ResourcePanel isLoading={isRestoring} />
                         {/* RESIZER */}
                         <div 
@@ -649,7 +681,7 @@ export const PrismEditor: React.FC = () => {
                     {/* Left Panel Floating Toggle */}
                     <div className="relative z-50 flex items-center h-full w-0">
                         <button 
-                            onClick={() => setShowLeftPanel(!showLeftPanel)}
+                            onClick={() => { setShowLeftPanel(!showLeftPanel); localStorage.setItem('prism:showLeft', (!showLeftPanel).toString()); }}
                             className="absolute left-0 -translate-x-1/2 w-6 h-6 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white shadow-xl border border-zinc-700 transition-all pointer-events-auto"
                             title="Toggle Resources"
                         >
@@ -663,7 +695,7 @@ export const PrismEditor: React.FC = () => {
 
                     {/* Center: Stage */}
                     <div 
-                        className="flex-1 bg-[#09090b] relative overflow-hidden border-x border-zinc-900" 
+                        className="flex-1 bg-[#09090b] relative overflow-hidden border-x border-zinc-900 min-h-0 min-w-0" 
                         ref={containerRef}
                         onPointerMove={handleCanvasPointerMove}
                         onPointerLeave={() => {
@@ -709,8 +741,8 @@ export const PrismEditor: React.FC = () => {
                         </div>
 
                         {/* Pointer Events Shield during structural resize */}
-                        {(isDraggingLeft || isDraggingRight) && (
-                            <div className="absolute inset-0 z-50 cursor-col-resize" />
+                        {(isDraggingLeft || isDraggingRight || isDraggingBottom) && (
+                            <div className={`absolute inset-0 z-50 ${isDraggingBottom ? 'cursor-row-resize' : 'cursor-col-resize'}`} />
                         )}
 
                         {/* Stage Info Overlay */}
@@ -755,7 +787,7 @@ export const PrismEditor: React.FC = () => {
                     {/* Right Panel Floating Toggle */}
                     <div className="relative z-50 flex items-center h-full w-0">
                         <button 
-                            onClick={() => setShowRightPanel(!showRightPanel)}
+                            onClick={() => { setShowRightPanel(!showRightPanel); localStorage.setItem('prism:showRight', (!showRightPanel).toString()); }}
                             className="absolute right-0 translate-x-1/2 w-6 h-6 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white shadow-xl border border-zinc-700 transition-all pointer-events-auto"
                             title="Toggle Inspector"
                         >
@@ -768,7 +800,7 @@ export const PrismEditor: React.FC = () => {
                     </div>
 
                     {/* Right: Inspector */}
-                    <div style={{ display: showRightPanel ? 'block' : 'none', width: rightPanelWidth }} className="shrink-0 h-full relative">
+                    <div style={{ display: showRightPanel ? 'block' : 'none', width: rightPanelWidth }} className="shrink-0 h-full relative overflow-hidden flex flex-col">
                         {/* RESIZER */}
                         <div 
                             onPointerDown={handleRightResizeDown}
@@ -778,11 +810,35 @@ export const PrismEditor: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Bottom Toggle */}
+                <div className="relative z-50 flex justify-center w-full h-0">
+                    <button 
+                        onClick={() => { setShowTimeline(!showTimeline); localStorage.setItem('prism:showTimeline', (!showTimeline).toString()); }}
+                        className="absolute bottom-0 translate-y-1/2 w-10 h-5 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white shadow-xl border border-zinc-700 transition-all pointer-events-auto z-50"
+                        title="Toggle Timeline"
+                    >
+                        {showTimeline ? (
+                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg> // Down
+                        ) : (
+                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg> // Up
+                        )}
+                    </button>
+                </div>
+
                 {/* BOTTOM AREA: Timeline */}
-                <div className="h-[320px] shrink-0 border-t border-zinc-800 bg-[#09090b] flex flex-col z-10">
+                <div style={{ display: showTimeline ? 'flex' : 'none', height: timelineHeight }} className="w-full shrink-0 border-t border-zinc-800 bg-[#09090b] flex-col relative z-40">
+                    {/* RESIZER */}
+                    <div 
+                        onPointerDown={handleBottomResizeDown}
+                        className="absolute top-0 left-0 right-0 h-2 cursor-row-resize hover:bg-indigo-500/20 active:bg-indigo-500/40 transition-colors z-50 -translate-y-1/2"
+                    />
+                    
                     {/* Top Accent Line */}
-                    <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
-                    <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
+                    <div className="w-full shrink-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
+                    
+                    <div className="flex-1 overflow-hidden">
+                        <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
+                    </div>
                 </div>
 
             </div>
