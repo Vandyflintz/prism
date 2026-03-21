@@ -19,7 +19,7 @@ const SYSTEM_FONTS = [
 ];
 
 export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
-    const { assets, addAsset, deleteAsset } = usePrismStore();
+    const { assets, addAsset, deleteAsset, addTrack } = usePrismStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
@@ -366,35 +366,77 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
 
                 {/* PREVIEW AREA */}
                 {activeTab === 'media' && !currentPsdStack && previewAssetId && (
-                    <div className="p-2 border-b border-zinc-800 shrink-0 bg-[#0d1624] relative shadow-md">
+                    <div className="p-3 border-b border-zinc-800 shrink-0 bg-indigo-500/5 backdrop-blur-sm relative shadow-xl z-20 animate-in fade-in slide-in-from-top-2 duration-300">
                         {(() => {
                             const asset = Object.values(assets).find(a => a.id === previewAssetId);
                             if (!asset) return null;
+
+                            const handleAddToTimeline = () => {
+                                if (!asset) return;
+                                
+                                const trackId = crypto.randomUUID();
+                                const duration = asset.metadata?.duration || 150 ; // Default to 5s if unknown
+                                
+                                const newTrack = {
+                                    id: trackId,
+                                    type: asset.type as any,
+                                    startFrame: 0,
+                                    durationInFrames: Math.ceil(duration * 30), // Assume 30fps
+                                    props: {
+                                        x: 0, y: 0,
+                                        width: asset.metadata?.width || 1080,
+                                        height: asset.metadata?.height || 1920,
+                                        opacity: 1, rotation: 0, scale: 1,
+                                        src: asset.src,
+                                        assetId: asset.id
+                                    }
+                                };
+                                addTrack(newTrack);
+                            };
+
                             return (
-                                <div className="flex flex-col gap-2 relative">
+                                <div className="flex flex-col gap-3 relative">
                                     <button 
                                         onClick={() => setPreviewAssetId(null)}
-                                        className="absolute -top-2 -right-2 z-10 p-1 bg-black/80 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all shadow-md border border-zinc-700"
+                                        className="absolute -top-1 -right-1 z-30 p-1 bg-zinc-900 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all shadow-md border border-zinc-800"
                                         title="Close Preview"
                                     >
                                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
-                                    <div className="w-full aspect-video bg-black/50 rounded overflow-hidden flex items-center justify-center border border-zinc-800/80 shadow-inner group relative">
+                                    
+                                    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-zinc-800 shadow-2xl group relative ring-1 ring-white/5">
                                         {asset.type === 'video' && <video src={asset.src} controls autoPlay className="w-full h-full object-contain" />}
                                         {asset.type === 'image' && <img src={asset.src} className="w-full h-full object-contain" />}
                                         {asset.type === 'psd' && <img src={asset.src} className="w-full h-full object-contain" />}
                                         {asset.type === 'audio' && (
-                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-zinc-900/50 p-2">
-                                                <svg className="w-8 h-8 text-emerald-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                                                <audio src={asset.src} controls autoPlay className="w-full h-7 opacity-80" />
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-zinc-900/50 p-4">
+                                                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                                    <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                                                </div>
+                                                <audio src={asset.src} controls autoPlay className="w-full h-8 opacity-90 accent-emerald-500" />
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col px-1">
-                                        <span className="text-[11px] text-zinc-300 font-medium truncate leading-tight">{asset.metadata?.originalName}</span>
-                                        <div className="flex justify-between items-center mt-0.5">
-                                            <span className="text-[9px] text-zinc-500 uppercase tracking-wide bg-zinc-800/50 px-1 rounded">{asset.type}</span>
-                                            {asset.metadata?.width && asset.metadata?.height && <span className="text-[9px] text-zinc-500 font-mono">{asset.metadata.width}x{asset.metadata.height}</span>}
+                                    
+                                    <div className="flex flex-col px-0.5 gap-1.5">
+                                        <div className="flex justify-between items-start">
+                                            <span className="text-[11px] text-zinc-100 font-semibold truncate leading-tight flex-1 mr-2">{asset.metadata?.originalName}</span>
+                                            <span className="text-[9px] text-zinc-500 uppercase tracking-widest bg-zinc-800 px-1.5 py-0.5 rounded-sm font-bold border border-zinc-700/50 leading-none">{asset.type}</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex gap-2 text-[9px] text-zinc-500 font-medium">
+                                                {asset.metadata?.width && asset.metadata?.height && <span>{asset.metadata.width}×{asset.metadata.height}</span>}
+                                                {asset.metadata?.duration && <span>{asset.metadata.duration.toFixed(1)}s</span>}
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={handleAddToTimeline}
+                                                className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold rounded shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-1"
+                                            >
+                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                                                <span>ADD TO TIMELINE</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

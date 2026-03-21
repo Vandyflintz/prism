@@ -14,50 +14,15 @@ import { ExportModal } from './ExportModal';
 import { AssetStorage } from '../lib/AssetStorage';
 
 
-const MOCK_PROJECT: PrismProject = {
-    id: 'mock-1',
+// Removed MOCK_PROJECT boilerplate
+const BLANK_PROJECT: PrismProject = {
+    id: 'default-project',
     width: 1080,
     height: 1920,
     fps: 30,
     durationInFrames: 300,
     assets: {},
-    tracks: [
-        {
-            id: 'track-bg',
-            type: 'shape', // Fallback
-            startFrame: 0,
-            durationInFrames: 300,
-            props: {
-                x: 0, y: 0, width: 1080, height: 1920,
-                opacity: 1, rotation: 0, scale: 1,
-                backgroundColor: '#f0f0f0'
-            }
-        },
-        {
-            id: 'track-1',
-            type: 'text',
-            startFrame: 0,
-            durationInFrames: 150,
-            props: {
-                x: 100, y: 300, width: 880, height: 200,
-                opacity: 1, rotation: 0, scale: 1,
-                content: 'Hello Prism', fontSize: 100, color: '#000000',
-                textAlign: 'center'
-            }
-        },
-        {
-            id: 'track-2',
-            type: 'text',
-            startFrame: 45,
-            durationInFrames: 200,
-            props: {
-                x: 100, y: 600, width: 880, height: 200,
-                opacity: 1, rotation: -5, scale: 1,
-                content: 'Edit Me in Browser', fontSize: 70, color: '#ff0055',
-                textAlign: 'center'
-            }
-        }
-    ]
+    tracks: []
 };
 
 export const PrismEditor: React.FC = () => {
@@ -392,9 +357,12 @@ export const PrismEditor: React.FC = () => {
         };
     }, []);
 
+    // Auto-initialize a blank project if none exists after restoration
     useEffect(() => {
-        if (!project) setProject(MOCK_PROJECT);
-    }, [setProject, project]);
+        if (!project && !isRestoring) {
+            setProject(BLANK_PROJECT);
+        }
+    }, [project, isRestoring, setProject]);
 
     // Sync Playback State
     useEffect(() => {
@@ -625,11 +593,11 @@ export const PrismEditor: React.FC = () => {
         };
     }, []);
 
-    if (!project) {
+    if (!project || isRestoring) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-[#09090b] text-zinc-400 font-mono gap-4">
                 <div className="w-8 h-8 pointer-events-none border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-                <div className="text-xs animate-pulse">INITIALIZING PRISM...</div>
+                <div className="text-xs animate-pulse tracking-widest uppercase">{isRestoring ? 'RESTORING ASSETS...' : 'INITIALIZING PRISM...'}</div>
             </div>
         );
     }
