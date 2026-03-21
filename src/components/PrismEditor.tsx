@@ -534,37 +534,14 @@ export const PrismEditor: React.FC = () => {
                 className="h-10 grow-0 shrink-0 flex items-center justify-between px-3 pl-[76px] border-b border-zinc-900 bg-[#09090b] select-none"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             >
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
-                        <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
-                        <span className="text-sm">Prism</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium ml-1">BETA</span>
-                    </div>
+                <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
+                    <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
+                    <span className="text-sm">Prism</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium ml-1">BETA</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
-
-                    {/* Collapse Toggles (Exclude from drag) */}
-                    <div 
-                        className="flex items-center gap-1 border-r border-zinc-800 pr-3 mr-1"
-                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                    >
-                        <button
-                            onClick={() => setShowLeftPanel(!showLeftPanel)}
-                            className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${showLeftPanel ? 'text-zinc-100' : 'text-zinc-600'}`}
-                            title="Toggle Resources"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                        </button>
-                        <button
-                            onClick={() => setShowRightPanel(!showRightPanel)}
-                            className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${showRightPanel ? 'text-zinc-100' : 'text-zinc-600'}`}
-                            title="Toggle Inspector"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M13 18h7" /></svg>
-                        </button>
-                    </div>
 
                     <button
                         onClick={handleExport}
@@ -586,6 +563,21 @@ export const PrismEditor: React.FC = () => {
                     {/* Left: Resources */}
                     <div style={{ display: showLeftPanel ? 'block' : 'none' }}>
                         <ResourcePanel isLoading={isRestoring} />
+                    </div>
+
+                    {/* Left Panel Floating Toggle */}
+                    <div className="relative z-50 flex items-center h-full w-0">
+                        <button 
+                            onClick={() => setShowLeftPanel(!showLeftPanel)}
+                            className="absolute left-0 -translate-x-1/2 w-6 h-6 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white shadow-xl border border-zinc-700 transition-all pointer-events-auto"
+                            title="Toggle Resources"
+                        >
+                            {showLeftPanel ? (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg> // Double Left Arrow
+                            ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg> // Double Right Arrow
+                            )}
+                        </button>
                     </div>
 
                     {/* Center: Stage */}
@@ -651,6 +643,21 @@ export const PrismEditor: React.FC = () => {
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Right Panel Floating Toggle */}
+                    <div className="relative z-50 flex items-center h-full w-0">
+                        <button 
+                            onClick={() => setShowRightPanel(!showRightPanel)}
+                            className="absolute right-0 translate-x-1/2 w-6 h-6 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white shadow-xl border border-zinc-700 transition-all pointer-events-auto"
+                            title="Toggle Inspector"
+                        >
+                            {showRightPanel ? (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7m-8-14l7 7-7 7" /></svg> // Double Right Arrow
+                            ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7M19 19l-7-7 7-7" /></svg> // Double Left Arrow
+                            )}
+                        </button>
                     </div>
 
                     {/* Right: Inspector */}
