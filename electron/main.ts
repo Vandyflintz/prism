@@ -29,7 +29,8 @@ function createWindow() {
             contextIsolation: true,
             webSecurity: false // Allow loading local resources (file://)
         },
-        titleBarStyle: 'hiddenInset', // Mac style
+        titleBarStyle: 'hidden', // Mac style
+        trafficLightPosition: { x: 16, y: 13 }, // Vertically center in 40px header
         backgroundColor: '#09090b', // Zinc-950
         icon: path.join(__dirname, '../resources/icon.png') // Linux/Windows fallback (Mac uses .icns in build)
     });

@@ -535,6 +535,16 @@ export const PrismEditor: React.FC = () => {
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             >
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
+                        <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
+                        <span className="text-sm">Prism</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium ml-1">BETA</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
+
                     {/* Collapse Toggles (Exclude from drag) */}
                     <div 
                         className="flex items-center gap-1 border-r border-zinc-800 pr-3 mr-1"
@@ -555,16 +565,6 @@ export const PrismEditor: React.FC = () => {
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M13 18h7" /></svg>
                         </button>
                     </div>
-
-                    <div className="flex items-center gap-2 text-zinc-100 font-bold tracking-tight">
-                        <svg className="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.8 11.2H5.2L12 5.8z" /></svg>
-                        <span className="text-sm">Prism</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium ml-1">BETA</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".psd" />
 
                     <button
                         onClick={handleExport}
