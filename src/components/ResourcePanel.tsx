@@ -24,6 +24,8 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [previewAssetId, setPreviewAssetId] = useState<string | null>(null);
+
     // PSD Navigation State
     const [currentPsdId, setCurrentPsdId] = useState<string | null>(null);
     const [currentPsdStack, setCurrentPsdStack] = useState<PsdLayerSummary[] | null>(null);
@@ -221,7 +223,26 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
                     e.dataTransfer.effectAllowed = 'copy';
                 }}
-                className="group relative aspect-square bg-zinc-900 rounded border border-zinc-800 overflow-hidden cursor-grab active:cursor-grabbing hover:border-indigo-500/50 transition-all shadow-sm"
+                onClick={() => setPreviewAssetId(asset.id)}
+                onMouseEnter={(e) => {
+                    const video = e.currentTarget.querySelector('video');
+                    if (video) video.play().catch(() => {});
+                    const audio = e.currentTarget.querySelector('audio');
+                    if (audio) audio.play().catch(() => {});
+                }}
+                onMouseLeave={(e) => {
+                    const video = e.currentTarget.querySelector('video');
+                    if (video) {
+                        video.pause();
+                        video.currentTime = 0;
+                    }
+                    const audio = e.currentTarget.querySelector('audio');
+                    if (audio) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                }}
+                className={`group relative aspect-square bg-zinc-900 rounded border ${previewAssetId === asset.id ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'border-zinc-800'} overflow-hidden cursor-grab active:cursor-grabbing hover:border-indigo-500/50 transition-all shadow-sm`}
                 onDoubleClick={() => {
                     if (asset.type === 'psd' && asset.metadata?.layers) {
                         setCurrentPsdId(asset.id);
@@ -240,7 +261,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
 
                 {asset.type === 'video' && (
                     <>
-                        <video src={asset.src} className="w-full h-full object-cover pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <video src={asset.src} muted loop playsInline className="w-full h-full object-cover pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-zinc-300 pointer-events-none border border-white/10">VID</div>
                     </>
                 )}
@@ -248,18 +269,19 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                     <img src={asset.src} alt="asset" className="w-full h-full object-cover pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity" />
                 )}
                 {asset.type === 'psd' && (
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative pointer-events-none">
                         {/* If we have a thumb (which is stored in asset.src for PSDs now), show it. Else fallback */}
                         <img src={asset.src} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
 
                         {/* Badge */}
-                        <div className="absolute top-1 left-1 bg-[#31a8ff]/80 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-bold text-white pointer-events-none shadow-sm">PSD</div>
+                        <div className="absolute top-1 left-1 bg-[#31a8ff]/80 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-bold text-white shadow-sm">PSD</div>
                     </div>
                 )}
                 {asset.type === 'audio' && (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-900">
-                        <svg className="w-6 h-6 text-emerald-500 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                        <div className="absolute top-1 left-1 bg-emerald-900/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-emerald-400 pointer-events-none border border-emerald-500/20">AUD</div>
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-900 pointer-events-none">
+                        <audio src={asset.src} loop className="hidden" />
+                        <svg className="w-6 h-6 text-emerald-500 opacity-80 group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                        <div className="absolute top-1 left-1 bg-emerald-900/60 backdrop-blur-md px-1 py-[1px] rounded-[2px] text-[8px] font-mono text-emerald-400 border border-emerald-500/20">AUD</div>
                     </div>
                 )}
 
@@ -339,6 +361,45 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                                 className="w-full bg-zinc-900 border border-zinc-800 rounded pl-7 pr-2 py-1 text-[10px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50"
                             />
                         </div>
+                    </div>
+                )}
+
+                {/* PREVIEW AREA */}
+                {activeTab === 'media' && !currentPsdStack && previewAssetId && (
+                    <div className="p-2 border-b border-zinc-800 shrink-0 bg-[#0d1624] relative shadow-md">
+                        {(() => {
+                            const asset = Object.values(assets).find(a => a.id === previewAssetId);
+                            if (!asset) return null;
+                            return (
+                                <div className="flex flex-col gap-2 relative">
+                                    <button 
+                                        onClick={() => setPreviewAssetId(null)}
+                                        className="absolute -top-2 -right-2 z-10 p-1 bg-black/80 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all shadow-md border border-zinc-700"
+                                        title="Close Preview"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                    <div className="w-full aspect-video bg-black/50 rounded overflow-hidden flex items-center justify-center border border-zinc-800/80 shadow-inner group relative">
+                                        {asset.type === 'video' && <video src={asset.src} controls autoPlay className="w-full h-full object-contain" />}
+                                        {asset.type === 'image' && <img src={asset.src} className="w-full h-full object-contain" />}
+                                        {asset.type === 'psd' && <img src={asset.src} className="w-full h-full object-contain" />}
+                                        {asset.type === 'audio' && (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-zinc-900/50 p-2">
+                                                <svg className="w-8 h-8 text-emerald-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                                                <audio src={asset.src} controls autoPlay className="w-full h-7 opacity-80" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col px-1">
+                                        <span className="text-[11px] text-zinc-300 font-medium truncate leading-tight">{asset.metadata?.originalName}</span>
+                                        <div className="flex justify-between items-center mt-0.5">
+                                            <span className="text-[9px] text-zinc-500 uppercase tracking-wide bg-zinc-800/50 px-1 rounded">{asset.type}</span>
+                                            {asset.metadata?.width && asset.metadata?.height && <span className="text-[9px] text-zinc-500 font-mono">{asset.metadata.width}x{asset.metadata.height}</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
 
