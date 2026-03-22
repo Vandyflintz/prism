@@ -359,7 +359,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
 
         return (
             <div style={style} data-track-id={track.id}>
-                    {/* <MediaFilter 
+                    <MediaFilter 
                         trackId={track.id} 
                         bass={props.bass} 
                         treble={props.treble} 
@@ -368,7 +368,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                         fadeIn={props.fadeInDuration}
                         fadeOut={props.fadeOutDuration}
                         duration={duration}
-                    /> */}
+                    />
                     <Video
                     src={asset.src}
                     startFrom={props.mediaOffset || 0}
@@ -534,7 +534,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         // Same normalization logic might be needed for audio
         return (
             <div data-track-id={track.id}>
-                {/* <MediaFilter 
+                <MediaFilter 
                     trackId={track.id} 
                     bass={props.bass} 
                     treble={props.treble} 
@@ -543,7 +543,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                     fadeIn={props.fadeInDuration}
                     fadeOut={props.fadeOutDuration}
                     duration={duration}
-                /> */}
+                />
                 <Audio 
                     src={asset.src} 
                     startFrom={props.mediaOffset || 0} 

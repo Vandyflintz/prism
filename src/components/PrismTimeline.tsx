@@ -40,7 +40,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const {
         project, assets, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
-        isMagnetEnabled, toggleMagnet, addTrack, addAsset, hasModifiedCanvas, updateProjectSettings,
+        isMagnetEnabled, toggleMagnet, toggleTimelineFollow, isTimelineFollowEnabled, addTrack, addAsset, hasModifiedCanvas, updateProjectSettings,
         alignTracksToStart, clearTimeline, resetProject
     } = usePrismStore();
 
@@ -54,13 +54,24 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
 
     const timelineRef = React.useRef<TimelineState>(null);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
+    const lastSyncedTime = React.useRef<number>(-1);
+    const isInternalSync = React.useRef<boolean>(false);
 
-    // Sync Timeline Cursor (Store -> Timeline)
+    // Sync Timeline Cursor (Store -> Timeline) - Throttle and Check
     React.useEffect(() => {
         if (timelineRef.current && project) {
-            // console.log('Syncing timeline to time:', currentTime);
+            // ONLY FOLLOW if enabled OR if we are NOT playing (Seeking/Scrubbing always syncs)
+            if (!isTimelineFollowEnabled && isPlaying) return;
+
+            // Avoid micro-syncs that cause lag
+            if (Math.abs(currentTime - lastSyncedTime.current) < 0.5) return;
+            
+            lastSyncedTime.current = currentTime;
+            isInternalSync.current = true;
             timelineRef.current.setTime(currentTime / (project.fps || 30));
             timelineRef.current.reRender();
+            // Reset after a small delay to allow events to process
+            setTimeout(() => { isInternalSync.current = false; }, 50);
         }
     }, [currentTime, project]);
 
@@ -657,6 +668,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
 
                         // Sync Props
                         onClickTimeArea={(time: number) => {
+                            if (isInternalSync.current) return true;
                             const frame = Math.round(time * fps);
                             if (Math.abs(frame - currentTime) > 1) {
                                 setCurrentTime(frame);
@@ -665,6 +677,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             return true;
                         }}
                         onCursorDrag={(time: number) => {
+                            if (isInternalSync.current) return;
                             const frame = Math.round(time * fps);
                             if (Math.abs(frame - currentTime) > 1) {
                                 setCurrentTime(frame);
@@ -700,7 +713,17 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                         onActionMoveEnd={(event: any) => {
                             const { action, row } = event;
 
-                            // Check if moved to a different row (Reorder Intent)
+                            // Same row, just update time
+                            const startFrame = Math.round(action.start * fps);
+                            const durationInFrames = Math.round((action.end - action.start) * fps);
+
+                            // Calculate if project needs extension
+                            const endFrame = startFrame + durationInFrames;
+                            if (project && endFrame > project.durationInFrames - 30) {
+                                updateProjectSettings({ durationInFrames: endFrame + 300 }); // Add 10s buffer
+                            }
+
+                            // ... existing reorder logic handle ...
                             if (row && row.id !== action.id) {
                                 const fromIndex = project.tracks.findIndex(t => t.id === action.id);
                                 const toIndex = project.tracks.findIndex(t => t.id === row.id);
@@ -712,11 +735,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                     reorderTracks(newOrder.map(t => t.id));
                                 }
                             } else {
-                                // Same row, just update time
-                                const startFrame = Math.round(action.start * fps);
-                                const durationInFrames = Math.round((action.end - action.start) * fps);
-
-                                // Preserve existing props
                                 const originalTrack = project.tracks.find(t => t.id === action.id);
                                 if (originalTrack) {
                                     updateTrack(action.id, {
@@ -731,6 +749,12 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             const action = event.action;
                             const startFrame = Math.round(action.start * fps);
                             const durationInFrames = Math.round((action.end - action.start) * fps);
+
+                            // Calculate if project needs extension
+                            const endFrame = startFrame + durationInFrames;
+                            if (project && endFrame > project.durationInFrames - 30) {
+                                updateProjectSettings({ durationInFrames: endFrame + 300 }); 
+                            }
 
                             const originalTrack = project.tracks.find(t => t.id === action.id);
                             if (originalTrack) {

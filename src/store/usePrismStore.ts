@@ -21,12 +21,14 @@ interface PrismState {
     currentTime: number; // For sync between player and timeline
     isPlaying: boolean;
     isMagnetEnabled: boolean;
+    isTimelineFollowEnabled: boolean;
     setProject: (project: PrismProject) => void;
     updateProjectSettings: (settings: Partial<PrismProject>) => void;
     setSelectedTrackId: (id: string | null) => void;
     setCurrentTime: (time: number) => void;
     setIsPlaying: (playing: boolean) => void;
     toggleMagnet: () => void;
+    toggleTimelineFollow: () => void;
     updateTrack: (trackId: string, updates: Partial<PrismTrack>) => void;
     reorderTracks: (orderedTrackIds: string[]) => void;
 
@@ -58,6 +60,7 @@ export const usePrismStore = create<PrismState>()(
             currentTime: 0,
             isPlaying: false,
             isMagnetEnabled: true,
+            isTimelineFollowEnabled: true,
             hasModifiedCanvas: false,
 
             setProject: (project) => set((state) => ({ 
@@ -82,6 +85,7 @@ export const usePrismStore = create<PrismState>()(
             },
             setIsPlaying: (playing) => set({ isPlaying: playing }),
             toggleMagnet: () => set((state) => ({ isMagnetEnabled: !state.isMagnetEnabled })),
+            toggleTimelineFollow: () => set((state) => ({ isTimelineFollowEnabled: !state.isTimelineFollowEnabled })),
 
             updateTrack: (trackId, updates) => set((state) => {
                 if (!state.project) return state;
@@ -223,7 +227,7 @@ export const usePrismStore = create<PrismState>()(
                         width: 1080,
                         height: 1920,
                         fps: 30,
-                        durationInFrames: 300,
+                        durationInFrames: 900, // Default 30s instead of 10s
                         backgroundColor: '#000000',
                         tracks: [] 
                     },

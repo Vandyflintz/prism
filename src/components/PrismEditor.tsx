@@ -381,36 +381,54 @@ export const PrismEditor: React.FC = () => {
         }
     }, [isPlaying, player]);
 
-    // Sync Seek / Scrub (One-way: Store -> Player)
+    // Sync Seek / Scrub (Store -> Player)
     const lastPlayerFrame = React.useRef<number>(-1);
+    const lastSeekTime = React.useRef<number>(0);
 
     useEffect(() => {
         const unsubscribe = usePrismStore.subscribe((state) => {
             if (player) {
                 const time = state.currentTime;
                 
+                // 1. If we are playing, the Player is the source of truth.
+                // We should ONLY seek if there's a MASSIVE discrepancy (e.g. user clicked the timeline far away),
+                // or if we are paused and dragging.
                 if (time === lastPlayerFrame.current) return;
 
                 const currentPlayerFrame = player.getCurrentFrame();
-                
-                if (Math.abs(currentPlayerFrame - time) > 2) {
-                    console.log(`[Sync] Store -> Player Seek: ${currentPlayerFrame} -> ${time}`);
-                    player.seekTo(time);
+                const diff = Math.abs(currentPlayerFrame - time);
+
+                // Throttling: Don't seek more than once every 50ms to avoid overloading the media engine
+                const now = Date.now();
+                if (now - lastSeekTime.current < 50) return;
+
+                if (state.isPlaying) {
+                    // During playback, only seek if the jump is > 1.5 seconds (45 frames @ 30fps)
+                    // This allows manual timeline clicks to still work while playing,
+                    // but prevents minor store lag from snapping the player backward.
+                    if (diff > 45) {
+                        console.log(`[Sync] Playback Jump Seek: ${currentPlayerFrame} -> ${time}`);
+                        lastSeekTime.current = now;
+                        player.seekTo(time);
+                    }
+                } else {
+                    // When paused (Scrubbing), be much more responsive (2 frame threshold)
+                    if (diff > 2) {
+                        lastSeekTime.current = now;
+                        player.seekTo(time);
+                    }
                 }
             }
         });
         return unsubscribe;
     }, [player]);
 
-    // Sync Frame Updates (Player -> Store)
+    // Sync Frame Updates from Player (Player -> Store)
     useEffect(() => {
         if (!player) return;
 
         const onFrame = (e: { detail: { frame: number } }) => {
             const frame = e.detail.frame;
-            if (Math.abs(frame - lastPlayerFrame.current) > 10) {
-                 console.warn(`[Sync] Large Player Jump: ${lastPlayerFrame.current} -> ${frame}`);
-            }
             lastPlayerFrame.current = frame; 
             setCurrentTime(frame);
         };
@@ -420,6 +438,12 @@ export const PrismEditor: React.FC = () => {
             player.removeEventListener('frameupdate', onFrame);
         };
     }, [player, setCurrentTime]);
+
+    // Memoize inputProps at top level to avoid Rules of Hooks violation in conditional block
+    const memoizedInputProps = React.useMemo(() => ({ 
+        project: project as PrismProject, // Cast because Player is only rendered when project exists
+        assets 
+    }), [project, assets]);
 
     const [zoomLevel, setZoomLevel] = React.useState<number>(0); // 0 = Fit
 
@@ -695,7 +719,7 @@ export const PrismEditor: React.FC = () => {
                                     <Player
                                         ref={setPlayer}
                                         component={PrismComposition}
-                                        inputProps={{ project, assets }}
+                                        inputProps={memoizedInputProps}
                                         durationInFrames={Math.max(1, project.durationInFrames)}
                                         fps={project.fps}
                                         compositionWidth={project.width}
