@@ -30,6 +30,22 @@ const IconBtn = ({ onClick, children, title, className = '' }: { onClick?: () =>
     </button>
 );
 
+// Toolbar Label Helper (For active toggles)
+const LabelBtn = ({ onClick, label, active, title, activeColor }: { onClick?: () => void, label: string, active: boolean, title?: string, activeColor: string }) => (
+    <button
+        onClick={onClick}
+        title={title}
+        className={`h-8 px-2 flex items-center gap-1.5 rounded-md border transition-all active:scale-95 shadow-sm font-bold text-[10px] tracking-wider ${
+            active 
+            ? `text-white ${activeColor} border-white/20 shadow-[0_0_12px_rgba(255,255,255,0.1)]` 
+            : 'bg-transparent border-zinc-800 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 hover:border-zinc-700'
+        }`}
+    >
+        <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-white' : 'bg-zinc-600 animate-pulse'}`}></div>
+        {label}
+    </button>
+);
+
 
 
 interface PrismTimelineProps {
@@ -53,6 +69,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const { undo, redo, pastStates, futureStates } = useStore(usePrismStore.temporal, (state) => state);
 
     const timelineRef = React.useRef<TimelineState>(null);
+    const timelineContainerRef = React.useRef<HTMLDivElement>(null);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
     const lastSyncedTime = React.useRef<number>(-1);
     const isInternalSync = React.useRef<boolean>(false);
@@ -80,8 +97,8 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 // Use the ref updated by onScroll
                 const scrollLeft = scrollLeftRef.current;
                 
-                // Approximate width of the timeline area (it's flex-1, usually stays around 800-1200px)
-                const viewWidth = 1000; 
+                // Use actual width of the container
+                const viewWidth = timelineContainerRef.current?.clientWidth || 1000; 
                 
                 // Calculate position of cursor in pixels
                 const cursorX = time * zoom;
@@ -270,37 +287,39 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
 
                     {/* Magnet Snap */}
-                    <IconBtn
+                    <LabelBtn
                         onClick={toggleMagnet}
+                        label="MAGNET"
+                        active={isMagnetEnabled}
+                        activeColor="bg-blue-600"
                         title={`Magnet Snap (${isMagnetEnabled ? "On" : "Off"})`}
-                        className={isMagnetEnabled ? 'text-blue-400 bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' : 'text-zinc-500 hover:text-zinc-300'}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                    </IconBtn>
-
-                    {/* Timeline Follow */}
-                    <IconBtn
-                        onClick={toggleTimelineFollow}
-                        title={`Timeline Follow (${isTimelineFollowEnabled ? "On" : "Off"}) [Alt+F]`}
-                        className={isTimelineFollowEnabled ? 'text-indigo-400 bg-indigo-500/20 border-indigo-500/50 hover:bg-indigo-500/30' : 'text-zinc-500 hover:text-zinc-300'}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" strokeWidth={2}/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h3m12 0h3M12 3v3m0 12v3" /></svg>
-                    </IconBtn>
+                    />
 
                     {/* Separator */}
                     <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
 
                     {/* Transport Controls */}
-                    <IconBtn title="Jump to Start" onClick={() => setCurrentTime(0)}>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
-                    </IconBtn>
-                    <IconBtn onClick={togglePlay} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
-                        {isPlaying ? (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                        ) : (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                        )}
-                    </IconBtn>
+                    <div className="flex items-center gap-1 bg-zinc-900/50 p-1 rounded-lg border border-zinc-800/50">
+                        <IconBtn title="Jump to Start" onClick={() => setCurrentTime(0)}>
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+                        </IconBtn>
+                        <IconBtn onClick={togglePlay} title={isPlaying ? "Pause (Space)" : "Play (Space)"}>
+                            {isPlaying ? (
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                            ) : (
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                            )}
+                        </IconBtn>
+
+                        {/* Timeline Follow (Moved here for better context) */}
+                        <LabelBtn
+                            onClick={toggleTimelineFollow}
+                            label="FOLLOW"
+                            active={isTimelineFollowEnabled}
+                            activeColor="bg-indigo-600"
+                            title={`Timeline Follow (${isTimelineFollowEnabled ? "On" : "Off"}) [Alt+F]`}
+                        />
+                    </div>
 
                     {/* Time Display */}
                     <div className="ml-3 px-3 py-1 bg-zinc-900 rounded border border-zinc-800 font-mono text-xs text-blue-400 tracking-wider shadow-inner">
@@ -696,14 +715,14 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 </div>
 
                 {/* RIGHT TIMELINE */}
-                <div className="flex-1 overflow-hidden relative">
+                <div ref={timelineContainerRef} className="flex-1 overflow-hidden relative">
                     <Timeline
                         ref={timelineRef}
                         style={{ width: '100%', height: '100%' }}
                         scale={scale}
                         scaleWidth={scaleWidth}
                         startLeft={10}
-                        autoScroll={true}
+                        autoScroll={false}
                         enableRowDrag={true}
                         rowHeight={32} // Explicit height Sync with Sidebar
 
