@@ -345,22 +345,59 @@ class TtsService {
         });
     }
     // ─── Generation ──────────────────────────────────
+    static preprocessProsodyTags(text, provider) {
+        let cleanText = text;
+        let speed = 1.0;
+        let pitch = 0;
+        // Process Global Rate Tag (takes the last one found if multiple exist)
+        const rateMatches = Array.from(cleanText.matchAll(/\[speed:([\d.]+)\]/g));
+        if (rateMatches.length > 0) {
+            speed = parseFloat(rateMatches[rateMatches.length - 1][1] || '1.0');
+        }
+        cleanText = cleanText.replace(/\[\/?speed(:[\d.]+)?\]/g, '');
+        // Process Global Pitch Tag
+        const pitchMatches = Array.from(cleanText.matchAll(/\[pitch:([\-\d]+)\]/g));
+        if (pitchMatches.length > 0) {
+            pitch = parseInt(pitchMatches[pitchMatches.length - 1][1] || '0', 10);
+        }
+        cleanText = cleanText.replace(/\[\/?pitch(:[\-\d]+)?\]/g, '');
+        // Emphasis Tags (Strip for Piper, ignored for 11Labs natively, could use SSML but standard removes it)
+        cleanText = cleanText.replace(/\[\/?emphasis(:[a-z]+)?\]/g, '');
+        // Process Pauses
+        // [pause:short] -> 0.5s, [pause:medium] -> 1.0s, [pause:long] -> 2.0s
+        cleanText = cleanText.replace(/\[pause:(short|medium|long)\]/g, (match, duration) => {
+            if (provider === 'elevenlabs-cloud') {
+                const time = duration === 'short' ? '0.5s' : duration === 'medium' ? '1.0s' : '2.0s';
+                return `<break time="${time}"/>`;
+            }
+            else {
+                // Piper pause simulation using punctuation
+                return duration === 'short' ? ' . . . ' : duration === 'medium' ? ' . . . . . ' : ' . . . . . . . . ';
+            }
+        });
+        // If ElevenLabs uses SSML, we must wrap in <speak>
+        if (provider === 'elevenlabs-cloud' && cleanText.includes('<break')) {
+            cleanText = `<speak>${cleanText}</speak>`;
+        }
+        return { cleanText, speed, pitch };
+    }
     static async generate(request, event) {
         const { text, voiceId, provider } = request;
         console.log(`[TTS] ▶ generate() called | provider=${provider} | voiceId=${voiceId} | text="${text.substring(0, 50)}..."`);
         const outputPath = path.join(this.tempDir, `tts_${Date.now()}.wav`);
         console.log(`[TTS]   outputPath=${outputPath}`);
+        const { cleanText, speed, pitch } = this.preprocessProsodyTags(text, provider);
         if (provider === 'elevenlabs-cloud') {
-            return await this.generateElevenLabs(text, voiceId, outputPath);
+            return await this.generateElevenLabs(cleanText, voiceId, outputPath);
         }
         else {
-            return await this.generatePiper(text, voiceId, outputPath, event);
+            return await this.generatePiper(cleanText, voiceId, outputPath, event, speed, pitch);
         }
     }
     /**
      * Local Piper TTS Generation with heavy logging and timeout.
      */
-    static async generatePiper(text, voiceId, outputPath, event) {
+    static async generatePiper(text, voiceId, outputPath, event, speed = 1.0, pitch = 0) {
         console.log(`[TTS] ── generatePiper START ──`);
         console.log(`[TTS]   voiceId="${voiceId}"`);
         console.log(`[TTS]   outputPath="${outputPath}"`);
@@ -472,10 +509,16 @@ class TtsService {
                     fn();
                 }
             };
-            const piper = (0, child_process_1.spawn)(piperBin, [
+            const lengthScale = Number((1.0 / Math.max(0.1, speed)).toFixed(3)); // --length_scale (smaller is faster in piper)
+            const piperArgs = [
                 '--model', modelPath,
-                '--output_file', outputPath
-            ]);
+                '--output_file', outputPath,
+                '--length_scale', lengthScale.toString(),
+                '--noise_scale', '0.667',
+                '--noise_w', '0.8'
+            ];
+            console.log(`[TTS]   Spawning Piper PID=${settled} with args: ${piperArgs.join(' ')}`);
+            const piper = (0, child_process_1.spawn)(piperBin, piperArgs);
             console.log(`[TTS]   Piper PID=${piper.pid}`);
             let stderrOutput = '';
             let stdoutOutput = '';

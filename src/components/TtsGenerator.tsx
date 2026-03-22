@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePrismStore } from '../store/usePrismStore';
 import { PrismAsset } from '../../types/prism';
 import { AssetStorage } from '../lib/AssetStorage';
@@ -17,6 +17,15 @@ export const TtsGenerator: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoadingVoices, setIsLoadingVoices] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Advanced UI States
+    type TtsTab = 'voice' | 'rate' | 'pitch' | 'pause' | 'emphasis';
+    const [activeTab, setActiveTab] = useState<TtsTab>('voice');
+    const [rateValue, setRateValue] = useState(1.0);
+    const [pitchValue, setPitchValue] = useState(0);
+    const [pauseValue, setPauseValue] = useState('short');
+    const [emphasisValue, setEmphasisValue] = useState('strong');
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Settings
     const [showSettings, setShowSettings] = useState(false);
@@ -160,6 +169,31 @@ export const TtsGenerator: React.FC = () => {
         }
     };
 
+    const insertTag = (type: string, value: string | number) => {
+        if (!textareaRef.current) return;
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const selectedText = text.substring(start, end);
+
+        let injectedText = '';
+        if (type === 'pause') {
+            injectedText = `[pause:${value}]`;
+        } else {
+            injectedText = `[${type}:${value}]${selectedText || 'text'}[/${type}]`;
+        }
+
+        const newText = text.substring(0, start) + injectedText + text.substring(end);
+        setText(newText);
+
+        // Refocus and set cursor position after updating
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(start + injectedText.length, start + injectedText.length);
+            }
+        }, 0);
+    };
+
     const handleGenerate = async () => {
         if (!text.trim()) return;
         setIsGenerating(true);
@@ -271,68 +305,124 @@ export const TtsGenerator: React.FC = () => {
                         </div>
                     ) : (
                         <>
+                            <div className="flex flex-col gap-0 border border-zinc-800 rounded-2xl overflow-hidden bg-zinc-950/50 mb-6">
+                                {/* Tab Header */}
+                                <div className="flex border-b border-zinc-800 bg-zinc-900 overflow-x-auto scroller-hide">
+                                    {(['voice', 'rate', 'pitch', 'pause', 'emphasis'] as TtsTab[]).map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setActiveTab(t)}
+                                            className={`flex-1 px-4 py-3 text-xs font-semibold tracking-wide transition-colors whitespace-nowrap ${
+                                                activeTab === t ? 'text-white border-b-2 border-indigo-500 bg-zinc-800/50' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
+                                            }`}
+                                        >
+                                            {t === 'voice' ? 'Voice' : t === 'rate' ? 'Speaking Rate' : t === 'pitch' ? 'Pitch' : t === 'pause' ? 'Pause' : 'Emphasis'}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                {/* Tab Content */}
+                                <div className="p-4 bg-zinc-950">
+                                    {activeTab === 'voice' && (
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Provider</label>
+                                                <div className="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800/50">
+                                                    <button
+                                                        onClick={() => setProvider('piper-local')}
+                                                        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${provider === 'piper-local' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                    >
+                                                        Prism Native
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setProvider('elevenlabs-cloud')}
+                                                        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${provider === 'elevenlabs-cloud' ? 'bg-indigo-600 text-white shadow shadow-indigo-500/20' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                    >
+                                                        Cloud
+                                                        <span className="text-[8px] bg-white/20 px-1 rounded text-white/80">PRO</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Voice Model</label>
+                                                    {provider === 'elevenlabs-cloud' && (
+                                                        <button
+                                                            onClick={fetchVoices}
+                                                            disabled={isLoadingVoices}
+                                                            className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                                                        >
+                                                            {isLoadingVoices ? 'Refreshing...' : 'Refresh'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <select
+                                                    value={voiceId}
+                                                    onChange={(e) => setVoiceId(e.target.value)}
+                                                    className={`w-full bg-zinc-900 border border-zinc-800/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none transition-all ${isLoadingVoices ? 'opacity-50 cursor-slow' : ''}`}
+                                                    disabled={isLoadingVoices || isGenerating}
+                                                >
+                                                    {isLoadingVoices ? (
+                                                        <option value="">Loading voices...</option>
+                                                    ) : voices.length === 0 ? (
+                                                        <option value="">No voices found...</option>
+                                                    ) : (
+                                                        voices.map(v => (
+                                                            <option key={v.id} value={v.id}>
+                                                                {v.name} {provider === 'piper-local' && !v.isDownloaded ? '  ( ↓ )' : ''}
+                                                            </option>
+                                                        ))
+                                                    )}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {activeTab === 'rate' && (
+                                        <div className="flex gap-4 items-center">
+                                            <span className="text-xs font-medium text-zinc-400 w-12 text-right">{rateValue.toFixed(1)}x</span>
+                                            <input type="range" min="0.5" max="2.0" step="0.1" value={rateValue} onChange={e => setRateValue(parseFloat(e.target.value))} className="flex-1 accent-indigo-500" />
+                                            <button onClick={() => insertTag('speed', rateValue)} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20">Apply</button>
+                                        </div>
+                                    )}
+                                    {activeTab === 'pitch' && (
+                                        <div className="flex gap-4 items-center">
+                                            <span className="text-xs font-medium text-zinc-400 w-12 text-right">{pitchValue > 0 ? `+${pitchValue}` : pitchValue}%</span>
+                                            <input type="range" min="-50" max="50" step="5" value={pitchValue} onChange={e => setPitchValue(parseInt(e.target.value))} className="flex-1 accent-indigo-500" />
+                                            <button onClick={() => insertTag('pitch', pitchValue)} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20">Apply</button>
+                                        </div>
+                                    )}
+                                    {activeTab === 'pause' && (
+                                        <div className="flex gap-4 items-center">
+                                            <select value={pauseValue} onChange={e => setPauseValue(e.target.value)} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                                                <option value="short">Short Pause (0.5s)</option>
+                                                <option value="medium">Medium Pause (1.0s)</option>
+                                                <option value="long">Long Pause (2.0s)</option>
+                                            </select>
+                                            <button onClick={() => insertTag('pause', pauseValue)} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20">Apply</button>
+                                        </div>
+                                    )}
+                                    {activeTab === 'emphasis' && (
+                                        <div className="flex gap-4 items-center">
+                                            <select value={emphasisValue} onChange={e => setEmphasisValue(e.target.value)} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                                                <option value="strong">Strong</option>
+                                                <option value="moderate">Moderate</option>
+                                                <option value="reduced">Reduced</option>
+                                            </select>
+                                            <button onClick={() => insertTag('emphasis', emphasisValue)} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20">Apply</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="space-y-3">
                                 <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Your Script</label>
                                 <textarea
+                                    ref={textareaRef}
                                     value={text}
                                     onChange={(e) => setText(e.target.value)}
-                                    placeholder="Type what you want the AI to say..."
+                                    placeholder="Type what you want the AI to say. Highlight text and use the tabs above to add pitch, speed, or emphasis tags..."
                                     className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none transition-all leading-relaxed"
                                 />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                    <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Provider</label>
-                                    <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
-                                        <button
-                                            onClick={() => setProvider('piper-local')}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${provider === 'piper-local' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        >
-                                            Prism Native
-                                        </button>
-                                        <button
-                                            onClick={() => setProvider('elevenlabs-cloud')}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${provider === 'elevenlabs-cloud' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        >
-                                            Cloud
-                                            <span className="text-[8px] bg-white/20 px-1 rounded text-white/80">PRO</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Voice</label>
-                                        {provider === 'elevenlabs-cloud' && (
-                                            <button
-                                                onClick={fetchVoices}
-                                                disabled={isLoadingVoices}
-                                                className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                                            >
-                                                {isLoadingVoices ? 'Refreshing...' : 'Refresh'}
-                                            </button>
-                                        )}
-                                    </div>
-                                    <select
-                                        value={voiceId}
-                                        onChange={(e) => setVoiceId(e.target.value)}
-                                        className={`w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none transition-all ${isLoadingVoices ? 'opacity-50 cursor-slow' : ''}`}
-                                        disabled={isLoadingVoices || isGenerating}
-                                    >
-                                        {isLoadingVoices ? (
-                                            <option value="">Loading voices...</option>
-                                        ) : voices.length === 0 ? (
-                                            <option value="">No voices found...</option>
-                                        ) : (
-                                            voices.map(v => (
-                                                <option key={v.id} value={v.id}>
-                                                    {v.name} {provider === 'piper-local' && !v.isDownloaded ? '  ( ↓ )' : ''}
-                                                </option>
-                                            ))
-                                        )}
-                                    </select>
-                                </div>
                             </div>
 
                             {/* Success Preview */}
