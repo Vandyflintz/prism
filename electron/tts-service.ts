@@ -94,13 +94,13 @@ export class TtsService {
                 fs.mkdirSync(destDir, { recursive: true });
             }
 
-            event.sender.send('tts:downloadProgress', { status: 'Downloading Engine...', progress: 0 });
+            event.sender.send('tts:downloadProgress', { status: '[1/3] Downloading Voice Engine...', progress: 0 });
             const archivePath = path.join(destDir, 'piper_archive');
             await this.downloadFile(binaryUrl, archivePath, (p) => {
-                event.sender.send('tts:downloadProgress', { status: 'Downloading Engine...', progress: p * 0.5 });
+                event.sender.send('tts:downloadProgress', { status: '[1/3] Downloading Voice Engine...', progress: p * 0.5 });
             });
 
-            event.sender.send('tts:downloadProgress', { status: 'Extracting Engine...', progress: 50 });
+            event.sender.send('tts:downloadProgress', { status: '[2/3] Extracting Voice Engine...', progress: 50 });
             if (binaryUrl.endsWith('.zip')) {
                 const zip = new AdmZip(archivePath);
                 zip.extractAllTo(destDir, true);
@@ -119,23 +119,23 @@ export class TtsService {
                 fs.chmodSync(piperBin, '755');
             }
 
-            event.sender.send('tts:downloadProgress', { status: 'Downloading Default Voice...', progress: 60 });
+            event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 60 });
             await this.downloadFile(modelUrl, path.join(destDir, 'en_US-lessac-medium.onnx'), (p) => {
-                event.sender.send('tts:downloadProgress', { status: 'Downloading Default Voice...', progress: 60 + (p * 0.35) });
+                event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 60 + (p * 0.35) });
             });
 
-            event.sender.send('tts:downloadProgress', { status: 'Downloading Config...', progress: 95 });
+            event.sender.send('tts:downloadProgress', { status: '[3/3] Finalizing Settings...', progress: 95 });
             await this.downloadFile(configUrl, path.join(destDir, 'en_US-lessac-medium.onnx.json'), () => {});
 
             // Auto-configure path in store
             (store as any).set('piperPath', piperBin);
 
-            event.sender.send('tts:downloadProgress', { status: 'Complete', progress: 100 });
+            event.sender.send('tts:downloadProgress', { status: 'Prism Engine Ready', progress: 100 });
             return { success: true, path: piperBin };
 
         } catch (error: any) {
             console.error('[TTS Service] Auto-download failed', error);
-            throw new Error(`Failed to download Piper: ${error.message}`);
+            throw new Error(`Failed to download Voice Engine: ${error.message}`);
         }
     }
 
@@ -290,7 +290,7 @@ export class TtsService {
         }
 
         if (!piperBin || !fs.existsSync(piperBin)) {
-            throw new Error("Local TTS Engine (Piper) is missing. Click 'Download Local Engine' in the settings.");
+            throw new Error("Prism Voice Engine is missing. Click 'Download Prism Engine' to install it.");
         }
 
         // Voice model path 
@@ -305,7 +305,7 @@ export class TtsService {
         }
 
         if (!fs.existsSync(modelPath)) {
-            throw new Error(`Piper voice model not found: ${modelPath}`);
+            throw new Error(`Voice model not found: ${modelPath}`);
         }
 
         return new Promise((resolve, reject) => {

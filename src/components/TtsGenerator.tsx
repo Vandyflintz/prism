@@ -5,14 +5,14 @@ import { usePrismStore } from '../store/usePrismStore';
 import { PrismAsset, PrismTrack } from '../../types/prism';
 
 export const TtsGenerator: React.FC = () => {
-    const { 
-        isTtsModalOpen, toggleTtsModal, addAsset, addTrack, currentTime 
+    const {
+        isTtsModalOpen, toggleTtsModal, addAsset, addTrack, currentTime
     } = usePrismStore();
 
     const [text, setText] = useState('');
     const [provider, setProvider] = useState<'piper-local' | 'elevenlabs-cloud'>('piper-local');
     const [voiceId, setVoiceId] = useState('');
-    const [voices, setVoices] = useState<{id: string, name: string}[]>([]);
+    const [voices, setVoices] = useState<{ id: string, name: string }[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoadingVoices, setIsLoadingVoices] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export const TtsGenerator: React.FC = () => {
     const [elevenLabsKey, setElevenLabsKey] = useState('');
     const [piperPath, setPiperPath] = useState('');
     const [isTestingConnection, setIsTestingConnection] = useState(false);
-    const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+    const [testResult, setTestResult] = useState<{ success: boolean, message: string } | null>(null);
     const [downloadStatus, setDownloadStatus] = useState('');
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -38,7 +38,7 @@ export const TtsGenerator: React.FC = () => {
             fetchVoices();
 
             // Set up download progress listener
-            const cleanup = (window as any).electron.onDownloadProgress((data: {status: string, progress: number}) => {
+            const cleanup = (window as any).electron.onDownloadProgress((data: { status: string, progress: number }) => {
                 setDownloadStatus(data.status);
                 setDownloadProgress(data.progress);
             });
@@ -61,7 +61,7 @@ export const TtsGenerator: React.FC = () => {
             const v = await (window as any).electron.getVoices(provider);
             console.log(`[TTS] Fetched ${v.length} voices for ${provider}`);
             setVoices(v);
-            
+
             if (v.length > 0) {
                 // Determine best voice to select
                 const currentVoiceStillValid = v.find((voice: any) => voice.id === voiceId);
@@ -85,9 +85,9 @@ export const TtsGenerator: React.FC = () => {
             setShowSettings(false);
             return;
         }
-        await (window as any).electron.updateTtsSettings({ 
-            elevenLabsKey, 
-            piperPath 
+        await (window as any).electron.updateTtsSettings({
+            elevenLabsKey,
+            piperPath
         });
         setTestResult(null);
         setShowSettings(false);
@@ -164,7 +164,7 @@ export const TtsGenerator: React.FC = () => {
             onGenerate(outputPath);
         } catch (err: any) {
             console.error(err);
-            if (err.message && err.message.includes("Local TTS Engine (Piper) is missing")) {
+            if (err.message && err.message.includes("Prism Voice Engine is missing")) {
                 setError("ENGINE_MISSING");
             } else {
                 setError(err.message || 'Unknown generation error');
@@ -200,7 +200,7 @@ export const TtsGenerator: React.FC = () => {
                         <h2 className="text-xl font-bold text-white tracking-tight">AI Voiceover</h2>
                         <p className="text-sm text-zinc-400 mt-1">Generate ultra-realistic speech from text</p>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
                         title="TTS Settings"
@@ -216,10 +216,10 @@ export const TtsGenerator: React.FC = () => {
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                                 TTS Configuration
                             </h3>
-                            
+
                             <div className="space-y-3">
                                 <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">ElevenLabs API Key</label>
-                                <input 
+                                <input
                                     type="password"
                                     value={elevenLabsKey}
                                     onChange={(e) => setElevenLabsKey(e.target.value)}
@@ -227,7 +227,7 @@ export const TtsGenerator: React.FC = () => {
                                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                                 />
                                 <div className="flex items-center justify-between">
-                                    <button 
+                                    <button
                                         onClick={handleTestConnection}
                                         disabled={isTestingConnection || !elevenLabsKey}
                                         className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 disabled:opacity-50 flex items-center gap-1"
@@ -246,25 +246,25 @@ export const TtsGenerator: React.FC = () => {
                             </div>
 
                             <div className="space-y-3">
-                                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Custom Piper Path</label>
-                                <input 
+                                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Custom Prism Engine Path</label>
+                                <input
                                     type="text"
                                     value={piperPath}
                                     onChange={(e) => setPiperPath(e.target.value)}
-                                    placeholder="/path/to/piper/binary"
+                                    placeholder="/path/to/prism/engine/binary"
                                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                                 />
-                                <p className="text-[10px] text-zinc-500 italic">Leave empty to use bundled Piper in /resources/piper</p>
+                                <p className="text-[10px] text-zinc-500 italic">Leave empty to auto-download or use the bundled Prism Engine.</p>
                             </div>
 
                             <div className="flex gap-2 pt-2">
-                                <button 
+                                <button
                                     onClick={handleSaveSettings}
                                     className="flex-1 bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition-colors shadow-lg"
                                 >
                                     Save Settings
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setShowSettings(false)}
                                     className="px-6 bg-zinc-800 text-zinc-300 font-bold py-3 rounded-xl hover:bg-zinc-700 transition-colors"
                                 >
@@ -276,7 +276,7 @@ export const TtsGenerator: React.FC = () => {
                         <>
                             <div className="space-y-3">
                                 <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Your Script</label>
-                                <textarea 
+                                <textarea
                                     value={text}
                                     onChange={(e) => setText(e.target.value)}
                                     placeholder="Type what you want the AI to say..."
@@ -288,13 +288,13 @@ export const TtsGenerator: React.FC = () => {
                                 <div className="space-y-3">
                                     <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Provider</label>
                                     <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
-                                        <button 
+                                        <button
                                             onClick={() => setProvider('piper-local')}
                                             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${provider === 'piper-local' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
                                         >
-                                            Local
+                                            Prism Native
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => setProvider('elevenlabs-cloud')}
                                             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${provider === 'elevenlabs-cloud' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-zinc-500 hover:text-zinc-300'}`}
                                         >
@@ -308,7 +308,7 @@ export const TtsGenerator: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">Voice</label>
                                         {provider === 'elevenlabs-cloud' && (
-                                            <button 
+                                            <button
                                                 onClick={fetchVoices}
                                                 disabled={isLoadingVoices}
                                                 className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
@@ -317,7 +317,7 @@ export const TtsGenerator: React.FC = () => {
                                             </button>
                                         )}
                                     </div>
-                                    <select 
+                                    <select
                                         value={voiceId}
                                         onChange={(e) => setVoiceId(e.target.value)}
                                         className={`w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none transition-all ${isLoadingVoices ? 'opacity-50 cursor-slow' : ''}`}
@@ -337,23 +337,23 @@ export const TtsGenerator: React.FC = () => {
                             </div>
 
                             {/* Error Message */}
-                    {error && error !== 'ENGINE_MISSING' && (
-                        <div className="flex items-start gap-2 text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-xs font-medium">
-                            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p className="flex-1 break-words leading-relaxed">{error}</p>
-                        </div>
-                    )}
-                    
-                    {error === 'ENGINE_MISSING' && (
-                        <div className="flex items-start gap-2 text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-lg text-xs font-medium">
-                            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <p className="flex-1 break-words leading-relaxed">Local engine missing. Click the Download button below to automatically install Piper.</p>
-                        </div>
-                    )}
+                            {error && error !== 'ENGINE_MISSING' && (
+                                <div className="flex items-start gap-2 text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-xs font-medium">
+                                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="flex-1 break-words leading-relaxed">{error}</p>
+                                </div>
+                            )}
+
+                            {error === 'ENGINE_MISSING' && (
+                                <div className="flex items-start gap-2 text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-lg text-xs font-medium">
+                                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    <p className="flex-1 break-words leading-relaxed">Prism Voice Engine is missing. Click the Download button below to automatically install it.</p>
+                                </div>
+                            )}
 
                             <div className="flex gap-3 mt-4">
                                 {error === 'ENGINE_MISSING' ? (
@@ -364,8 +364,8 @@ export const TtsGenerator: React.FC = () => {
                                     >
                                         {isDownloading ? (
                                             <>
-                                                <div 
-                                                    className="absolute inset-0 bg-indigo-400/30 transition-all duration-300 pointer-events-none" 
+                                                <div
+                                                    className="absolute inset-0 bg-indigo-400/30 transition-all duration-300 pointer-events-none"
                                                     style={{ width: `${downloadProgress}%` }}
                                                 />
                                                 <svg className="animate-spin h-5 w-5 relative z-10" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -374,12 +374,12 @@ export const TtsGenerator: React.FC = () => {
                                         ) : (
                                             <>
                                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                                Download Local Engine
+                                                Download Prism Engine
                                             </>
                                         )}
                                     </button>
                                 ) : (
-                                    <button 
+                                    <button
                                         onClick={handleGenerate}
                                         disabled={isGenerating || !text.trim()}
                                         className={`flex-2 flex-grow bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${isGenerating ? 'cursor-not-allowed' : 'hover:bg-zinc-200'}`}
@@ -400,7 +400,7 @@ export const TtsGenerator: React.FC = () => {
                                         )}
                                     </button>
                                 )}
-                                <button 
+                                <button
                                     onClick={() => { toggleTtsModal(); setText(''); setError(null); }}
                                     className="px-8 bg-zinc-800 text-zinc-300 font-bold rounded-2xl hover:bg-zinc-700 transition-colors"
                                 >
