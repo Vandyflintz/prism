@@ -112,6 +112,12 @@ export interface LayerProps {
 
     // Audio props
     volume?: number;
+    playbackRate?: number; // Default 1.0 (Pitch)
+    bass?: number; // dB boost (default 0)
+    treble?: number; // dB boost (default 0)
+    pan?: number; // Stereo pan (-1 to 1, default 0)
+    fadeInDuration?: number; // Duration in seconds (default 0)
+    fadeOutDuration?: number; // Duration in seconds (default 0)
 
     // Specific to 'text'
     content?: string; // The actual text string

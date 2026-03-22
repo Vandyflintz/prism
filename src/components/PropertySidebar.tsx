@@ -160,17 +160,124 @@ export const PropertySidebar: React.FC = () => {
                         {(track.type === 'audio' || track.type === 'video') && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 block">Audio Mixer</label>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <span className="text-xs text-zinc-400">Volume</span>
-                                        <span className="text-xs text-zinc-500">{((track.props.volume ?? 1) * 100).toFixed(0)}%</span>
+                                <div className="space-y-4">
+                                    {/* Volume */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-zinc-400">Volume</span>
+                                            <span className="text-xs text-zinc-500 font-mono">{((track.props.volume ?? 1) * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="2" step="0.05"
+                                            value={track.props.volume ?? 1}
+                                            onChange={(e) => handleChange('volume', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                                        />
                                     </div>
-                                    <input
-                                        type="range" min="0" max="1" step="0.05"
-                                        value={track.props.volume ?? 1}
-                                        onChange={(e) => handleChange('volume', parseFloat(e.target.value))}
-                                        className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                                    />
+
+                                    {/* Pitch / Speed */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-zinc-400">Pitch / Speed</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-zinc-500 font-mono">{(track.props.playbackRate ?? 1).toFixed(2)}x</span>
+                                                <button 
+                                                    onClick={() => handleChange('playbackRate', 1)}
+                                                    className="text-[9px] text-zinc-600 hover:text-zinc-400 uppercase font-bold"
+                                                >Reset</button>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range" min="0.5" max="2" step="0.05"
+                                            value={track.props.playbackRate ?? 1}
+                                            onChange={(e) => handleChange('playbackRate', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400"
+                                        />
+                                    </div>
+
+                                    {/* Bass */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-zinc-400">Bass Boost</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-zinc-500 font-mono">{(track.props.bass ?? 0) > 0 ? '+' : ''}{track.props.bass ?? 0} dB</span>
+                                                <button 
+                                                    onClick={() => handleChange('bass', 0)}
+                                                    className="text-[9px] text-zinc-600 hover:text-zinc-400 uppercase font-bold"
+                                                >Reset</button>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range" min="-20" max="20" step="1"
+                                            value={track.props.bass ?? 0}
+                                            onChange={(e) => handleChange('bass', parseInt(e.target.value))}
+                                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+                                        />
+                                    </div>
+
+                                    {/* Treble */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-zinc-400">Treble</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-zinc-500 font-mono">{(track.props.treble ?? 0) > 0 ? '+' : ''}{track.props.treble ?? 0} dB</span>
+                                                <button 
+                                                    onClick={() => handleChange('treble', 0)}
+                                                    className="text-[9px] text-zinc-600 hover:text-zinc-400 uppercase font-bold"
+                                                >Reset</button>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range" min="-20" max="20" step="1"
+                                            value={track.props.treble ?? 0}
+                                            onChange={(e) => handleChange('treble', parseInt(e.target.value))}
+                                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400"
+                                        />
+                                    </div>
+
+                                    {/* Stereo Pan */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-zinc-400">Stereo Pan</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-zinc-500 font-mono">
+                                                    {(track.props.pan ?? 0) === 0 ? 'Center' : (track.props.pan ?? 0) < 0 ? `L ${Math.abs(track.props.pan ?? 0).toFixed(1)}` : `R ${(track.props.pan ?? 0).toFixed(1)}`}
+                                                </span>
+                                                <button 
+                                                    onClick={() => handleChange('pan', 0)}
+                                                    className="text-[9px] text-zinc-600 hover:text-zinc-400 uppercase font-bold"
+                                                >Reset</button>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range" min="-1" max="1" step="0.1"
+                                            value={track.props.pan ?? 0}
+                                            onChange={(e) => handleChange('pan', parseFloat(e.target.value))}
+                                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:accent-purple-400"
+                                        />
+                                    </div>
+
+                                    {/* Fades */}
+                                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800/50">
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] text-zinc-500 uppercase font-bold">Fade In (s)</span>
+                                            <input
+                                                type="number" min="0" max="10" step="0.1"
+                                                value={track.props.fadeInDuration ?? 0}
+                                                onChange={(e) => handleChange('fadeInDuration', parseFloat(e.target.value))}
+                                                className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] text-zinc-500 uppercase font-bold">Fade Out (s)</span>
+                                            <input
+                                                type="number" min="0" max="10" step="0.1"
+                                                value={track.props.fadeOutDuration ?? 0}
+                                                onChange={(e) => handleChange('fadeOutDuration', parseFloat(e.target.value))}
+                                                className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

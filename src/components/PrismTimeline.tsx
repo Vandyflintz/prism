@@ -7,7 +7,6 @@ import { usePrismStore } from '../store/usePrismStore';
 import { TimelineActionItem } from './TimelineActionItem';
 import { PrismProject } from '../../types/prism';
 import { TransitionEditor } from './TransitionEditor';
-import { AudioEditor } from './AudioEditor';
 
 
 // Helper: Format timecode (HH:MM:SS:FF)
@@ -46,7 +45,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     } = usePrismStore();
 
     const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
-    const [editingAudioTrackId, setEditingAudioTrackId] = React.useState<string | null>(null);
 
     // Old transitionOptions are now in the Editor component
 
@@ -613,20 +611,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                             )}
                                         </button>
 
-                                        {/* Mute (Audio) OR Transition/FX (Video/Image) */}
-                                        {track.type === 'audio' ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    // toggleTrackMute(track.id);
-                                                    setEditingAudioTrackId(track.id);
-                                                }}
-                                                className={`w-5 h-5 flex items-center justify-center rounded bg-transparent border border-zinc-800 hover:bg-zinc-700 transition-colors ${track.muted ? 'text-red-400 border-red-500/30' : 'text-zinc-500 hover:text-zinc-200'}`}
-                                                title="Edit Audio"
-                                            >
-                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                                            </button>
-                                        ) : (track.type === 'image' || track.type === 'video' || track.type === 'text') ? (
+                                         {(track.type === 'image' || track.type === 'video' || track.type === 'text') && (
                                             <div className="flex items-center gap-1 relative">
                                                 {/* Transition Button */}
                                                 <button
@@ -640,7 +625,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                                                     <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                                                 </button>
                                             </div>
-                                        ) : null}
+                                        )}
                                     </div>
 
                                     {/* Drag Grip (Vertical Dots) */}
@@ -804,13 +789,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 />
             )}
 
-            {/* Audio Editor Modal */}
-            {editingAudioTrackId && (
-                <AudioEditor
-                    trackId={editingAudioTrackId}
-                    onClose={() => setEditingAudioTrackId(null)}
-                />
-            )}
         </div>
     );
 };

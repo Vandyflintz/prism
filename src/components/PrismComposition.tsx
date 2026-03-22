@@ -1,6 +1,72 @@
 import React from 'react';
 import { AbsoluteFill, Sequence, Audio, Video, useCurrentFrame, interpolate, Easing } from 'remotion';
 import { PrismProject, PrismTrack, PrismAsset } from '../../types/prism';
+import { audioManager } from '../utils/audioManager';
+
+const MediaFilter: React.FC<{ 
+    trackId: string; 
+    bass?: number; 
+    treble?: number; 
+    volume?: number;
+    pan?: number;
+    fadeIn?: number;
+    fadeOut?: number;
+    duration: number;
+}> = ({ trackId, bass, treble, volume, pan, fadeIn = 0, fadeOut = 0, duration }) => {
+    const elRef = React.useRef<HTMLMediaElement | null>(null);
+    const frame = useCurrentFrame();
+
+    // Volume Envelope (Fade In/Out)
+    const envelopeVolume = React.useMemo(() => {
+        if (fadeIn === 0 && fadeOut === 0) return 1;
+        
+        let v = 1;
+        const fps = 30; // Hardcoded fallback or we could pass from props
+        if (fadeIn > 0) {
+            // fadeIn is in seconds, convert to frames
+            const fadeInFrames = fadeIn * fps; 
+            v *= interpolate(frame, [0, fadeInFrames], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+        }
+        if (fadeOut > 0) {
+            const fadeOutFrames = fadeOut * fps;
+            v *= interpolate(frame, [duration - fadeOutFrames, duration], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+        }
+        return v;
+    }, [frame, fadeIn, fadeOut, duration]);
+
+    React.useEffect(() => {
+        // Look for audio or video element inside the sequence
+        const update = () => {
+            const el = document.querySelector(`[data-track-id="${trackId}"] video, [data-track-id="${trackId}"] audio`) as HTMLMediaElement;
+            if (el) {
+                if (elRef.current && elRef.current !== el) {
+                    audioManager.releaseElement(elRef.current);
+                }
+                elRef.current = el;
+                audioManager.applyFilters(el, {
+                    bass: bass || 0,
+                    treble: treble || 0,
+                    volume: (volume ?? 1) * envelopeVolume,
+                    pan: pan || 0
+                });
+            }
+        };
+
+        update();
+        // Polling as fallback for Remotion recycling
+        const timer = setInterval(update, 1000);
+        
+        return () => {
+            clearInterval(timer);
+            if (elRef.current) {
+                audioManager.releaseElement(elRef.current);
+                elRef.current = null;
+            }
+        };
+    }, [trackId, bass, treble, volume, pan, envelopeVolume]);
+
+    return null;
+};
 
 export const PrismComposition: React.FC<{ project: PrismProject; assets: Record<string, PrismAsset> }> = ({ project, assets }) => {
     if (!project) return <AbsoluteFill style={{ backgroundColor: 'red' }}>No Project Data</AbsoluteFill>;
@@ -252,7 +318,17 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                 <div style={{
                     ...style,
                     overflow: 'hidden',
-                }}>
+                }} data-track-id={track.id}>
+                    <MediaFilter 
+                        trackId={track.id} 
+                        bass={props.bass} 
+                        treble={props.treble} 
+                        volume={props.volume}
+                        pan={props.pan}
+                        fadeIn={props.fadeInDuration}
+                        fadeOut={props.fadeOutDuration}
+                        duration={duration}
+                    />
                     <Video
                         src={asset.src}
                         startFrom={props.mediaOffset || 0}
@@ -263,15 +339,27 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                             transformOrigin: 'center center',
                             transform: `translate(${props.contentX || 0}px, ${props.contentY || 0}px) scale(${props.contentScale || 1})`,
                         }}
-                        volume={props.volume ?? 1}
+                        volume={Math.min(1.0, props.volume ?? 1.0)}
+                        playbackRate={props.playbackRate ?? 1}
+                        data-track-id={track.id}
                     />
                 </div>
             );
         }
 
         return (
-            <div style={style}>
-                <Video
+            <div style={style} data-track-id={track.id}>
+                    <MediaFilter 
+                        trackId={track.id} 
+                        bass={props.bass} 
+                        treble={props.treble} 
+                        volume={props.volume} 
+                        pan={props.pan}
+                        fadeIn={props.fadeInDuration}
+                        fadeOut={props.fadeOutDuration}
+                        duration={duration}
+                    />
+                    <Video
                     src={asset.src}
                     startFrom={props.mediaOffset || 0}
                     style={{
@@ -279,7 +367,9 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                         height: '100%',
                         objectFit: fitMode as any
                     }}
-                    volume={props.volume ?? 1}
+                    volume={Math.min(1.0, props.volume ?? 1.0)}
+                    playbackRate={props.playbackRate ?? 1}
+                    data-track-id={track.id}
                 />
             </div>
         );
@@ -432,7 +522,27 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         const asset = assetId ? assets[assetId] : null;
         if (!asset) return null;
         // Same normalization logic might be needed for audio
-        return <Audio src={asset.src} startFrom={props.mediaOffset || 0} volume={props.volume ?? 1} />;
+        return (
+            <div data-track-id={track.id}>
+                <MediaFilter 
+                    trackId={track.id} 
+                    bass={props.bass} 
+                    treble={props.treble} 
+                    volume={props.volume} 
+                    pan={props.pan}
+                    fadeIn={props.fadeInDuration}
+                    fadeOut={props.fadeOutDuration}
+                    duration={duration}
+                />
+                <Audio 
+                    src={asset.src} 
+                    startFrom={props.mediaOffset || 0} 
+                    volume={Math.min(1.0, props.volume ?? 1.0)} 
+                    playbackRate={props.playbackRate ?? 1}
+                    data-track-id={track.id}
+                />
+            </div>
+        );
     }
 
     return <div style={{ ...style, backgroundColor: 'rgba(255,0,0,0.3)' }} />;
