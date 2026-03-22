@@ -56,6 +56,10 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const sidebarRef = React.useRef<HTMLDivElement>(null);
     const lastSyncedTime = React.useRef<number>(-1);
     const isInternalSync = React.useRef<boolean>(false);
+    const scrollLeftRef = React.useRef<number>(0);
+    const isUserInteracting = React.useRef<boolean>(false);
+
+    const [zoom, setZoom] = React.useState(160); // Moved up to avoid TDZ
 
     // Sync Timeline Cursor (Store -> Timeline) - Throttle and Check
     React.useEffect(() => {
@@ -66,14 +70,40 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
             // Avoid micro-syncs that cause lag
             if (Math.abs(currentTime - lastSyncedTime.current) < 0.5) return;
             
+            const time = currentTime / (project.fps || 30);
             lastSyncedTime.current = currentTime;
             isInternalSync.current = true;
-            timelineRef.current.setTime(currentTime / (project.fps || 30));
+            timelineRef.current.setTime(time);
+            
+            // AUTO-SCROLL LOGIC: Ensure playhead is visible
+            if (isTimelineFollowEnabled && isPlaying && !isUserInteracting.current) {
+                // Use the ref updated by onScroll
+                const scrollLeft = scrollLeftRef.current;
+                
+                // Approximate width of the timeline area (it's flex-1, usually stays around 800-1200px)
+                const viewWidth = 1000; 
+                
+                // Calculate position of cursor in pixels
+                const cursorX = time * zoom;
+                
+                // FLUID SYNC: Keep the playhead around the 20% mark
+                const targetScrollLeft = Math.max(0, cursorX - (viewWidth * 0.2));
+                
+                // Always sync scroll if enabled and playing for "fluid" feel
+                if (timelineRef.current?.setScrollLeft) {
+                    // Only scroll if we are sufficiently far from target to avoid constant micro-shaking
+                    // but close enough to feel fluid.
+                    if (Math.abs(scrollLeft - targetScrollLeft) > 1) {
+                        timelineRef.current.setScrollLeft(targetScrollLeft);
+                    }
+                }
+            }
+
             timelineRef.current.reRender();
             // Reset after a small delay to allow events to process
             setTimeout(() => { isInternalSync.current = false; }, 50);
         }
-    }, [currentTime, project]);
+    }, [currentTime, project, isTimelineFollowEnabled, isPlaying, zoom]);
 
     if (!project) return <div className="p-4 text-zinc-500">No Project Loaded</div>;
 
@@ -117,7 +147,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
         }
     };
 
-    const [zoom, setZoom] = React.useState(160); // Default pixels per scale unit
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 20, 500));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 20, 20));
@@ -145,12 +174,15 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 } else {
                     undo();
                 }
+            } else if (e.altKey && e.code === 'KeyF') {
+                e.preventDefault();
+                toggleTimelineFollow();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [togglePlay, selectedTrackId, splitTrack, deleteTrack, undo, redo]);
+    }, [togglePlay, selectedTrackId, splitTrack, deleteTrack, undo, redo, toggleTimelineFollow]);
 
     // One scale unit = 1 second
     const scale = 1;
@@ -246,6 +278,15 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                     </IconBtn>
 
+                    {/* Timeline Follow */}
+                    <IconBtn
+                        onClick={toggleTimelineFollow}
+                        title={`Timeline Follow (${isTimelineFollowEnabled ? "On" : "Off"}) [Alt+F]`}
+                        className={isTimelineFollowEnabled ? 'text-indigo-400 bg-indigo-500/20 border-indigo-500/50 hover:bg-indigo-500/30' : 'text-zinc-500 hover:text-zinc-300'}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" strokeWidth={2}/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h3m12 0h3M12 3v3m0 12v3" /></svg>
+                    </IconBtn>
+
                     {/* Separator */}
                     <div className="w-[1px] h-4 bg-zinc-800 mx-1"></div>
 
@@ -285,6 +326,9 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
             {/* TIMELINE SURFACE */}
             <div
                 className="flex-1 relative overflow-hidden bg-[#09090b] flex"
+                onMouseDown={() => { isUserInteracting.current = true; }}
+                onMouseUp={() => { isUserInteracting.current = false; }}
+                onMouseLeave={() => { isUserInteracting.current = false; }}
                 onDragOver={(e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'copy';
@@ -687,7 +731,8 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             setSelectedTrackId(action.id);
                         }}
                         // Sync Scroll (Timeline -> Sidebar)
-                        onScroll={({ scrollTop }) => {
+                        onScroll={({ scrollTop, scrollLeft }) => {
+                            scrollLeftRef.current = scrollLeft;
                             if (sidebarRef.current) {
                                 sidebarRef.current.scrollTop = scrollTop;
                             }

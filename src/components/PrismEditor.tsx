@@ -407,7 +407,6 @@ export const PrismEditor: React.FC = () => {
                     // This allows manual timeline clicks to still work while playing,
                     // but prevents minor store lag from snapping the player backward.
                     if (diff > 45) {
-                        console.log(`[Sync] Playback Jump Seek: ${currentPlayerFrame} -> ${time}`);
                         lastSeekTime.current = now;
                         player.seekTo(time);
                     }
