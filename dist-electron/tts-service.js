@@ -535,18 +535,49 @@ class TtsService {
             });
         });
     }
-    // ─── Local Voices ─────────────────────────────────
     static async getLocalVoices() {
-        const voices = [
-            { id: 'en_US-lessac-medium.onnx', name: 'English (US) Female - Lessac' },
-            { id: 'en_US-amy-medium.onnx', name: 'English (US) Female - Amy' },
-            { id: 'en_US-ryan-medium.onnx', name: 'English (US) Male - Ryan (Clear)' },
-            { id: 'en_US-joe-medium.onnx', name: 'English (US) Male - Joe' },
-            { id: 'en_GB-alba-medium.onnx', name: 'English (UK) Female - Alba' },
-            { id: 'en_GB-alan-medium.onnx', name: 'English (UK) Male - Alan' }
-        ];
         const piperDataDir = path.join(electron_1.app.getPath('userData'), 'piper');
-        return voices.map(v => {
+        if (!this.cachedLocalVoices) {
+            try {
+                const response = await fetch('https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/voices.json');
+                if (!response.ok)
+                    throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const voices = [];
+                for (const key in data) {
+                    const v = data[key];
+                    // We filter for English voices to keep the UI clean
+                    if (v.language && v.language.family === 'en') {
+                        const region = v.language.region || 'Unknown';
+                        const quality = v.quality || 'unknown';
+                        const name = v.name || key;
+                        // e.g., "English (US) - Ryan (medium)"
+                        const displayName = `English (${region}) - ${name.charAt(0).toUpperCase() + name.slice(1)} (${quality})`;
+                        voices.push({
+                            id: `${key}.onnx`,
+                            name: displayName
+                        });
+                    }
+                }
+                // Sort by name (grouping regions together)
+                voices.sort((a, b) => a.name.localeCompare(b.name));
+                this.cachedLocalVoices = voices;
+                console.log(`[TTS] Loaded ${voices.length} local voices from official manifest.`);
+            }
+            catch (err) {
+                console.error('[TTS] Failed to fetch Piper voices manifest, falling back to local defaults', err);
+                // Fallback hardcoded list if offline or HF is down
+                this.cachedLocalVoices = [
+                    { id: 'en_US-lessac-medium.onnx', name: 'English (US) Female - Lessac (medium)' },
+                    { id: 'en_US-amy-medium.onnx', name: 'English (US) Female - Amy (medium)' },
+                    { id: 'en_US-ryan-medium.onnx', name: 'English (US) Male - Ryan (medium)' },
+                    { id: 'en_US-joe-medium.onnx', name: 'English (US) Male - Joe (medium)' },
+                    { id: 'en_GB-alba-medium.onnx', name: 'English (UK) Female - Alba (medium)' },
+                    { id: 'en_GB-alan-medium.onnx', name: 'English (UK) Male - Alan (medium)' }
+                ];
+            }
+        }
+        return this.cachedLocalVoices.map(v => {
             const isDownloaded = fs.existsSync(path.join(piperDataDir, v.id));
             return {
                 ...v,
@@ -623,3 +654,5 @@ class TtsService {
 }
 exports.TtsService = TtsService;
 TtsService.tempDir = path.join(electron_1.app.getPath('userData'), 'tts-temp');
+// ─── Local Voices ─────────────────────────────────
+TtsService.cachedLocalVoices = null;

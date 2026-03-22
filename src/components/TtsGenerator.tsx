@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePrismStore } from '../store/usePrismStore';
-import { PrismAsset, PrismTrack } from '../../types/prism';
+import { PrismAsset } from '../../types/prism';
+import { AssetStorage } from '../lib/AssetStorage';
 
 export const TtsGenerator: React.FC = () => {
     const {
-        isTtsModalOpen, toggleTtsModal, addAsset, addTrack, currentTime
+        isTtsModalOpen, toggleTtsModal, addAsset
     } = usePrismStore();
 
     const [text, setText] = useState('');
@@ -117,43 +118,46 @@ export const TtsGenerator: React.FC = () => {
         }
     };
 
-    const onConfirmAddToTimeline = () => {
+    const onConfirmSaveAudio = async () => {
         if (!generatedPath) return;
-        // Add as Asset
-        const assetId = crypto.randomUUID();
-        const newAsset: PrismAsset = {
-            id: assetId,
-            type: 'audio',
-            src: `file://${generatedPath}`,
-            metadata: {
-                originalName: `TTS: ${text.substring(0, 20)}...`,
-                tts: {
-                    isTts: true,
-                    ttsText: text,
-                    ttsVoiceId: voiceId,
-                    ttsProvider: provider
+        
+        try {
+            // Fetch the generated local file as a Blob to persist it
+            const response = await fetch(`file://${generatedPath}`);
+            const blob = await response.blob();
+            
+            // Generate a permanent Object URL
+            const objectUrl = URL.createObjectURL(blob);
+            
+            // Add as persistent Asset
+            const assetId = crypto.randomUUID();
+            const newAsset: PrismAsset = {
+                id: assetId,
+                type: 'audio',
+                src: objectUrl,
+                metadata: {
+                    originalName: `TTS: ${text.substring(0, 20)}...`,
+                    mimeType: 'audio/wav',
+                    createdAt: Date.now(),
+                    tts: {
+                        isTts: true,
+                        ttsText: text,
+                        ttsVoiceId: voiceId,
+                        ttsProvider: provider
+                    }
                 }
-            }
-        };
-        addAsset(newAsset);
+            };
+            
+            await AssetStorage.saveAsset(newAsset, blob);
+            addAsset(newAsset);
 
-        // Add to Timeline
-        const newTrack: PrismTrack = {
-            id: crypto.randomUUID(),
-            type: 'audio',
-            startFrame: currentTime,
-            durationInFrames: 150,
-            props: {
-                x: 0, y: 0, width: 0, height: 0, opacity: 1, rotation: 0, scale: 1,
-                assetId: assetId,
-                volume: 1
-            }
-        };
-        addTrack(newTrack);
-
-        setGeneratedPath(null);
-        toggleTtsModal();
-        setText('');
+            setGeneratedPath(null);
+            toggleTtsModal();
+            setText('');
+        } catch (err: any) {
+            console.error('[TTS] Failed to persist generated audio:', err);
+            setError(`Failed to save to Media: ${err.message}`);
+        }
     };
 
     const handleGenerate = async () => {
@@ -323,7 +327,7 @@ export const TtsGenerator: React.FC = () => {
                                         ) : (
                                             voices.map(v => (
                                                 <option key={v.id} value={v.id}>
-                                                    {v.name} {provider === 'piper-local' && !v.isDownloaded ? '(Needs Download)' : ''}
+                                                    {v.name} {provider === 'piper-local' && !v.isDownloaded ? '  ( ↓ )' : ''}
                                                 </option>
                                             ))
                                         )}
@@ -363,11 +367,11 @@ export const TtsGenerator: React.FC = () => {
                                 {generatedPath ? (
                                     <>
                                         <button
-                                            onClick={onConfirmAddToTimeline}
+                                            onClick={onConfirmSaveAudio}
                                             className="flex-2 flex-grow bg-emerald-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95 hover:bg-emerald-500"
                                         >
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                                            Add to Timeline
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                            Save to Media
                                         </button>
                                         <button
                                             onClick={() => { setGeneratedPath(null); }}
