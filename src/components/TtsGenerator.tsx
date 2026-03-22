@@ -23,6 +23,9 @@ export const TtsGenerator: React.FC = () => {
     const [piperPath, setPiperPath] = useState('');
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+    const [downloadStatus, setDownloadStatus] = useState('');
+    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         if (isTtsModalOpen && (window as any).electron) {
@@ -33,6 +36,14 @@ export const TtsGenerator: React.FC = () => {
             });
             // Initial fetch to populate local voices at least
             fetchVoices();
+
+            // Set up download progress listener
+            const cleanup = (window as any).electron.onDownloadProgress((data: {status: string, progress: number}) => {
+                setDownloadStatus(data.status);
+                setDownloadProgress(data.progress);
+            });
+
+            return cleanup;
         }
     }, [isTtsModalOpen]);
 
@@ -99,10 +110,47 @@ export const TtsGenerator: React.FC = () => {
         }
     };
 
+    const onGenerate = (outputPath: string) => {
+        // Add as Asset
+        const assetId = crypto.randomUUID();
+        const newAsset: PrismAsset = {
+            id: assetId,
+            type: 'audio',
+            src: `prism-asset://${outputPath}`,
+            metadata: {
+                originalName: `TTS: ${text.substring(0, 20)}...`,
+                tts: {
+                    isTts: true,
+                    ttsText: text,
+                    ttsVoiceId: voiceId,
+                    ttsProvider: provider
+                }
+            }
+        };
+        addAsset(newAsset);
+
+        // Add to Timeline
+        const newTrack: PrismTrack = {
+            id: crypto.randomUUID(),
+            type: 'audio',
+            startFrame: currentTime,
+            durationInFrames: 150, // Temporary, should ideally get duration from file
+            props: {
+                x: 0, y: 0, width: 0, height: 0, opacity: 1, rotation: 0, scale: 1,
+                assetId: assetId,
+                volume: 1
+            }
+        };
+        addTrack(newTrack);
+
+        toggleTtsModal();
+        setText('');
+    };
+
     const handleGenerate = async () => {
         if (!text.trim()) return;
         setIsGenerating(true);
-        setError(null);
+        setError('');
 
         try {
             if (!(window as any).electron) {
@@ -113,45 +161,33 @@ export const TtsGenerator: React.FC = () => {
                 voiceId,
                 provider
             });
-
-            // Add as Asset
-            const assetId = crypto.randomUUID();
-            const newAsset: PrismAsset = {
-                id: assetId,
-                type: 'audio',
-                src: `prism-asset://${outputPath}`,
-                metadata: {
-                    originalName: `TTS: ${text.substring(0, 20)}...`,
-                    tts: {
-                        isTts: true,
-                        ttsText: text,
-                        ttsVoiceId: voiceId,
-                        ttsProvider: provider
-                    }
-                }
-            };
-            addAsset(newAsset);
-
-            // Add to Timeline
-            const newTrack: PrismTrack = {
-                id: crypto.randomUUID(),
-                type: 'audio',
-                startFrame: currentTime,
-                durationInFrames: 150, // Temporary, should ideally get duration from file
-                props: {
-                    x: 0, y: 0, width: 0, height: 0, opacity: 1, rotation: 0, scale: 1,
-                    assetId: assetId,
-                    volume: 1
-                }
-            };
-            addTrack(newTrack);
-
-            toggleTtsModal();
-            setText('');
+            onGenerate(outputPath);
         } catch (err: any) {
-            setError(err.message || 'Generation failed');
+            console.error(err);
+            if (err.message && err.message.includes("Local TTS Engine (Piper) is missing")) {
+                setError("ENGINE_MISSING");
+            } else {
+                setError(err.message || 'Unknown generation error');
+            }
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleDownloadEngine = async () => {
+        if (!(window as any).electron) return;
+        setIsDownloading(true);
+        setError('');
+        try {
+            await (window as any).electron.downloadPiper();
+            setDownloadStatus('');
+            // Optional: trigger generation automatically after download?
+            // handleGenerate();
+            setError(''); // clear the missing error
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -300,34 +336,70 @@ export const TtsGenerator: React.FC = () => {
                                 </div>
                             </div>
 
-                            {error && (
-                                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 animate-pulse">
-                                    <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    <p className="text-xs text-red-400 leading-tight">{error}</p>
-                                </div>
-                            )}
+                            {/* Error Message */}
+                    {error && error !== 'ENGINE_MISSING' && (
+                        <div className="flex items-start gap-2 text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-xs font-medium">
+                            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="flex-1 break-words leading-relaxed">{error}</p>
+                        </div>
+                    )}
+                    
+                    {error === 'ENGINE_MISSING' && (
+                        <div className="flex items-start gap-2 text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-lg text-xs font-medium">
+                            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <p className="flex-1 break-words leading-relaxed">Local engine missing. Click the Download button below to automatically install Piper.</p>
+                        </div>
+                    )}
 
                             <div className="flex gap-3 mt-4">
-                                <button 
-                                    onClick={handleGenerate}
-                                    disabled={isGenerating || !text.trim()}
-                                    className={`flex-2 flex-grow bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${isGenerating ? 'cursor-not-allowed' : 'hover:bg-zinc-200'}`}
-                                >
-                                    {isGenerating ? (
-                                        <>
-                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Generating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                                            Add to Timeline
-                                        </>
-                                    )}
-                                </button>
+                                {error === 'ENGINE_MISSING' ? (
+                                    <button
+                                        onClick={handleDownloadEngine}
+                                        disabled={isDownloading}
+                                        className={`relative flex-2 flex-grow bg-indigo-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-500/20 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:bg-indigo-500 overflow-hidden`}
+                                    >
+                                        {isDownloading ? (
+                                            <>
+                                                <div 
+                                                    className="absolute inset-0 bg-indigo-400/30 transition-all duration-300 pointer-events-none" 
+                                                    style={{ width: `${downloadProgress}%` }}
+                                                />
+                                                <svg className="animate-spin h-5 w-5 relative z-10" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <span className="relative z-10">{downloadStatus || 'Downloading...'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                                Download Local Engine
+                                            </>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={handleGenerate}
+                                        disabled={isGenerating || !text.trim()}
+                                        className={`flex-2 flex-grow bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${isGenerating ? 'cursor-not-allowed' : 'hover:bg-zinc-200'}`}
+                                    >
+                                        {isGenerating ? (
+                                            <>
+                                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                                                Add to Timeline
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                                 <button 
                                     onClick={() => { toggleTtsModal(); setText(''); setError(null); }}
                                     className="px-8 bg-zinc-800 text-zinc-300 font-bold rounded-2xl hover:bg-zinc-700 transition-colors"

@@ -17,6 +17,13 @@ contextBridge.exposeInMainWorld('electron', {
     updateTtsSettings: (settings: any) => ipcRenderer.invoke('tts:updateSettings', settings),
     getVoices: (provider: string) => ipcRenderer.invoke('tts:getVoices', provider),
     testTtsConnection: () => ipcRenderer.invoke('tts:testConnection'),
+    downloadPiper: () => ipcRenderer.invoke('tts:downloadPiper'),
+    
+    onDownloadProgress: (callback: (data: {status: string, progress: number}) => void) => {
+        const listener = (_e: any, data: any) => callback(data);
+        ipcRenderer.on('tts:downloadProgress', listener);
+        return () => ipcRenderer.removeListener('tts:downloadProgress', listener);
+    },
 
     onFullscreenChange: (callback: (isFullscreen: boolean) => void) => {
         const listener = (_e: any, isFs: boolean) => callback(isFs);
