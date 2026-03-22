@@ -247,19 +247,7 @@ class TtsService {
         event.sender.send('tts:downloadProgress', { status: 'Prism Engine Ready', progress: 100 });
     }
     // ─── Utility Helpers ──────────────────────────────
-    /** Check if current hardware is Apple Silicon (even under Rosetta). */
-    static isAppleSilicon() {
-        try {
-            const translated = (0, child_process_1.execSync)('sysctl -in sysctl.proc_translated').toString().trim();
-            if (translated === '1')
-                return true;
-            const hwArm64 = (0, child_process_1.execSync)('sysctl -in hw.optional.arm64').toString().trim();
-            return hwArm64 === '1';
-        }
-        catch {
-            return false;
-        }
-    }
+    // ─── Utility Helpers ──────────────────────────────
     /** Find a binary by name using `which`. Returns null if not found. */
     static async findBinary(name) {
         return new Promise((resolve) => {
