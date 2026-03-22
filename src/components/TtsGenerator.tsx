@@ -12,7 +12,7 @@ export const TtsGenerator: React.FC = () => {
     const [text, setText] = useState('');
     const [provider, setProvider] = useState<'piper-local' | 'elevenlabs-cloud'>('piper-local');
     const [voiceId, setVoiceId] = useState('');
-    const [voices, setVoices] = useState<{ id: string, name: string }[]>([]);
+    const [voices, setVoices] = useState<{ id: string, name: string, isDownloaded?: boolean }[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoadingVoices, setIsLoadingVoices] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -172,6 +172,7 @@ export const TtsGenerator: React.FC = () => {
                 text, voiceId, provider
             });
             console.log('[TTS UI] Generation success, outputPath:', outputPath);
+            fetchVoices(); // Refresh voice list to update (Downloaded) status
             setGeneratedPath(outputPath);
         } catch (err: any) {
             console.error('[TTS UI] Error:', err);
@@ -321,7 +322,9 @@ export const TtsGenerator: React.FC = () => {
                                             <option value="">No voices found...</option>
                                         ) : (
                                             voices.map(v => (
-                                                <option key={v.id} value={v.id}>{v.name}</option>
+                                                <option key={v.id} value={v.id}>
+                                                    {v.name} {provider === 'piper-local' && !v.isDownloaded ? '(Needs Download)' : ''}
+                                                </option>
                                             ))
                                         )}
                                     </select>

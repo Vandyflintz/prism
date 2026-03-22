@@ -76,17 +76,14 @@ class TtsService {
                 return await this.getElevenLabsVoices();
             }
             else {
-                return [
-                    { id: 'en_US-lessac-medium.onnx', name: 'English (US) - Lessac' },
-                    { id: 'en_GB-southern_english_female-low.onnx', name: 'English (UK) - Female' },
-                ];
+                return await this.getLocalVoices();
             }
         });
         electron_1.ipcMain.handle('tts:testConnection', async () => {
             return await this.testElevenLabsConnection();
         });
-        electron_1.ipcMain.handle('tts:downloadPiper', async (event) => {
-            return await this.downloadPiperWithProgress(event);
+        electron_1.ipcMain.handle('tts:downloadPiper', async (event, voiceId) => {
+            return await this.downloadPiperWithProgress(event, voiceId);
         });
     }
     // ─── Engine Download ──────────────────────────────
@@ -97,7 +94,7 @@ class TtsService {
      *              official GitHub release that ships without .dylib files.
      * Windows:     Uses the GitHub binary release (which works on Windows).
      */
-    static async downloadPiperWithProgress(event) {
+    static async downloadPiperWithProgress(event, voiceId) {
         const platform = process.platform;
         const destDir = path.join(electron_1.app.getPath('userData'), 'piper');
         try {
@@ -105,10 +102,10 @@ class TtsService {
                 fs.mkdirSync(destDir, { recursive: true });
             }
             if (platform === 'win32') {
-                await this.downloadPiperBinary(event, destDir);
+                await this.downloadPiperBinary(event, destDir, voiceId);
             }
             else {
-                await this.downloadPiperViaVenv(event, destDir);
+                await this.downloadPiperViaVenv(event, destDir, voiceId);
             }
             return { success: true };
         }
@@ -122,7 +119,7 @@ class TtsService {
      * Only requires `python3` which ships with macOS (Xcode Command Line Tools).
      * No Homebrew, no pipx, no system-level installs needed.
      */
-    static async downloadPiperViaVenv(event, destDir) {
+    static async downloadPiperViaVenv(event, destDir, voiceId = 'en_US-lessac-medium.onnx') {
         const venvDir = path.join(electron_1.app.getPath('userData'), 'piper-venv');
         const isWin = process.platform === 'win32';
         const pipBin = isWin ? path.join(venvDir, 'Scripts', 'pip.exe') : path.join(venvDir, 'bin', 'pip');
@@ -143,10 +140,18 @@ class TtsService {
                 throw new Error('piper-tts installed but the piper binary was not found in the venv.');
             }
             console.log(`[TTS] ✔ Piper binary found at: ${piperBin}`);
-            // Step 3 – Download the default voice model (with retries for flaky networks)
-            event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 55 });
-            const modelUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx';
-            const configUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json';
+            // Step 3 – Download the voice model (with retries for flaky networks)
+            const targetVoice = voiceId || 'en_US-lessac-medium.onnx';
+            event.sender.send('tts:downloadProgress', { status: `[3/3] Downloading Voice (${targetVoice})...`, progress: 55 });
+            // Parse voice ID to build HuggingFace URL
+            // Format: lang_Region-name-quality.onnx
+            const match = targetVoice.match(/^([a-z]{2})_([A-Z]{2})-([a-z\_]+)-([a-z]+)\.onnx$/);
+            if (!match)
+                throw new Error(`Invalid voice ID format: ${targetVoice}`);
+            const [, lang, langRegion, name, quality] = match;
+            const baseUrl = `https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/${lang}/${lang}_${langRegion}/${name}/${quality}`;
+            const modelUrl = `${baseUrl}/${targetVoice}`;
+            const configUrl = `${baseUrl}/${targetVoice}.json`;
             const downloadWithRetry = async (url, dest, onProgress, retries = 3) => {
                 for (let attempt = 1; attempt <= retries; attempt++) {
                     try {
@@ -174,10 +179,10 @@ class TtsService {
                     }
                 }
             };
-            const modelDest = path.join(destDir, 'en_US-lessac-medium.onnx');
-            const configDest = path.join(destDir, 'en_US-lessac-medium.onnx.json');
+            const modelDest = path.join(destDir, targetVoice);
+            const configDest = path.join(destDir, `${targetVoice}.json`);
             await downloadWithRetry(modelUrl, modelDest, (p) => {
-                event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 55 + (p * 0.40) });
+                event.sender.send('tts:downloadProgress', { status: `[3/3] Downloading Voice (${targetVoice})...`, progress: 55 + (p * 0.40) });
             });
             event.sender.send('tts:downloadProgress', { status: '[3/3] Finalizing...', progress: 96 });
             await downloadWithRetry(configUrl, configDest, () => { });
@@ -212,7 +217,7 @@ class TtsService {
     /**
      * Windows-only: download the official GitHub release binary.
      */
-    static async downloadPiperBinary(event, destDir) {
+    static async downloadPiperBinary(event, destDir, voiceId) {
         const binaryUrl = 'https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip';
         event.sender.send('tts:downloadProgress', { status: '[1/3] Downloading Voice Engine...', progress: 0 });
         const archivePath = path.join(destDir, 'piper_archive');
@@ -224,14 +229,20 @@ class TtsService {
         zip.extractAllTo(destDir, true);
         fs.unlinkSync(archivePath);
         const piperBin = path.join(destDir, 'piper.exe');
-        const modelUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx';
-        const configUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json';
-        event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 60 });
-        await this.downloadFile(modelUrl, path.join(destDir, 'en_US-lessac-medium.onnx'), (p) => {
-            event.sender.send('tts:downloadProgress', { status: '[3/3] Downloading Default Voice...', progress: 60 + (p * 0.35) });
+        const targetVoice = voiceId || 'en_US-lessac-medium.onnx';
+        event.sender.send('tts:downloadProgress', { status: `[3/3] Downloading Voice (${targetVoice})...`, progress: 60 });
+        const match = targetVoice.match(/^([a-z]{2})_([A-Z]{2})-([a-z\_]+)-([a-z]+)\.onnx$/);
+        if (!match)
+            throw new Error(`Invalid voice ID format: ${targetVoice}`);
+        const [, lang, langRegion, name, quality] = match;
+        const baseUrl = `https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/${lang}/${lang}_${langRegion}/${name}/${quality}`;
+        const modelUrl = `${baseUrl}/${targetVoice}`;
+        const configUrl = `${baseUrl}/${targetVoice}.json`;
+        await this.downloadFile(modelUrl, path.join(destDir, targetVoice), (p) => {
+            event.sender.send('tts:downloadProgress', { status: `[3/3] Downloading Voice (${targetVoice})...`, progress: 60 + (p * 0.35) });
         });
         event.sender.send('tts:downloadProgress', { status: '[3/3] Finalizing...', progress: 96 });
-        await this.downloadFile(configUrl, path.join(destDir, 'en_US-lessac-medium.onnx.json'), () => { });
+        await this.downloadFile(configUrl, path.join(destDir, `${targetVoice}.json`), () => { });
         store.set('piperPath', piperBin);
         event.sender.send('tts:downloadProgress', { status: 'Prism Engine Ready', progress: 100 });
     }
@@ -438,7 +449,7 @@ class TtsService {
             console.log(`[TTS]   ⚠ Engine (${!!piperBin}) or Model (${foundModel}) missing — auto-installing...`);
             if (event) {
                 // Auto-download the engine + model, emitting progress to the UI
-                await this.downloadPiperWithProgress(event);
+                await this.downloadPiperWithProgress(event, voiceId);
                 // Re-search for the binary after download
                 const freshBin = await this.findPiperBinary();
                 const storeBin = store.get('piperPath');
@@ -522,6 +533,25 @@ class TtsService {
                 console.error(`[TTS]   ✘ Spawn error: ${err.message}`);
                 settle(() => reject(err));
             });
+        });
+    }
+    // ─── Local Voices ─────────────────────────────────
+    static async getLocalVoices() {
+        const voices = [
+            { id: 'en_US-lessac-medium.onnx', name: 'English (US) Female - Lessac' },
+            { id: 'en_US-amy-medium.onnx', name: 'English (US) Female - Amy' },
+            { id: 'en_US-ryan-medium.onnx', name: 'English (US) Male - Ryan (Clear)' },
+            { id: 'en_US-joe-medium.onnx', name: 'English (US) Male - Joe' },
+            { id: 'en_GB-alba-medium.onnx', name: 'English (UK) Female - Alba' },
+            { id: 'en_GB-alan-medium.onnx', name: 'English (UK) Male - Alan' }
+        ];
+        const piperDataDir = path.join(electron_1.app.getPath('userData'), 'piper');
+        return voices.map(v => {
+            const isDownloaded = fs.existsSync(path.join(piperDataDir, v.id));
+            return {
+                ...v,
+                isDownloaded
+            };
         });
     }
     // ─── ElevenLabs Cloud ─────────────────────────────
