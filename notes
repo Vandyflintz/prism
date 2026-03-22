@@ -1,4 +1,5 @@
 ./dist/mac-arm64/Prism.app/Contents/MacOS/Prism 
+ls -la ~/Library/Application\ Support/prism/piper
 sk_16ddef2c954ac8376fbbc57b99da385239b374f733845d78
 
 
