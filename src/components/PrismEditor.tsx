@@ -27,8 +27,8 @@ const BLANK_PROJECT: PrismProject = {
 
 export const PrismEditor: React.FC = () => {
     const {
-        project, assets, setProject, isPlaying, setCurrentTime,
-        hydrateAssets
+        project, assets, setProject, isPlaying, setIsPlaying, setCurrentTime,
+        isLoopingEnabled, hydrateAssets
     } = usePrismStore();
 
     const [isRestoring, setIsRestoring] = React.useState(true);
@@ -97,6 +97,10 @@ export const PrismEditor: React.FC = () => {
     const [leftPanelWidth, setLeftPanelWidth] = React.useState(280);
     const [rightPanelWidth, setRightPanelWidth] = React.useState(320);
     const [timelineHeight, setTimelineHeight] = React.useState(320);
+
+    const handleOpenSettings = React.useCallback(() => {
+        setIsSettingsOpen(true);
+    }, []);
     
     // Resize states
     const [isDraggingLeft, setIsDraggingLeft] = React.useState(false);
@@ -364,22 +368,36 @@ export const PrismEditor: React.FC = () => {
         }
     }, [project, isRestoring, setProject]);
 
-    // Sync Playback State
+    // Sync Playback State (Manual -> Player)
     useEffect(() => {
         if (player) {
             if (isPlaying) {
                 if (!player.isPlaying()) {
-                    // console.log('Force Play');
                     player.play();
                 }
             } else {
                 if (player.isPlaying()) {
-                    // console.log('Force Pause');
                     player.pause();
                 }
             }
         }
     }, [isPlaying, player]);
+
+    // Track Player Events (Player -> Store)
+    useEffect(() => {
+        if (!player) return;
+        
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        
+        player.addEventListener('play', onPlay);
+        player.addEventListener('pause', onPause);
+        
+        return () => {
+            player.removeEventListener('play', onPlay);
+            player.removeEventListener('pause', onPause);
+        };
+    }, [player, setIsPlaying]);
 
     // Sync Seek / Scrub (Store -> Player)
     const lastPlayerFrame = React.useRef<number>(-1);
@@ -727,7 +745,7 @@ export const PrismEditor: React.FC = () => {
                                             width: '100%',
                                             height: '100%',
                                         }}
-                                        // loop // Disable internal loop to avoid conflict with manual project end handling
+                                        loop={isLoopingEnabled}
                                         doubleClickToFullscreen
                                     />
                                 </div>
@@ -831,7 +849,7 @@ export const PrismEditor: React.FC = () => {
                     <div className="w-full shrink-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
                     
                     <div className="flex-1 overflow-hidden">
-                        <PrismTimeline onOpenSettings={() => setIsSettingsOpen(true)} />
+                        <PrismTimeline onOpenSettings={handleOpenSettings} />
                     </div>
                 </div>
 

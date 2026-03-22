@@ -56,11 +56,21 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const {
         project, assets, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
-        isMagnetEnabled, toggleMagnet, toggleTimelineFollow, isTimelineFollowEnabled, addTrack, addAsset, hasModifiedCanvas, updateProjectSettings,
+        isMagnetEnabled, toggleMagnet, toggleTimelineFollow, isTimelineFollowEnabled, 
+        isLoopingEnabled, toggleLooping,
+        addTrack, addAsset, hasModifiedCanvas, updateProjectSettings,
         alignTracksToStart, clearTimeline, resetProject
     } = usePrismStore();
 
     const [editingTransitionTrackId, setEditingTransitionTrackId] = React.useState<string | null>(null);
+    
+    // Memoize stable objects to prevent infinite loops in the Timeline component
+    const timelineEffects = React.useMemo(() => ({
+        visual: { id: 'visual', name: 'Visual Layer' },
+        audio: { id: 'audio', name: 'Audio Layer' }
+    }), []);
+
+    const timelineStyle = React.useMemo(() => ({ width: '100%', height: '100%' }), []);
 
     // Old transitionOptions are now in the Editor component
 
@@ -318,6 +328,15 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             active={isTimelineFollowEnabled}
                             activeColor="bg-indigo-600"
                             title={`Timeline Follow (${isTimelineFollowEnabled ? "On" : "Off"}) [Alt+F]`}
+                        />
+
+                        {/* Looping Toggle */}
+                        <LabelBtn
+                            onClick={toggleLooping}
+                            label="LOOP"
+                            active={isLoopingEnabled}
+                            activeColor="bg-emerald-600"
+                            title={`Loop Playback (${isLoopingEnabled ? "On" : "Off"})`}
                         />
                     </div>
 
@@ -718,7 +737,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                 <div ref={timelineContainerRef} className="flex-1 overflow-hidden relative">
                     <Timeline
                         ref={timelineRef}
-                        style={{ width: '100%', height: '100%' }}
+                        style={timelineStyle}
                         scale={scale}
                         scaleWidth={scaleWidth}
                         startLeft={10}
@@ -758,10 +777,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                         }}
 
                         editorData={timelineData}
-                        effects={{
-                            visual: { id: 'visual', name: 'Visual Layer' },
-                            audio: { id: 'audio', name: 'Audio Layer' }
-                        }}
+                        effects={timelineEffects}
                         getActionRender={(action, row) => <TimelineActionItem action={action} row={row} />}
                         // Clean row render purely for background lines
                         // @ts-ignore
