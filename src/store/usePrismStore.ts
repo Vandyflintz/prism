@@ -76,7 +76,10 @@ export const usePrismStore = create<PrismState>()(
 
             setSelectedTrackId: (id) => set({ selectedTrackId: id }),
 
-            setCurrentTime: (time) => set({ currentTime: time }),
+            setCurrentTime: (time) => {
+                // console.log(`[Store] setCurrentTime: ${time}`);
+                set({ currentTime: time });
+            },
             setIsPlaying: (playing) => set({ isPlaying: playing }),
             toggleMagnet: () => set((state) => ({ isMagnetEnabled: !state.isMagnetEnabled })),
 

@@ -658,13 +658,17 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                         // Sync Props
                         onClickTimeArea={(time: number) => {
                             const frame = Math.round(time * fps);
-                            setCurrentTime(frame);
+                            if (Math.abs(frame - currentTime) > 1) {
+                                setCurrentTime(frame);
+                            }
                             setSelectedTrackId(null);
                             return true;
                         }}
                         onCursorDrag={(time: number) => {
                             const frame = Math.round(time * fps);
-                            setCurrentTime(frame);
+                            if (Math.abs(frame - currentTime) > 1) {
+                                setCurrentTime(frame);
+                            }
                         }}
                         onClickAction={(e, { action }) => {
                             setSelectedTrackId(action.id);

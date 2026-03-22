@@ -86,11 +86,12 @@ class AudioEffectManager {
         // Apply values
         if (chain) {
             const now = ctx.currentTime;
-            // Use setTargetAtTime for glitch-free updates
-            chain.bass.gain.setTargetAtTime(bass, now, 0.03);
-            chain.treble.gain.setTargetAtTime(treble, now, 0.03);
-            chain.gain.gain.setTargetAtTime(volume, now, 0.03);
-            chain.pan.pan.setTargetAtTime(pan, now, 0.03);
+            // Slightly longer time constant for smoother transitions (0.1s instead of 0.03s)
+            const tc = 0.1; 
+            chain.bass.gain.setTargetAtTime(bass, now, tc);
+            chain.treble.gain.setTargetAtTime(treble, now, tc);
+            chain.gain.gain.setTargetAtTime(volume, now, tc);
+            chain.pan.pan.setTargetAtTime(pan, now, tc);
             
             // If using our gain node, we MUST set element volume to 1 to avoid double processing
             if (volume !== 1) {

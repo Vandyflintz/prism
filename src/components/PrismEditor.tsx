@@ -382,19 +382,19 @@ export const PrismEditor: React.FC = () => {
     }, [isPlaying, player]);
 
     // Sync Seek / Scrub (One-way: Store -> Player)
+    const lastPlayerFrame = React.useRef<number>(-1);
+
     useEffect(() => {
         const unsubscribe = usePrismStore.subscribe((state) => {
             if (player) {
                 const time = state.currentTime;
-                const currentFrame = player.getCurrentFrame();
-                // Avoid infinite loop by checking if we are already close enough
-                // and avoiding seeking if player is already playing (which handles frame updates itself)
-                // Actually, if we seek while playing, it might stutter. 
-                // We only need to seek if the external time changed (e.g. user clicked timeline).
-                // But during playback, state.currentTime is updated BY the player.
-                // So we should verify if the source of change was external.
-                // However, the simple check |current - target| > 1 works for scrubbing.
-                if (Math.abs(currentFrame - time) > 1) {
+                
+                if (time === lastPlayerFrame.current) return;
+
+                const currentPlayerFrame = player.getCurrentFrame();
+                
+                if (Math.abs(currentPlayerFrame - time) > 2) {
+                    console.log(`[Sync] Store -> Player Seek: ${currentPlayerFrame} -> ${time}`);
                     player.seekTo(time);
                 }
             }
@@ -407,11 +407,14 @@ export const PrismEditor: React.FC = () => {
         if (!player) return;
 
         const onFrame = (e: { detail: { frame: number } }) => {
-            // console.log('frameupdate', e.detail.frame);
-            setCurrentTime(e.detail.frame);
+            const frame = e.detail.frame;
+            if (Math.abs(frame - lastPlayerFrame.current) > 10) {
+                 console.warn(`[Sync] Large Player Jump: ${lastPlayerFrame.current} -> ${frame}`);
+            }
+            lastPlayerFrame.current = frame; 
+            setCurrentTime(frame);
         };
 
-        // console.log('Adding frameupdate listener to player');
         player.addEventListener('frameupdate', onFrame);
         return () => {
             player.removeEventListener('frameupdate', onFrame);
@@ -701,7 +704,7 @@ export const PrismEditor: React.FC = () => {
                                             width: '100%',
                                             height: '100%',
                                         }}
-                                        loop
+                                        // loop // Disable internal loop to avoid conflict with manual project end handling
                                         doubleClickToFullscreen
                                     />
                                 </div>

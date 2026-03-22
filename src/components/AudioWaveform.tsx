@@ -4,75 +4,89 @@ interface AudioWaveformProps {
     src: string;
     width: number;
     height: number;
-    color?: string; // Hex color for the waveform
+    color?: string;
     onDurationLoaded?: (duration: number) => void;
 }
 
-const AUDIO_CACHE = new Map<string, Float32Array>();
+// Global cache for peaks to avoid redundant worker runs
+const PEAKS_CACHE = new Map<string, Float32Array>();
+const PENDING_REQUESTS = new Map<string, Promise<Float32Array>>();
 
-export const AudioWaveform: React.FC<AudioWaveformProps> = ({ src, width, height, color = '#10b981', onDurationLoaded }) => {
+export const AudioWaveform: React.FC<AudioWaveformProps> = ({ src, width, height, color = '#10b981' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [peaks, setPeaks] = useState<Float32Array | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        // Debounce or check cache
         if (!src) return;
 
         let isCancelled = false;
 
-        const loadAudio = async () => {
-            if (AUDIO_CACHE.has(src)) {
-                setPeaks(AUDIO_CACHE.get(src)!);
+        const getPeaks = async () => {
+            // 1. Check Cache
+            if (PEAKS_CACHE.has(src)) {
+                setPeaks(PEAKS_CACHE.get(src)!);
                 return;
             }
 
-            try {
+            // 2. Check for pending request to avoid parallel decoding of same file
+            if (PENDING_REQUESTS.has(src)) {
+                setIsLoading(true);
+                const result = await PENDING_REQUESTS.get(src);
+                if (!isCancelled) {
+                    setPeaks(result!);
+                    setIsLoading(false);
+                }
+                return;
+            }
+
+            // 3. Start New Request
+            const fetchAndDecode = async (): Promise<Float32Array> => {
                 const response = await fetch(src);
                 const arrayBuffer = await response.arrayBuffer();
                 const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                
+                try {
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    const channelData = audioBuffer.getChannelData(0);
+                    
+                    // High resolution for zoom: 100 points per second
+                    const pointsPerSecond = 100;
+                    const totalPoints = Math.ceil(audioBuffer.duration * pointsPerSecond);
 
-                // Decode can be CPU intensive, maybe offload to worker later if needed
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-                // Downsample for visualization
-                // We don't need every sample. We need roughly one peak per pixel width?
-                // Actually, let's store a decent resolution and scale deeply draw time.
-                // 100 samples per second is decent for zoom.
-
-                const channelData = audioBuffer.getChannelData(0); // Left channel
-                // const samples = 1000; // Fixed resolution for now? Or depends on duration?
-                // Let's create a fixed size buffer for the visualizer, e.g., 200 points per second of audio
-                const pointsPerSecond = 50;
-                const totalPoints = Math.ceil(audioBuffer.duration * pointsPerSecond);
-
-                const step = Math.ceil(channelData.length / totalPoints);
-                const computedPeaks = new Float32Array(totalPoints);
-
-                for (let i = 0; i < totalPoints; i++) {
-                    const start = i * step;
-                    const end = start + step;
-                    let max = 0;
-                    for (let j = start; j < end; j++) {
-                        const val = Math.abs(channelData[j]);
-                        if (val > max) max = val;
-                    }
-                    computedPeaks[i] = max;
+                    return new Promise((resolve) => {
+                        const worker = new Worker(new URL('../utils/waveformWorker.ts', import.meta.url));
+                        worker.onmessage = (e) => {
+                            const { peaks: computedPeaks } = e.data;
+                            PEAKS_CACHE.set(src, computedPeaks);
+                            worker.terminate();
+                            resolve(computedPeaks);
+                        };
+                        worker.postMessage({ channelData, totalPoints });
+                    });
+                } finally {
+                    audioContext.close();
                 }
+            };
 
+            const request = fetchAndDecode();
+            PENDING_REQUESTS.set(src, request);
+            
+            setIsLoading(true);
+            try {
+                const result = await request;
                 if (!isCancelled) {
-                    AUDIO_CACHE.set(src, computedPeaks);
-                    setPeaks(computedPeaks);
+                    setPeaks(result);
                 }
-
-                // Close context to free resources
-                audioContext.close();
-
             } catch (err) {
                 console.error("Failed to generate waveform", err);
+            } finally {
+                PENDING_REQUESTS.delete(src);
+                if (!isCancelled) setIsLoading(false);
             }
         };
 
-        loadAudio();
+        getPeaks();
 
         return () => {
             isCancelled = true;
@@ -84,55 +98,40 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({ src, width, height
         const canvas = canvasRef.current;
         if (!canvas || !peaks) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: true });
         if (!ctx) return;
 
-        // Clear
         ctx.clearRect(0, 0, width, height);
-
-        // Draw
         ctx.fillStyle = color;
 
-        // Determine bar width and gap
-        // We want to stretch 'peaks' to 'width'
-        // If peaks.length > width, we skip.
-        // If peaks.length < width, we extend.
-
-        // Simple approach: Iterate pixels 0..width
-        // Map pixel x to peaks index
-
-        // const centerY = height / 2;
-        // const scaleY = height / 2 * 0.9; // Leave 10% margin
-
-        ctx.beginPath();
-
-        // Bar style
         const barWidth = 2;
         const gap = 1;
         const totalBars = Math.floor(width / (barWidth + gap));
 
         for (let i = 0; i < totalBars; i++) {
             const x = i * (barWidth + gap);
-            // Map i (0..totalBars) to peaks index (0..peaks.length)
             const peakIndex = Math.floor((i / totalBars) * peaks.length);
             const val = peaks[peakIndex] || 0;
 
-            const h = Math.max(2, val * height); // Min height 2px
-
-            // Rounded bar?
+            const h = Math.max(1, val * height * 0.8);
             ctx.fillRect(x, (height - h) / 2, barWidth, h);
         }
-
-        // ctx.fill();
 
     }, [peaks, width, height, color]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={width}
-            height={height}
-            className="w-full h-full pointer-events-none opacity-80"
-        />
+        <div className="relative w-full h-full">
+            {isLoading && !peaks && (
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/20 backdrop-blur-[1px]">
+                    <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                </div>
+            )}
+            <canvas
+                ref={canvasRef}
+                width={width}
+                height={height}
+                className="w-full h-full pointer-events-none opacity-60 mix-blend-screen"
+            />
+        </div>
     );
 };

@@ -15,15 +15,14 @@ const MediaFilter: React.FC<{
 }> = ({ trackId, bass, treble, volume, pan, fadeIn = 0, fadeOut = 0, duration }) => {
     const elRef = React.useRef<HTMLMediaElement | null>(null);
     const frame = useCurrentFrame();
+    const fps = 30; // Could be passed from project, but 30 is base
 
     // Volume Envelope (Fade In/Out)
     const envelopeVolume = React.useMemo(() => {
         if (fadeIn === 0 && fadeOut === 0) return 1;
         
         let v = 1;
-        const fps = 30; // Hardcoded fallback or we could pass from props
         if (fadeIn > 0) {
-            // fadeIn is in seconds, convert to frames
             const fadeInFrames = fadeIn * fps; 
             v *= interpolate(frame, [0, fadeInFrames], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
         }
@@ -32,29 +31,40 @@ const MediaFilter: React.FC<{
             v *= interpolate(frame, [duration - fadeOutFrames, duration], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
         }
         return v;
-    }, [frame, fadeIn, fadeOut, duration]);
+    }, [frame, fadeIn, fadeOut, duration, fps]);
+
+    // Use a ref to track last applied values for performance
+    const lastApplied = React.useRef<string>('');
 
     React.useEffect(() => {
-        // Look for audio or video element inside the sequence
         const update = () => {
             const el = document.querySelector(`[data-track-id="${trackId}"] video, [data-track-id="${trackId}"] audio`) as HTMLMediaElement;
             if (el) {
+                // Optimization: Stringify current state to check for changes
+                const combinedVolume = (volume ?? 1) * envelopeVolume;
+                const stateKey = `${bass}-${treble}-${combinedVolume}-${pan}`;
+                
+                if (stateKey === lastApplied.current && elRef.current === el) return;
+                
                 if (elRef.current && elRef.current !== el) {
                     audioManager.releaseElement(elRef.current);
                 }
+                
                 elRef.current = el;
+                lastApplied.current = stateKey;
+                
                 audioManager.applyFilters(el, {
                     bass: bass || 0,
                     treble: treble || 0,
-                    volume: (volume ?? 1) * envelopeVolume,
+                    volume: combinedVolume,
                     pan: pan || 0
                 });
             }
         };
 
         update();
-        // Polling as fallback for Remotion recycling
-        const timer = setInterval(update, 1000);
+        // Polling as fallback for Remotion recycling - increase interval to reduce CPU
+        const timer = setInterval(update, 500); 
         
         return () => {
             clearInterval(timer);
@@ -349,7 +359,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
 
         return (
             <div style={style} data-track-id={track.id}>
-                    <MediaFilter 
+                    {/* <MediaFilter 
                         trackId={track.id} 
                         bass={props.bass} 
                         treble={props.treble} 
@@ -358,7 +368,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                         fadeIn={props.fadeInDuration}
                         fadeOut={props.fadeOutDuration}
                         duration={duration}
-                    />
+                    /> */}
                     <Video
                     src={asset.src}
                     startFrom={props.mediaOffset || 0}
@@ -524,7 +534,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
         // Same normalization logic might be needed for audio
         return (
             <div data-track-id={track.id}>
-                <MediaFilter 
+                {/* <MediaFilter 
                     trackId={track.id} 
                     bass={props.bass} 
                     treble={props.treble} 
@@ -533,7 +543,7 @@ const PrismLayer: React.FC<{ track: PrismTrack; project: PrismProject; assets: R
                     fadeIn={props.fadeInDuration}
                     fadeOut={props.fadeOutDuration}
                     duration={duration}
-                />
+                /> */}
                 <Audio 
                     src={asset.src} 
                     startFrom={props.mediaOffset || 0} 

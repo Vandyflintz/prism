@@ -67,8 +67,8 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
     }, [action]);
 
     // Helper: Determine if we should show waveform
-    // Only if type is audio and we have a valid src
-    const showWaveform = type === 'audio' && src;
+    // Show for audio OR video if we have a valid src
+    const showWaveform = (type === 'audio' || type === 'video') && src;
 
     return (
         <div ref={containerRef} className={`w-full h-full flex flex-col justify-center`}>
@@ -78,14 +78,14 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
 
                 {/* Audio Waveform Background */}
                 {showWaveform && (
-                    <div className="absolute inset-0 z-0 opacity-50 mix-blend-overlay">
+                    <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen">
                         {/* We pass dynamically measured width to canvas */}
                         {dimensions.width > 0 && (
                             <AudioWaveform
                                 src={src}
                                 width={dimensions.width}
                                 height={24} // Fixed height of row
-                                color="#a7f3d0" // emerald-200
+                                color={type === 'audio' ? "#a7f3d0" : "#ffffff"} // emerald-200 for audio, white for video
                             />
                         )}
                     </div>
