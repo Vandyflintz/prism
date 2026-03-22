@@ -23,6 +23,7 @@ interface PrismState {
     isMagnetEnabled: boolean;
     isTimelineFollowEnabled: boolean;
     isLoopingEnabled: boolean;
+    isTtsModalOpen: boolean;
     setProject: (project: PrismProject) => void;
     updateProjectSettings: (settings: Partial<PrismProject>) => void;
     setSelectedTrackId: (id: string | null) => void;
@@ -31,6 +32,7 @@ interface PrismState {
     toggleMagnet: () => void;
     toggleTimelineFollow: () => void;
     toggleLooping: () => void;
+    toggleTtsModal: () => void;
     updateTrack: (trackId: string, updates: Partial<PrismTrack>) => void;
     reorderTracks: (orderedTrackIds: string[]) => void;
 
@@ -64,6 +66,7 @@ export const usePrismStore = create<PrismState>()(
             isMagnetEnabled: true,
             isTimelineFollowEnabled: true,
             isLoopingEnabled: true,
+            isTtsModalOpen: false,
             hasModifiedCanvas: false,
 
             setProject: (project) => set((state) => ({ 
@@ -90,6 +93,7 @@ export const usePrismStore = create<PrismState>()(
             toggleMagnet: () => set((state) => ({ isMagnetEnabled: !state.isMagnetEnabled })),
             toggleTimelineFollow: () => set((state) => ({ isTimelineFollowEnabled: !state.isTimelineFollowEnabled })),
             toggleLooping: () => set((state) => ({ isLoopingEnabled: !state.isLoopingEnabled })),
+            toggleTtsModal: () => set((state) => ({ isTtsModalOpen: !state.isTtsModalOpen })),
 
             updateTrack: (trackId, updates) => set((state) => {
                 if (!state.project) return state;

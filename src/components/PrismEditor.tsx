@@ -12,6 +12,7 @@ import { TimelineSettingsModal } from './TimelineSettingsModal';
 import { ResourcePanel } from './ResourcePanel';
 import { ExportModal } from './ExportModal';
 import { AssetStorage } from '../lib/AssetStorage';
+import { TtsGenerator } from './TtsGenerator';
 
 
 // Removed MOCK_PROJECT boilerplate
@@ -866,6 +867,9 @@ export const PrismEditor: React.FC = () => {
                 status={exportStatus}
                 outputValue={exportOutput}
             />
+
+            {/* TTS Generator Modal */}
+            <TtsGenerator />
         </div>
     );
 }

@@ -18,6 +18,7 @@
     "ag-psd": "^30.1.0",
     "bullmq": "^5.67.2",
     "electron-serve": "^3.0.1",
+    "electron-store": "^11.0.2",
     "next": "16.0.10",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -106,11 +107,25 @@
       "icon": "resources/icon.ico"
     },
     "linux": {
-      "target": [
-        "AppImage"
-      ],
       "icon": "resources"
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": "prsm",
+        "name": "Prism Project",
+        "description": "Prism Video Project File",
+        "role": "Editor",
+        "icon": "resources/icon.icns"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "Prism Asset Protocol",
+        "schemes": [
+          "prism-asset"
+        ]
+      }
+    ]
   },
   "main": "dist-electron/main.js",
   "overrides": {

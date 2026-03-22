@@ -27,6 +27,14 @@ export interface PrismProject {
 
 export type AssetType = 'image' | 'audio' | 'video' | 'font' | 'psd';
 
+export interface AudioTtsMetadata {
+    isTts: boolean;
+    ttsText: string;
+    ttsVoiceId: string;
+    ttsProvider: 'piper-local' | 'elevenlabs-cloud';
+    ttsSettings?: Record<string, any>; // For pitch, speed, etc.
+}
+
 export interface PrismAsset {
     id: string;
     type: AssetType;
@@ -47,6 +55,9 @@ export interface PrismAsset {
         // Internal assets (e.g. PSD layers) hidden from library
         isInternal?: boolean;
         createdAt?: number;
+
+        // Hybrid TTS
+        tts?: AudioTtsMetadata;
     };
 }
 

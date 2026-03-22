@@ -11,6 +11,13 @@ contextBridge.exposeInMainWorld('electron', {
     saveProject: (data: any, filePath: string | null) => ipcRenderer.invoke('project:save', { data, filePath }),
     openProject: () => ipcRenderer.invoke('project:open'),
 
+    // TTS API
+    generateTts: (request: any) => ipcRenderer.invoke('tts:generate', request),
+    getTtsSettings: () => ipcRenderer.invoke('tts:getSettings'),
+    updateTtsSettings: (settings: any) => ipcRenderer.invoke('tts:updateSettings', settings),
+    getVoices: (provider: string) => ipcRenderer.invoke('tts:getVoices', provider),
+    testTtsConnection: () => ipcRenderer.invoke('tts:testConnection'),
+
     onFullscreenChange: (callback: (isFullscreen: boolean) => void) => {
         const listener = (_e: any, isFs: boolean) => callback(isFs);
         ipcRenderer.on('window:fullscreen', listener);

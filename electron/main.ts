@@ -158,6 +158,10 @@ ipcMain.handle('render-composition', async (event: IpcMainInvokeEvent, data: any
 // Persistence
 import { saveProjectPackage, loadProjectPackage } from './persistence';
 
+// TTS Service
+import { TtsService } from './tts-service';
+TtsService.init();
+
 ipcMain.handle('project:save', async (event, { data, filePath }) => {
     let targetPath = filePath;
 

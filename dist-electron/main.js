@@ -176,6 +176,9 @@ electron_1.ipcMain.handle('render-composition', async (event, data) => {
 });
 // Persistence
 const persistence_1 = require("./persistence");
+// TTS Service
+const tts_service_1 = require("./tts-service");
+tts_service_1.TtsService.init();
 electron_1.ipcMain.handle('project:save', async (event, { data, filePath }) => {
     let targetPath = filePath;
     if (!targetPath) {

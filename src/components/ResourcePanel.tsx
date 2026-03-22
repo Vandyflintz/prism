@@ -19,7 +19,10 @@ const SYSTEM_FONTS = [
 ];
 
 export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
-    const { assets, addAsset, deleteAsset, addTrack, project, updateProjectSettings, hasModifiedCanvas } = usePrismStore();
+    const { 
+        assets, addAsset, deleteAsset, addTrack, project, updateProjectSettings, hasModifiedCanvas,
+        toggleTtsModal
+    } = usePrismStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'media' | 'text'>('media');
     const [searchQuery, setSearchQuery] = useState('');
@@ -533,6 +536,17 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                                         <svg className="w-3 h-3 text-zinc-400 group-hover:text-zinc-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                     </div>
                                     <span className="text-[9px] font-medium text-zinc-500 group-hover:text-zinc-300">Import</span>
+                                </button>
+
+                                {/* VOICE OVER BTN */}
+                                <button
+                                    onClick={toggleTtsModal}
+                                    className="aspect-square rounded border border-dashed border-emerald-900/50 bg-emerald-950/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 transition-all flex flex-col items-center justify-center gap-1 group"
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-emerald-900/40 flex items-center justify-center group-hover:bg-emerald-800 transition-colors border border-emerald-500/20">
+                                        <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                                    </div>
+                                    <span className="text-[9px] font-medium text-emerald-500 group-hover:text-emerald-400">Voiceover</span>
                                 </button>
 
                                 {/* LOADING SKELETON */}
