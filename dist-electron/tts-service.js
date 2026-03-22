@@ -139,11 +139,13 @@ class TtsService {
         }
     }
     static async generateElevenLabs(text, voiceId, outputPath) {
+        if (!voiceId)
+            throw new Error("No voice selected. Please select a voice first.");
         const apiKey = store.get('elevenLabsKey');
         if (!apiKey)
             throw new Error("ElevenLabs API Key missing in settings.");
-        // Use the v2/stream endpoint for better compatibility and performance
-        const response = await fetch(`https://api.elevenlabs.io/v2/text-to-speech/${voiceId}/stream`, {
+        // Use the v1 endpoint for text-to-speech (V2 is primarily for voice discovery)
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
             method: 'POST',
             headers: {
                 'xi-api-key': apiKey,
