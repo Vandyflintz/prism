@@ -83,6 +83,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const sidebarRef = React.useRef<HTMLDivElement>(null);
     const lastSyncedTime = React.useRef<number>(-1);
     const isInternalSync = React.useRef<boolean>(false);
+    const isSyncingScroll = React.useRef<boolean>(false);
     const scrollLeftRef = React.useRef<number>(0);
     const isUserInteracting = React.useRef<boolean>(false);
 
@@ -215,7 +216,128 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
     const scale = 1;
     const scaleWidth = zoom;
 
+    const handleTimeAreaClick = React.useCallback((time: number) => {
+        if (isInternalSync.current) return true;
+        const frame = Math.round(time * fps);
+        if (Math.abs(frame - currentTime) > 1) {
+            setCurrentTime(frame);
+        }
+        setSelectedTrackId(null);
+        return true;
+    }, [fps, currentTime, setCurrentTime, setSelectedTrackId]);
 
+    const handleCursorDrag = React.useCallback((time: number) => {
+        if (isInternalSync.current) return;
+        const frame = Math.round(time * fps);
+        if (Math.abs(frame - currentTime) > 1) {
+            setCurrentTime(frame);
+        }
+    }, [fps, currentTime, setCurrentTime]);
+
+    const handleActionClick = React.useCallback((e: any, { action }: any) => {
+        setSelectedTrackId(action.id);
+    }, [setSelectedTrackId]);
+
+    const handleTimelineScroll = React.useCallback(({ scrollTop, scrollLeft }: any) => {
+        scrollLeftRef.current = scrollLeft;
+        if (isSyncingScroll.current) return;
+        if (sidebarRef.current && sidebarRef.current.scrollTop !== scrollTop) {
+            isSyncingScroll.current = true;
+            sidebarRef.current.scrollTop = scrollTop;
+            // Native browsers enqueue the generic scroll event, we reset safely using rAF
+            requestAnimationFrame(() => { isSyncingScroll.current = false; });
+        }
+    }, []);
+
+    const handleActionRender = React.useCallback((action: any, row: any) => {
+        return <TimelineActionItem action={action} row={row} />;
+    }, []);
+
+    const handleRowRender = React.useCallback((row: any) => {
+        return (
+            <div className="h-full w-full flex items-center bg-transparent">
+                <div className={`w-full h-[28px] rounded-md border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] ${getTrackBackground(row.type, false)}`}>
+                </div>
+            </div>
+        );
+    }, []);
+
+    const handleActionMoveEnd = React.useCallback((event: any) => {
+        const { action, row } = event;
+
+        // Same row, just update time
+        const startFrame = Math.round(action.start * fps);
+        const durationInFrames = Math.round((action.end - action.start) * fps);
+
+        // Calculate if project needs extension
+        const endFrame = startFrame + durationInFrames;
+        if (project && endFrame > project.durationInFrames - 30) {
+            updateProjectSettings({ durationInFrames: endFrame + 300 }); 
+        }
+
+        if (row && row.id !== action.id) {
+            const fromIndex = project.tracks.findIndex(t => t.id === action.id);
+            const toIndex = project.tracks.findIndex(t => t.id === row.id);
+
+            if (fromIndex !== -1 && toIndex !== -1) {
+                const newOrder = [...project.tracks];
+                const [moved] = newOrder.splice(fromIndex, 1);
+                newOrder.splice(toIndex, 0, moved);
+                reorderTracks(newOrder.map(t => t.id));
+            }
+        } else {
+            const originalTrack = project.tracks.find(t => t.id === action.id);
+            if (originalTrack) {
+                updateTrack(action.id, {
+                    startFrame,
+                    durationInFrames,
+                    props: originalTrack.props
+                });
+            }
+        }
+    }, [fps, project, updateProjectSettings, reorderTracks, updateTrack]);
+
+    const handleActionResizeEnd = React.useCallback((event: any) => {
+        const action = event.action;
+        const startFrame = Math.round(action.start * fps);
+        const durationInFrames = Math.round((action.end - action.start) * fps);
+
+        // Calculate if project needs extension
+        const endFrame = startFrame + durationInFrames;
+        if (project && endFrame > project.durationInFrames - 30) {
+            updateProjectSettings({ durationInFrames: endFrame + 300 }); 
+        }
+
+        const originalTrack = project.tracks.find(t => t.id === action.id);
+        if (originalTrack) {
+            const updates: any = { startFrame, durationInFrames, props: { ...originalTrack.props } };
+
+            // Handle Slip Edit (Resize from Left)
+            const delta = startFrame - originalTrack.startFrame;
+            const originalMediaOffset = originalTrack.props.mediaOffset || 0;
+            updates.props.mediaOffset = Math.max(0, originalMediaOffset + delta);
+
+            // Enforce Max Duration Limit for Videos/Audio
+            const assetId = originalTrack.props.assetId;
+            if (assetId) {
+                const asset = assets[assetId];
+                if (asset && asset.metadata && asset.metadata.duration) {
+                    const maxDurationFrames = Math.round(asset.metadata.duration * fps);
+                    const currentOffset = updates.props.mediaOffset || 0;
+                    if (updates.durationInFrames + currentOffset > maxDurationFrames) {
+                        updates.durationInFrames = Math.max(1, maxDurationFrames - currentOffset);
+                    }
+                }
+            }
+
+            updateTrack(action.id, updates);
+        }
+    }, [fps, project, updateProjectSettings, assets, updateTrack]);
+
+    const handleRowDragEnd = React.useCallback((params: any) => {
+        const newOrderIds = params.editorData.map((row: any) => row.id);
+        reorderTracks(newOrderIds);
+    }, [reorderTracks]);
 
     return (
         <div className="w-full h-full flex flex-col bg-zinc-950 border-t border-zinc-800 select-none">
@@ -596,8 +718,11 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     ref={sidebarRef}
                     className="w-28 shrink-0 bg-zinc-900 border-r border-zinc-800 overflow-hidden overflow-y-auto no-scrollbar"
                     onScroll={(e) => {
+                        if (isSyncingScroll.current) return;
                         if (timelineRef.current) {
+                            isSyncingScroll.current = true;
                             timelineRef.current.setScrollTop(e.currentTarget.scrollTop);
+                            isSyncingScroll.current = false;
                         }
                     }}
                 >
@@ -747,127 +872,19 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
 
                         gridSnap={isMagnetEnabled}
                         dragLine={isMagnetEnabled}
-
-                        // Sync Props
-                        onClickTimeArea={(time: number) => {
-                            if (isInternalSync.current) return true;
-                            const frame = Math.round(time * fps);
-                            if (Math.abs(frame - currentTime) > 1) {
-                                setCurrentTime(frame);
-                            }
-                            setSelectedTrackId(null);
-                            return true;
-                        }}
-                        onCursorDrag={(time: number) => {
-                            if (isInternalSync.current) return;
-                            const frame = Math.round(time * fps);
-                            if (Math.abs(frame - currentTime) > 1) {
-                                setCurrentTime(frame);
-                            }
-                        }}
-                        onClickAction={(e, { action }) => {
-                            setSelectedTrackId(action.id);
-                        }}
-                        // Sync Scroll (Timeline -> Sidebar)
-                        onScroll={({ scrollTop, scrollLeft }) => {
-                            scrollLeftRef.current = scrollLeft;
-                            if (sidebarRef.current) {
-                                sidebarRef.current.scrollTop = scrollTop;
-                            }
-                        }}
+                        onClickTimeArea={handleTimeAreaClick}
+                        onCursorDrag={handleCursorDrag}
+                        onClickAction={handleActionClick}
+                        onScroll={handleTimelineScroll}
 
                         editorData={timelineData}
                         effects={timelineEffects}
-                        getActionRender={(action, row) => <TimelineActionItem action={action} row={row} />}
-                        // Clean row render purely for background lines
-                        // @ts-ignore
-                        getRowRender={(row: any) => {
-                            return (
-                                <div className="h-full w-full flex items-center bg-transparent">
-                                    <div className={`w-full h-[28px] rounded-md border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] ${getTrackBackground(row.type, false)}`}>
-                                        {/* Optional: Grid lines or patterns here */}
-                                    </div>
-                                </div>
-                            );
-                        }}
-                        onActionMoveEnd={(event: any) => {
-                            const { action, row } = event;
-
-                            // Same row, just update time
-                            const startFrame = Math.round(action.start * fps);
-                            const durationInFrames = Math.round((action.end - action.start) * fps);
-
-                            // Calculate if project needs extension
-                            const endFrame = startFrame + durationInFrames;
-                            if (project && endFrame > project.durationInFrames - 30) {
-                                updateProjectSettings({ durationInFrames: endFrame + 300 }); // Add 10s buffer
-                            }
-
-                            // ... existing reorder logic handle ...
-                            if (row && row.id !== action.id) {
-                                const fromIndex = project.tracks.findIndex(t => t.id === action.id);
-                                const toIndex = project.tracks.findIndex(t => t.id === row.id);
-
-                                if (fromIndex !== -1 && toIndex !== -1) {
-                                    const newOrder = [...project.tracks];
-                                    const [moved] = newOrder.splice(fromIndex, 1);
-                                    newOrder.splice(toIndex, 0, moved);
-                                    reorderTracks(newOrder.map(t => t.id));
-                                }
-                            } else {
-                                const originalTrack = project.tracks.find(t => t.id === action.id);
-                                if (originalTrack) {
-                                    updateTrack(action.id, {
-                                        startFrame,
-                                        durationInFrames,
-                                        props: originalTrack.props
-                                    });
-                                }
-                            }
-                        }}
-                        onActionResizeEnd={(event: any) => {
-                            const action = event.action;
-                            const startFrame = Math.round(action.start * fps);
-                            const durationInFrames = Math.round((action.end - action.start) * fps);
-
-                            // Calculate if project needs extension
-                            const endFrame = startFrame + durationInFrames;
-                            if (project && endFrame > project.durationInFrames - 30) {
-                                updateProjectSettings({ durationInFrames: endFrame + 300 }); 
-                            }
-
-                            const originalTrack = project.tracks.find(t => t.id === action.id);
-                            if (originalTrack) {
-                                const updates: any = { startFrame, durationInFrames, props: { ...originalTrack.props } };
-
-                                // Handle Slip Edit (Resize from Left)
-                                const delta = startFrame - originalTrack.startFrame;
-                                const originalMediaOffset = originalTrack.props.mediaOffset || 0;
-                                updates.props.mediaOffset = Math.max(0, originalMediaOffset + delta);
-
-                                // Enforce Max Duration Limit
-                                const assetId = originalTrack.props.assetId;
-                                if (assetId) {
-                                    const asset = assets[assetId];
-                                    if (asset && asset.metadata?.duration) {
-                                        const maxDurationFrames = Math.floor(asset.metadata.duration * fps);
-                                        const currentOffset = updates.props.mediaOffset || 0;
-
-                                        if (updates.durationInFrames + currentOffset > maxDurationFrames) {
-                                            updates.durationInFrames = Math.max(1, maxDurationFrames - currentOffset);
-                                        }
-                                    }
-                                }
-
-                                updateTrack(action.id, updates);
-                            }
-                        }}
-
-                        onRowDragEnd={(params: any) => {
-                            const newOrderIds = params.editorData.map((row: any) => row.id);
-                            reorderTracks(newOrderIds);
-                        }}
-
+                        getActionRender={handleActionRender}
+                        // @ts-ignore - Undocumented feature in react-timeline-editor
+                        getRowRender={handleRowRender}
+                        onActionMoveEnd={handleActionMoveEnd}
+                        onActionResizeEnd={handleActionResizeEnd}
+                        onRowDragEnd={handleRowDragEnd}
                     />
                 </div>
             </div>

@@ -16,6 +16,15 @@ export const PropertySidebar: React.FC = () => {
         });
     };
 
+    const handleNumberChange = (key: string, value: string, isFloat = false) => {
+        if (!track) return;
+        let parsed = isFloat ? parseFloat(value) : parseInt(value);
+        if (isNaN(parsed)) parsed = 0;
+        updateTrack(track.id, {
+            props: { ...track.props, [key]: parsed }
+        });
+    };
+
     return (
         <div className="w-full h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-20 shadow-xl overflow-hidden">
             {/* Sidebar Header */}
@@ -75,7 +84,7 @@ export const PropertySidebar: React.FC = () => {
                                         <input
                                             type="number"
                                             value={track.props.x}
-                                            onChange={(e) => handleChange('x', parseInt(e.target.value))}
+                                            onChange={(e) => handleNumberChange('x', e.target.value, false)}
                                             className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                         />
                                     </div>
@@ -84,7 +93,7 @@ export const PropertySidebar: React.FC = () => {
                                         <input
                                             type="number"
                                             value={track.props.y}
-                                            onChange={(e) => handleChange('y', parseInt(e.target.value))}
+                                            onChange={(e) => handleNumberChange('y', e.target.value, false)}
                                             className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                         />
                                     </div>
@@ -94,7 +103,7 @@ export const PropertySidebar: React.FC = () => {
                                             <input
                                                 type="number"
                                                 value={track.props.width || 0}
-                                                onChange={(e) => handleChange('width', parseInt(e.target.value))}
+                                                onChange={(e) => handleNumberChange('width', e.target.value, false)}
                                                 className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                             />
                                         </div>
@@ -103,7 +112,7 @@ export const PropertySidebar: React.FC = () => {
                                             <input
                                                 type="number"
                                                 value={track.props.height || 0}
-                                                onChange={(e) => handleChange('height', parseInt(e.target.value))}
+                                                onChange={(e) => handleNumberChange('height', e.target.value, false)}
                                                 className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                             />
                                         </div>
@@ -146,8 +155,8 @@ export const PropertySidebar: React.FC = () => {
                                             <span className="text-xs text-zinc-400 block">Size (px)</span>
                                             <input
                                                 type="number"
-                                                value={track.props.fontSize}
-                                                onChange={(e) => handleChange('fontSize', parseInt(e.target.value))}
+                                                value={track.props.fontSize ?? 0}
+                                                onChange={(e) => handleNumberChange('fontSize', e.target.value, false)}
                                                 className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:border-indigo-500 outline-none"
                                             />
                                         </div>
@@ -264,7 +273,7 @@ export const PropertySidebar: React.FC = () => {
                                             <input
                                                 type="number" min="0" max="10" step="0.1"
                                                 value={track.props.fadeInDuration ?? 0}
-                                                onChange={(e) => handleChange('fadeInDuration', parseFloat(e.target.value))}
+                                                onChange={(e) => handleNumberChange('fadeInDuration', e.target.value, true)}
                                                 className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
                                             />
                                         </div>
@@ -273,7 +282,7 @@ export const PropertySidebar: React.FC = () => {
                                             <input
                                                 type="number" min="0" max="10" step="0.1"
                                                 value={track.props.fadeOutDuration ?? 0}
-                                                onChange={(e) => handleChange('fadeOutDuration', parseFloat(e.target.value))}
+                                                onChange={(e) => handleNumberChange('fadeOutDuration', e.target.value, true)}
                                                 className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
                                             />
                                         </div>
