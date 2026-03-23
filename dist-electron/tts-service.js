@@ -345,59 +345,151 @@ class TtsService {
         });
     }
     // ─── Generation ──────────────────────────────────
-    static preprocessProsodyTags(text, provider) {
-        let cleanText = text;
-        let speed = 1.0;
-        let pitch = 0;
-        // Process Global Rate Tag (takes the last one found if multiple exist)
-        const rateMatches = Array.from(cleanText.matchAll(/\[speed:([\d.]+)\]/g));
-        if (rateMatches.length > 0) {
-            speed = parseFloat(rateMatches[rateMatches.length - 1][1] || '1.0');
-        }
-        cleanText = cleanText.replace(/\[\/?speed(:[\d.]+)?\]/g, '');
-        // Process Global Pitch Tag
-        const pitchMatches = Array.from(cleanText.matchAll(/\[pitch:([\-\d]+)\]/g));
-        if (pitchMatches.length > 0) {
-            pitch = parseInt(pitchMatches[pitchMatches.length - 1][1] || '0', 10);
-        }
-        cleanText = cleanText.replace(/\[\/?pitch(:[\-\d]+)?\]/g, '');
-        // Emphasis Tags (Strip for Piper, ignored for 11Labs natively, could use SSML but standard removes it)
-        cleanText = cleanText.replace(/\[\/?emphasis(:[a-z]+)?\]/g, '');
-        // Process Pauses
-        // [pause:short] -> 0.5s, [pause:medium] -> 1.0s, [pause:long] -> 2.0s
-        cleanText = cleanText.replace(/\[pause:(short|medium|long)\]/g, (match, duration) => {
-            if (provider === 'elevenlabs-cloud') {
-                const time = duration === 'short' ? '0.5s' : duration === 'medium' ? '1.0s' : '2.0s';
-                return `<break time="${time}"/>`;
+    static parseProsodyChunks(input) {
+        const regex = /(\[speed:[\d.]+\]|\[\/speed\]|\[pitch:[\-\d]+\]|\[\/pitch\]|\[emphasis:[a-z]+\]|\[\/emphasis\]|\[pause:(?:short|medium|long)\])/g;
+        const tokens = input.split(regex);
+        const chunks = [];
+        let currentSpeed = 1.0;
+        let currentPitch = 0;
+        let currentEmphasis = 'moderate';
+        let currentText = '';
+        for (const token of tokens) {
+            if (!token)
+                continue;
+            if (token.startsWith('[')) {
+                // If there's pending text, flush it to a chunk FIRST before changing state
+                if (currentText.trim()) {
+                    chunks.push({ text: currentText.trim(), speed: currentSpeed, pitch: currentPitch, emphasis: currentEmphasis, pauseAfter: 0 });
+                    currentText = '';
+                }
+                if (token.startsWith('[speed:')) {
+                    const val = token.match(/\[speed:([\d.]+)\]/)?.[1];
+                    if (val)
+                        currentSpeed = parseFloat(val);
+                }
+                else if (token === '[/speed]') {
+                    currentSpeed = 1.0;
+                }
+                else if (token.startsWith('[pitch:')) {
+                    const val = token.match(/\[pitch:([\-\d]+)\]/)?.[1];
+                    if (val)
+                        currentPitch = parseInt(val, 10);
+                }
+                else if (token === '[/pitch]') {
+                    currentPitch = 0;
+                }
+                else if (token.startsWith('[pause:')) {
+                    const val = token.match(/\[pause:(short|medium|long)\]/)?.[1];
+                    const pauseTime = val === 'short' ? 0.5 : val === 'medium' ? 1.0 : 2.0;
+                    // If the literal previous chunk was just pushed, we can append a pause to it
+                    if (chunks.length > 0) {
+                        chunks[chunks.length - 1].pauseAfter += pauseTime;
+                    }
+                    else {
+                        chunks.push({ text: '', speed: currentSpeed, pitch: currentPitch, emphasis: currentEmphasis, pauseAfter: pauseTime });
+                    }
+                }
+                else if (token.startsWith('[emphasis:')) {
+                    const val = token.match(/\[emphasis:([a-z]+)\]/)?.[1];
+                    if (val)
+                        currentEmphasis = val;
+                }
+                else if (token === '[/emphasis]') {
+                    currentEmphasis = 'moderate';
+                }
             }
             else {
-                // Piper pause simulation using punctuation
-                return duration === 'short' ? ' . . . ' : duration === 'medium' ? ' . . . . . ' : ' . . . . . . . . ';
+                currentText += token;
             }
-        });
-        // If ElevenLabs uses SSML, we must wrap in <speak>
-        if (provider === 'elevenlabs-cloud' && cleanText.includes('<break')) {
-            cleanText = `<speak>${cleanText}</speak>`;
         }
-        return { cleanText, speed, pitch };
+        if (currentText.trim()) {
+            chunks.push({ text: currentText.trim(), speed: currentSpeed, pitch: currentPitch, emphasis: currentEmphasis, pauseAfter: 0 });
+        }
+        return chunks;
+    }
+    static concatWavsAndSilences(items, outputPath) {
+        let finalFormatHeader = null;
+        const dataBuffers = [];
+        let sampleRate = 22050; // Piper default
+        let blockAlign = 2; // Piper default 16-bit mono
+        for (const item of items) {
+            if (item.file) {
+                if (!fs.existsSync(item.file))
+                    continue;
+                const buf = fs.readFileSync(item.file);
+                if (buf.toString('ascii', 0, 4) !== 'RIFF')
+                    continue;
+                let offset = 12;
+                let dataChunkOffset = -1;
+                let dataChunkSize = 0;
+                while (offset < buf.length) {
+                    const chunkId = buf.toString('ascii', offset, offset + 4);
+                    const chunkSize = buf.readUInt32LE(offset + 4);
+                    if (chunkId === 'fmt ') {
+                        if (!finalFormatHeader) {
+                            sampleRate = buf.readUInt32LE(offset + 12);
+                            blockAlign = buf.readUInt16LE(offset + 20);
+                        }
+                    }
+                    else if (chunkId === 'data') {
+                        dataChunkOffset = offset + 8;
+                        dataChunkSize = chunkSize;
+                        break;
+                    }
+                    offset += 8 + chunkSize;
+                }
+                if (dataChunkOffset !== -1) {
+                    if (!finalFormatHeader) {
+                        finalFormatHeader = buf.subarray(0, dataChunkOffset - 8);
+                    }
+                    dataBuffers.push(buf.subarray(dataChunkOffset, dataChunkOffset + dataChunkSize));
+                }
+            }
+            else if (item.silenceS && item.silenceS > 0) {
+                const numSamples = Math.floor(item.silenceS * sampleRate);
+                const silenceBytes = numSamples * blockAlign;
+                dataBuffers.push(Buffer.alloc(silenceBytes)); // Buffer.alloc fills with 0 (silence PCM)
+            }
+        }
+        if (dataBuffers.length === 0 || !finalFormatHeader) {
+            throw new Error("No valid WAV data to concatenate");
+        }
+        const totalDataLength = dataBuffers.reduce((acc, b) => acc + b.length, 0);
+        const totalFileSize = finalFormatHeader.length + 8 + totalDataLength;
+        const outHeader = Buffer.alloc(finalFormatHeader.length + 8);
+        finalFormatHeader.copy(outHeader, 0);
+        outHeader.writeUInt32LE(totalFileSize - 8, 4); // RIFF Size
+        outHeader.write('data', finalFormatHeader.length); // Data Header
+        outHeader.writeUInt32LE(totalDataLength, finalFormatHeader.length + 4); // Data Size
+        const finalArray = [outHeader, ...dataBuffers];
+        fs.writeFileSync(outputPath, Buffer.concat(finalArray));
     }
     static async generate(request, event) {
         const { text, voiceId, provider } = request;
         console.log(`[TTS] ▶ generate() called | provider=${provider} | voiceId=${voiceId} | text="${text.substring(0, 50)}..."`);
         const outputPath = path.join(this.tempDir, `tts_${Date.now()}.wav`);
-        console.log(`[TTS]   outputPath=${outputPath}`);
-        const { cleanText, speed, pitch } = this.preprocessProsodyTags(text, provider);
+        const chunks = this.parseProsodyChunks(text);
         if (provider === 'elevenlabs-cloud') {
-            return await this.generateElevenLabs(cleanText, voiceId, outputPath);
+            // For ElevenLabs, compile all chunks back into a single SSML string to save API costs
+            let ssml = chunks.map(c => {
+                let part = c.text;
+                if (c.pauseAfter > 0)
+                    part += ` <break time="${c.pauseAfter}s"/>`;
+                return part;
+            }).join(' ');
+            if (ssml.includes('<break'))
+                ssml = `<speak>${ssml}</speak>`;
+            return await this.generateElevenLabs(ssml, voiceId, outputPath);
         }
         else {
-            return await this.generatePiper(cleanText, voiceId, outputPath, event, speed, pitch);
+            // For Piper, generate each chunk specifically and then precisely stitch them mathematically
+            return await this.generatePiper(chunks, voiceId, outputPath, event);
         }
     }
     /**
-     * Local Piper TTS Generation with heavy logging and timeout.
+     * Local Piper TTS Generation with heavy logging and chunk management.
      */
-    static async generatePiper(text, voiceId, outputPath, event, speed = 1.0, pitch = 0) {
+    static async generatePiper(chunks, voiceId, outputPath, event) {
         console.log(`[TTS] ── generatePiper START ──`);
         console.log(`[TTS]   voiceId="${voiceId}"`);
         console.log(`[TTS]   outputPath="${outputPath}"`);
@@ -498,17 +590,34 @@ class TtsService {
         }
         console.log(`[TTS]   ✔ Final piperBin="${piperBin}"`);
         console.log(`[TTS]   ✔ Final modelPath="${modelPath}"`);
-        // ── Step 3: Spawn piper with timeout ──
-        const TIMEOUT_MS = 30000; // 30 seconds max
-        console.log(`[TTS]   Spawning: "${piperBin}" --model "${modelPath}" --output_file "${outputPath}"`);
+        const tempFiles = [];
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            if (chunk.text.trim()) {
+                const chunkPath = path.join(this.tempDir, `tts_chunk_${Date.now()}_${i}.wav`);
+                await this.runPiperProcess(piperBin, modelPath, chunk.text, chunkPath, chunk.speed);
+                tempFiles.push({ file: chunkPath });
+            }
+            if (chunk.pauseAfter > 0) {
+                tempFiles.push({ silenceS: chunk.pauseAfter });
+            }
+        }
+        this.concatWavsAndSilences(tempFiles, outputPath);
+        for (const t of tempFiles) {
+            if (t.file && fs.existsSync(t.file)) {
+                fs.unlinkSync(t.file);
+            }
+        }
+        return outputPath;
+    }
+    static runPiperProcess(piperBin, modelPath, text, outputPath, speed) {
+        const TIMEOUT_MS = 30000;
         return new Promise((resolve, reject) => {
             let settled = false;
-            const settle = (fn) => {
-                if (!settled) {
-                    settled = true;
-                    fn();
-                }
-            };
+            const settle = (fn) => { if (!settled) {
+                settled = true;
+                fn();
+            } };
             const lengthScale = Number((1.0 / Math.max(0.1, speed)).toFixed(3)); // --length_scale (smaller is faster in piper)
             const piperArgs = [
                 '--model', modelPath,
@@ -517,51 +626,26 @@ class TtsService {
                 '--noise_scale', '0.667',
                 '--noise_w', '0.8'
             ];
-            console.log(`[TTS]   Spawning Piper PID=${settled} with args: ${piperArgs.join(' ')}`);
             const piper = (0, child_process_1.spawn)(piperBin, piperArgs);
-            console.log(`[TTS]   Piper PID=${piper.pid}`);
             let stderrOutput = '';
-            let stdoutOutput = '';
-            piper.stdout.on('data', (data) => {
-                const text = data.toString();
-                stdoutOutput += text;
-                console.log(`[TTS]   [stdout] ${text.trim()}`);
-            });
-            piper.stderr.on('data', (data) => {
-                const text = data.toString();
-                stderrOutput += text;
-                console.log(`[TTS]   [stderr] ${text.trim()}`);
-            });
+            piper.stderr.on('data', (data) => { stderrOutput += data.toString(); });
             piper.stdin.write(text);
             piper.stdin.end();
-            console.log(`[TTS]   Text written to stdin and closed.`);
-            // Timeout guard
             const timer = setTimeout(() => {
-                console.error(`[TTS]   ✘ TIMEOUT after ${TIMEOUT_MS}ms! Killing piper PID=${piper.pid}`);
-                console.error(`[TTS]   stderr so far: ${stderrOutput}`);
-                console.error(`[TTS]   stdout so far: ${stdoutOutput}`);
                 piper.kill('SIGKILL');
-                settle(() => reject(new Error(`Prism Engine timed out after ${TIMEOUT_MS / 1000}s. stderr: ${stderrOutput}`)));
+                settle(() => reject(new Error(`Prism Engine timed out. stderr: ${stderrOutput}`)));
             }, TIMEOUT_MS);
             piper.on('close', (code) => {
                 clearTimeout(timer);
-                console.log(`[TTS]   Piper exited with code=${code}`);
-                if (stderrOutput)
-                    console.log(`[TTS]   stderr: ${stderrOutput.trim()}`);
-                if (code === 0) {
-                    const exists = fs.existsSync(outputPath);
-                    const size = exists ? fs.statSync(outputPath).size : 0;
-                    console.log(`[TTS]   ✔ Output file exists=${exists} size=${size} bytes`);
-                    settle(() => resolve(outputPath));
+                if (code === 0 && fs.existsSync(outputPath)) {
+                    settle(() => resolve());
                 }
                 else {
-                    console.error(`[TTS]   ✘ Piper failed with code ${code}`);
-                    settle(() => reject(new Error(`Prism Engine exited with code ${code}. ${stderrOutput}`)));
+                    settle(() => reject(new Error(`Piper failed with code ${code}. err: ${stderrOutput}`)));
                 }
             });
             piper.on('error', (err) => {
                 clearTimeout(timer);
-                console.error(`[TTS]   ✘ Spawn error: ${err.message}`);
                 settle(() => reject(err));
             });
         });
