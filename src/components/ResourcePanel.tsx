@@ -58,6 +58,52 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
     const timerIntervalRef = useRef<number | null>(null);
+    
+    // Audio Extraction State
+    const [isExtracting, setIsExtracting] = useState<string | null>(null);
+
+    const extractAudioFromVideo = async (asset: PrismAsset) => {
+        setIsExtracting(asset.id);
+        try {
+            const res = await fetch(asset.src);
+            const arrayBuffer = await res.arrayBuffer();
+            
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            const wavBlob = audioBufferToWav(decodedBuffer);
+            
+            const newAssetId = crypto.randomUUID();
+            const originalNameParts = (asset.metadata?.originalName || 'video.mp4').split('.');
+            originalNameParts.pop();
+            const newName = `${originalNameParts.join('.')}_audio.wav`;
+
+            const objectUrl = URL.createObjectURL(wavBlob);
+            
+            const newAsset: PrismAsset = {
+                id: newAssetId,
+                type: 'audio',
+                src: objectUrl,
+                metadata: {
+                    originalName: newName,
+                    mimeType: 'audio/wav',
+                    duration: decodedBuffer.duration,
+                    createdAt: Date.now()
+                }
+            };
+            
+            const file = new File([wavBlob], newName, { type: 'audio/wav' });
+            await AssetStorage.saveAsset(newAsset, file);
+            
+            addAsset(newAsset);
+            setPreviewAssetId(null);
+        } catch (err) {
+            console.error("Audio Extraction Failed", err);
+            alert("Could not extract audio from this video.");
+        } finally {
+            setIsExtracting(null);
+        }
+    };
 
     // Cleanup recording on unmount
     useEffect(() => {
@@ -602,13 +648,29 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                                                 {asset.metadata?.duration && <span>{asset.metadata.duration.toFixed(1)}s</span>}
                                             </div>
                                             
-                                            <button 
-                                                onClick={handleAddToTimeline}
-                                                className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold rounded shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-1"
-                                            >
-                                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-                                                <span>ADD TO TIMELINE</span>
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {asset.type === 'video' && (
+                                                    <button 
+                                                        onClick={() => extractAudioFromVideo(asset)}
+                                                        disabled={isExtracting === asset.id}
+                                                        className={`px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-bold rounded shadow-lg transition-all active:scale-95 flex items-center gap-1 ${isExtracting === asset.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        {isExtracting === asset.id ? (
+                                                            <div className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin cursor-wait"></div>
+                                                        ) : (
+                                                            <svg className="w-2.5 h-2.5 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                                                        )}
+                                                        <span>EXTRACT AUDIO</span>
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={handleAddToTimeline}
+                                                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold rounded shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-1"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                                                    <span>ADD TO TIMELINE</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1029,3 +1091,52 @@ const ReviewAudioPlayer = ({ src, duration }: { src: string, duration: number })
         </div>
     );
 };
+
+function audioBufferToWav(buffer: AudioBuffer) {
+    let numOfChan = buffer.numberOfChannels,
+        length = buffer.length * numOfChan * 2 + 44,
+        bufferArray = new ArrayBuffer(length),
+        view = new DataView(bufferArray),
+        channels = [], i, sample,
+        offset = 0,
+        pos = 0;
+
+    const setUint16 = (data: number) => {
+        view.setUint16(offset, data, true);
+        offset += 2;
+    };
+
+    const setUint32 = (data: number) => {
+        view.setUint32(offset, data, true);
+        offset += 4;
+    };
+
+    setUint32(0x46464952);
+    setUint32(length - 8);
+    setUint32(0x45564157);
+    setUint32(0x20746d66);
+    setUint32(16);
+    setUint16(1);
+    setUint16(numOfChan);
+    setUint32(buffer.sampleRate);
+    setUint32(buffer.sampleRate * 2 * numOfChan);
+    setUint16(numOfChan * 2);
+    setUint16(16);
+    setUint32(0x61746164);
+    setUint32(length - pos - 4);
+
+    for(i = 0; i < buffer.numberOfChannels; i++)
+        channels.push(buffer.getChannelData(i));
+
+    while(pos < buffer.length) {
+        for(i = 0; i < numOfChan; i++) {
+            sample = Math.max(-1, Math.min(1, channels[i][pos]));
+            sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+            view.setInt16(offset, sample, true);
+            offset += 2;
+        }
+        pos++;
+    }
+
+    return new Blob([bufferArray], {type: "audio/wav"});
+}
