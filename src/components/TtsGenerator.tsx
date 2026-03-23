@@ -179,13 +179,26 @@ export const TtsGenerator: React.FC = () => {
         if (type === 'pause') {
             injectedText = `[pause:${value}]`;
         } else {
-            injectedText = `[${type}:${value}]${selectedText || 'text'}[/${type}]`;
+            if (selectedText) {
+                injectedText = `[${type}:${value}]${selectedText}[/${type}]`;
+            } else {
+                injectedText = `[${type}:${value}] `;
+            }
         }
 
-        const newText = text.substring(0, start) + injectedText + text.substring(end);
-        setText(newText);
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(start, end);
 
-        // Refocus and set cursor position after updating
+        // Using standard document.execCommand to securely insert text while preserving the native browser Ctrl+Z undo history
+        const success = document.execCommand('insertText', false, injectedText);
+
+        // Fallback for extremely strict environments where execCommand is disabled
+        if (!success) {
+            const newText = text.substring(0, start) + injectedText + text.substring(end);
+            setText(newText);
+        }
+
+        // Refocus and set cursor position exactly after the newly injected text
         setTimeout(() => {
             if (textareaRef.current) {
                 textareaRef.current.focus();
