@@ -48,6 +48,13 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
     // Voice Record State
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
+    const [pendingRecording, setPendingRecording] = useState<{
+        blob: Blob,
+        objectUrl: string,
+        duration: number,
+        originalName: string
+    } | null>(null);
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
     const timerIntervalRef = useRef<number | null>(null);
@@ -59,8 +66,11 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
             if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
             }
+            if (pendingRecording) {
+                URL.revokeObjectURL(pendingRecording.objectUrl);
+            }
         };
-    }, []);
+    }, [pendingRecording]);
 
     // Load Fonts when selected
     useEffect(() => {
@@ -118,25 +128,15 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
 
                 if (duration <= 0) duration = Math.max(0.1, recordingTime); // fallback
 
-                const assetId = crypto.randomUUID();
                 const originalName = `Recording_${new Date().toLocaleTimeString().replace(/:/g, '-')}.webm`;
-                const newAsset: PrismAsset = {
-                    id: assetId,
-                    type: 'audio',
-                    src: objectUrl,
-                    metadata: {
-                        originalName,
-                        mimeType: 'audio/webm',
-                        duration,
-                        createdAt: Date.now()
-                    }
-                };
                 
-                const file = new File([audioBlob], originalName, { type: 'audio/webm' });
-                AssetStorage.saveAsset(newAsset, file).catch((err: any) => console.error("Failed to save recording persistence:", err));
-                addAsset(newAsset);
-                
-                setActiveTab('media');
+                // Set to pending state instead of saving immediately
+                setPendingRecording({
+                    blob: audioBlob,
+                    objectUrl,
+                    duration,
+                    originalName
+                });
                 
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -161,6 +161,42 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
             }
+        }
+    };
+
+    const handleConfirmRecording = async () => {
+        if (!pendingRecording) return;
+        
+        try {
+            const assetId = crypto.randomUUID();
+            const newAsset: PrismAsset = {
+                id: assetId,
+                type: 'audio',
+                src: pendingRecording.objectUrl,
+                metadata: {
+                    originalName: pendingRecording.originalName,
+                    mimeType: 'audio/webm',
+                    duration: pendingRecording.duration,
+                    createdAt: Date.now()
+                }
+            };
+            
+            const file = new File([pendingRecording.blob], pendingRecording.originalName, { type: 'audio/webm' });
+            await AssetStorage.saveAsset(newAsset, file);
+            addAsset(newAsset);
+            
+            setPendingRecording(null);
+            setActiveTab('media');
+        } catch (err) {
+            console.error("Failed to save recording persistence:", err);
+            alert("Failed to save recording.");
+        }
+    };
+
+    const handleDiscardRecording = () => {
+        if (pendingRecording) {
+            URL.revokeObjectURL(pendingRecording.objectUrl);
+            setPendingRecording(null);
         }
     };
 
@@ -772,46 +808,87 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                     )}
 
                     {activeTab === 'record' && (
-                        <div className="flex flex-col items-center justify-center p-8 h-full">
-                            <div className="relative flex items-center justify-center mb-8">
-                                {/* Pulsing rings when recording */}
-                                {isRecording && (
-                                    <>
-                                        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20" style={{ transform: 'scale(1.5)' }}></div>
-                                        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-10" style={{ transform: 'scale(2)', animationDelay: '0.2s' }}></div>
-                                    </>
-                                )}
-                                <button
-                                    onClick={isRecording ? stopRecording : startRecording}
-                                    className={`relative z-10 flex flex-col items-center justify-center w-24 h-24 rounded-full transition-all duration-300 shadow-2xl ${
-                                        isRecording 
-                                        ? 'bg-red-500 hover:bg-red-600 shadow-red-500/50' 
-                                        : 'bg-zinc-800 hover:bg-zinc-700 shadow-transparent hover:shadow-zinc-700/50 border border-zinc-700'
-                                    }`}
-                                >
-                                    {isRecording ? (
-                                        <div className="w-8 h-8 bg-white rounded-sm"></div>
-                                    ) : (
-                                        <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
+                        <div className="flex flex-col items-center justify-center p-6 h-full text-zinc-200">
+                            {pendingRecording ? (
+                                <div className="w-full flex justify-center items-center h-full"> 
+                                    <div className="w-full max-w-sm flex flex-col items-center justify-center gap-6 p-6 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200">
+                                        
+                                        <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                                            <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                                        </div>
+                                        
+                                        <div className="text-center w-full px-2">
+                                            <div 
+                                                className="text-xs font-semibold truncate leading-snug mx-auto mb-3 text-zinc-300 w-full"
+                                                title={pendingRecording.originalName}
+                                            >
+                                                {pendingRecording.originalName}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="w-full px-2 mb-2">
+                                            <ReviewAudioPlayer src={pendingRecording.objectUrl} duration={pendingRecording.duration} />
+                                        </div>
+                                        
+                                        <div className="flex w-full gap-2 mt-2">
+                                            <button 
+                                                onClick={handleDiscardRecording}
+                                                className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] font-bold rounded-md shadow transition-colors"
+                                            >
+                                                Discard
+                                            </button>
+                                            <button 
+                                                onClick={handleConfirmRecording}
+                                                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-md shadow-lg shadow-emerald-600/20 transition-all hover:shadow-emerald-500/30"
+                                            >
+                                                Save to Media
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative flex items-center justify-center mb-8">
+                                        {/* Pulsing rings when recording */}
+                                        {isRecording && (
+                                            <>
+                                                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20" style={{ transform: 'scale(1.5)' }}></div>
+                                                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-10" style={{ transform: 'scale(2)', animationDelay: '0.2s' }}></div>
+                                            </>
+                                        )}
+                                        <button
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            className={`relative z-10 flex flex-col items-center justify-center w-24 h-24 rounded-full transition-all duration-300 shadow-2xl ${
+                                                isRecording 
+                                                ? 'bg-red-500 hover:bg-red-600 shadow-red-500/50' 
+                                                : 'bg-zinc-800 hover:bg-zinc-700 shadow-transparent hover:shadow-zinc-700/50 border border-zinc-700'
+                                            }`}
+                                        >
+                                            {isRecording ? (
+                                                <div className="w-8 h-8 bg-white rounded-sm"></div>
+                                            ) : (
+                                                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                                </svg>
+                                            )}
+                                        </button>
+                                    </div>
 
-                            <div className="text-center font-mono">
-                                <div className={`text-4xl font-bold transition-colors ${isRecording ? 'text-red-400' : 'text-zinc-500'}`}>
-                                    {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
-                                </div>
-                                <div className={`text-[10px] mt-2 tracking-widest uppercase transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'text-zinc-600'}`}>
-                                    {isRecording ? 'Recording Live...' : 'Ready to record'}
-                                </div>
-                            </div>
-                            
-                            {!isRecording && recordingTime === 0 && (
-                                <p className="text-center text-[10px] text-zinc-500 mt-12 max-w-[80%] leading-relaxed">
-                                    Click the microphone to start recording your voice. Once stopped, the audio clip will appear in your Media tab.
-                                </p>
+                                    <div className="text-center font-mono">
+                                        <div className={`text-4xl font-bold transition-colors ${isRecording ? 'text-red-400' : 'text-zinc-500'}`}>
+                                            {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                        </div>
+                                        <div className={`text-[10px] mt-2 tracking-widest uppercase transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'text-zinc-600'}`}>
+                                            {isRecording ? 'Recording Live...' : 'Ready to record'}
+                                        </div>
+                                    </div>
+                                    
+                                    {!isRecording && recordingTime === 0 && (
+                                        <p className="text-center text-[10px] text-zinc-500 mt-12 max-w-[80%] leading-relaxed">
+                                            Click the microphone to start recording your voice.
+                                        </p>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}
@@ -866,6 +943,89 @@ const CustomFontSelect = ({ value, onChange, systemFonts, googleFonts }: { value
                     </div>
                 </>
             )}
+        </div>
+    );
+};
+
+const ReviewAudioPlayer = ({ src, duration }: { src: string, duration: number }) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+
+    const togglePlay = () => {
+        if (audioRef.current) {
+            if (isPlaying) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    const handleEnded = () => {
+        setIsPlaying(false);
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            setCurrentTime(0);
+        }
+    };
+
+    return (
+        <div className="w-full flex flex-col gap-2 bg-zinc-950/50 p-3 rounded-lg border border-zinc-800/80 shadow-inner">
+            <audio 
+                ref={audioRef} 
+                src={src} 
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={handleEnded}
+                className="hidden"
+            />
+            
+            <div className="flex items-center gap-3 w-full">
+                <button 
+                    onClick={togglePlay}
+                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-lg shadow-emerald-500/20"
+                >
+                    {isPlaying ? (
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+                    ) : (
+                        <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    )}
+                </button>
+                
+                <div className="flex-1 flex items-center gap-2">
+                    <div className="text-[9px] font-mono text-zinc-400 w-6 text-right">
+                        {currentTime.toFixed(1)}
+                    </div>
+                    
+                    <div 
+                        className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden relative cursor-pointer group"
+                        onClick={(e) => {
+                            if (audioRef.current) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                audioRef.current.currentTime = pos * duration;
+                                setCurrentTime(pos * duration);
+                            }
+                        }}
+                    >
+                        <div 
+                            className="absolute top-0 left-0 bottom-0 bg-emerald-500 rounded-full group-hover:bg-emerald-400 transition-colors"
+                            style={{ width: `${Math.min(100, (currentTime / (duration || 1)) * 100)}%` }}
+                        />
+                    </div>
+                    
+                    <div className="text-[9px] font-mono text-zinc-500 w-6">
+                        {duration.toFixed(1)}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
