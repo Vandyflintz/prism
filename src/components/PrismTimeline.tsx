@@ -50,9 +50,10 @@ const LabelBtn = ({ onClick, label, active, title, activeColor }: { onClick?: ()
 
 interface PrismTimelineProps {
     onOpenSettings?: () => void;
+    onOpenAutoCaptions?: () => void;
 }
 
-export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) => {
+export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, onOpenAutoCaptions }) => {
     const {
         project, assets, updateTrack, currentTime, setCurrentTime, isPlaying, setIsPlaying, reorderTracks,
         toggleTrackLock, toggleTrackVisibility, splitTrack, deleteTrack, selectedTrackId, setSelectedTrackId,
@@ -468,8 +469,21 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                     </div>
                 </div>
 
-                {/* Zoom Controls */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                    {/* Auto Captions Trigger */}
+                    <button 
+                        onClick={onOpenAutoCaptions}
+                        className="px-3 py-1 bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-bold tracking-widest rounded shadow-[0_4px_14px_0_rgba(139,92,246,0.39)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.23)] hover:bg-[rgba(139,92,246,0.9)] transition-all active:scale-95 flex items-center gap-1.5 border border-violet-500/50 uppercase"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                        <span>AUTO CAPTIONS</span>
+                    </button>
+
+                    {/* Separator */}
+                    <div className="w-[1px] h-4 bg-zinc-800"></div>
+
+                    {/* Zoom Controls */}
+                    <div className="flex items-center gap-2">
                     <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-bold mr-1">Timeline Scale</span>
                     <div className="flex items-center bg-zinc-900 rounded-lg p-0.5 border border-zinc-800">
                         <IconBtn onClick={handleZoomOut} title="Zoom Out">
@@ -480,6 +494,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings }) 
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         </IconBtn>
                     </div>
+                </div>
                 </div>
             </div>
 

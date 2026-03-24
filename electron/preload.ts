@@ -19,6 +19,9 @@ contextBridge.exposeInMainWorld('electron', {
     testTtsConnection: () => ipcRenderer.invoke('tts:testConnection'),
     downloadPiper: () => ipcRenderer.invoke('tts:downloadPiper'),
     
+    // STT API
+    generateCaptions: (buffer: ArrayBuffer) => ipcRenderer.invoke('stt:generateCaptions', buffer),
+    
     onDownloadProgress: (callback: (data: {status: string, progress: number}) => void) => {
         const listener = (_e: any, data: any) => callback(data);
         ipcRenderer.on('tts:downloadProgress', listener);

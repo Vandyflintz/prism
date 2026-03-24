@@ -13,6 +13,7 @@ import { ResourcePanel } from './ResourcePanel';
 import { ExportModal } from './ExportModal';
 import { AssetStorage } from '../lib/AssetStorage';
 import { TtsGenerator } from './TtsGenerator';
+import { AutoCaptionsModal } from './AutoCaptionsModal';
 
 
 // Removed MOCK_PROJECT boilerplate
@@ -187,6 +188,9 @@ export const PrismEditor: React.FC = () => {
     const [exportProgress, setExportProgress] = React.useState(0);
     const [exportStatus, setExportStatus] = React.useState<'idle' | 'rendering' | 'done' | 'error'>('idle');
     const [exportOutput, setExportOutput] = React.useState('');
+
+    // STT State
+    const [isAutoCaptionsModalOpen, setIsAutoCaptionsModalOpen] = React.useState(false);
 
     // Persistence State
     const [currentFilePath, setCurrentFilePath] = React.useState<string | null>(null);
@@ -850,7 +854,10 @@ export const PrismEditor: React.FC = () => {
                     <div className="w-full shrink-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent opacity-50"></div>
                     
                     <div className="flex-1 overflow-hidden">
-                        <PrismTimeline onOpenSettings={handleOpenSettings} />
+                        <PrismTimeline 
+                            onOpenSettings={handleOpenSettings} 
+                            onOpenAutoCaptions={() => setIsAutoCaptionsModalOpen(true)}
+                        />
                     </div>
                 </div>
 
@@ -870,6 +877,9 @@ export const PrismEditor: React.FC = () => {
 
             {/* TTS Generator Modal */}
             <TtsGenerator />
+
+            {/* Auto Captions Modal */}
+            {isAutoCaptionsModalOpen && <AutoCaptionsModal onClose={() => setIsAutoCaptionsModalOpen(false)} />}
         </div>
     );
 }

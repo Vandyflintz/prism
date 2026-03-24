@@ -179,6 +179,20 @@ const persistence_1 = require("./persistence");
 // TTS Service
 const tts_service_1 = require("./tts-service");
 tts_service_1.TtsService.init();
+// STT Service
+const stt_service_1 = require("./stt-service");
+electron_1.ipcMain.handle('stt:generateCaptions', async (event, buffer) => {
+    console.log(`[Main] STT Generate Captions called. Buffer size: ${buffer.byteLength}`);
+    const tempPath = path.join(os.tmpdir(), `prism-stt-${Date.now()}.wav`);
+    await fs.promises.writeFile(tempPath, new Uint8Array(buffer));
+    try {
+        const chunks = await (0, stt_service_1.generateCaptions)(tempPath);
+        return chunks;
+    }
+    finally {
+        fs.promises.unlink(tempPath).catch(e => console.error("Failed to delete temp STT file", e));
+    }
+});
 electron_1.ipcMain.handle('project:save', async (event, { data, filePath }) => {
     let targetPath = filePath;
     if (!targetPath) {

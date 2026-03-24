@@ -214,27 +214,42 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
         if (!pendingRecording) return;
         
         try {
+            // CRITICAL: audio/webm blobs from MediaRecorder cannot be seeked by the browser.
+            // Remotion must seek audio to keep it in sync with the timeline.         
+            // We must transcode to WAV (PCM) which is always seekable.
+            const rawArrayBuffer = await pendingRecording.blob.arrayBuffer();
+            const audioCtx = new AudioContext();
+            const decodedBuffer = await audioCtx.decodeAudioData(rawArrayBuffer);
+
+            // Re-encode as WAV
+            const wavBlob = audioBufferToWav(decodedBuffer);
+            const wavName = pendingRecording.originalName.replace('.webm', '.wav');
+            const wavUrl = URL.createObjectURL(wavBlob);
+            
+            // Revoke the old webm URL since we no longer need it
+            URL.revokeObjectURL(pendingRecording.objectUrl);
+
             const assetId = crypto.randomUUID();
             const newAsset: PrismAsset = {
                 id: assetId,
                 type: 'audio',
-                src: pendingRecording.objectUrl,
+                src: wavUrl,
                 metadata: {
-                    originalName: pendingRecording.originalName,
-                    mimeType: 'audio/webm',
+                    originalName: wavName,
+                    mimeType: 'audio/wav',
                     duration: pendingRecording.duration,
                     createdAt: Date.now()
                 }
             };
             
-            const file = new File([pendingRecording.blob], pendingRecording.originalName, { type: 'audio/webm' });
+            const file = new File([wavBlob], wavName, { type: 'audio/wav' });
             await AssetStorage.saveAsset(newAsset, file);
             addAsset(newAsset);
             
             setPendingRecording(null);
             setActiveTab('media');
         } catch (err) {
-            console.error("Failed to save recording persistence:", err);
+            console.error("Failed to save recording:", err);
             alert("Failed to save recording.");
         }
     };
@@ -1122,8 +1137,8 @@ function audioBufferToWav(buffer: AudioBuffer) {
     setUint32(buffer.sampleRate * 2 * numOfChan);
     setUint16(numOfChan * 2);
     setUint16(16);
-    setUint32(0x61746164);
-    setUint32(length - pos - 4);
+    setUint32(0x61746164); // "data"
+    setUint32(length - 44);
 
     for(i = 0; i < buffer.numberOfChannels; i++)
         channels.push(buffer.getChannelData(i));

@@ -37,6 +37,7 @@ interface PrismState {
     reorderTracks: (orderedTrackIds: string[]) => void;
 
     addTrack: (track: PrismTrack) => void;
+    addTracks: (tracks: PrismTrack[]) => void;
     addAsset: (asset: PrismAsset) => void;
     toggleTrackLock: (trackId: string) => void;
     toggleTrackVisibility: (trackId: string) => void;
@@ -107,6 +108,15 @@ export const usePrismStore = create<PrismState>()(
                 if (!state.project) return state;
                 const tracks = [...state.project.tracks, track];
                 return { project: { ...state.project, tracks } };
+            }),
+
+            addTracks: (newTracks) => set((state) => {
+                if (!state.project) return state;
+                const tracks = [...state.project.tracks, ...newTracks];
+                // Also auto-extend the project duration if captions go beyond it
+                const maxEndFrame = newTracks.reduce((max, t) => Math.max(max, t.startFrame + t.durationInFrames), 0);
+                const durationInFrames = Math.max(state.project.durationInFrames, maxEndFrame + 30);
+                return { project: { ...state.project, tracks, durationInFrames } };
             }),
 
             addAsset: (asset) => set((state) => {

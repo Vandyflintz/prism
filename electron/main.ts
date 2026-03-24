@@ -162,6 +162,21 @@ import { saveProjectPackage, loadProjectPackage } from './persistence';
 import { TtsService } from './tts-service';
 TtsService.init();
 
+// STT Service
+import { generateCaptions } from './stt-service';
+ipcMain.handle('stt:generateCaptions', async (event, buffer: ArrayBuffer) => {
+    console.log(`[Main] STT Generate Captions called. Buffer size: ${buffer.byteLength}`);
+    const tempPath = path.join(os.tmpdir(), `prism-stt-${Date.now()}.wav`);
+    await fs.promises.writeFile(tempPath, new Uint8Array(buffer));
+    
+    try {
+        const chunks = await generateCaptions(tempPath);
+        return chunks;
+    } finally {
+        fs.promises.unlink(tempPath).catch(e => console.error("Failed to delete temp STT file", e));
+    }
+});
+
 ipcMain.handle('project:save', async (event, { data, filePath }) => {
     let targetPath = filePath;
 

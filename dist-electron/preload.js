@@ -17,6 +17,8 @@ electron_1.contextBridge.exposeInMainWorld('electron', {
     getVoices: (provider) => electron_1.ipcRenderer.invoke('tts:getVoices', provider),
     testTtsConnection: () => electron_1.ipcRenderer.invoke('tts:testConnection'),
     downloadPiper: () => electron_1.ipcRenderer.invoke('tts:downloadPiper'),
+    // STT API
+    generateCaptions: (buffer) => electron_1.ipcRenderer.invoke('stt:generateCaptions', buffer),
     onDownloadProgress: (callback) => {
         const listener = (_e, data) => callback(data);
         electron_1.ipcRenderer.on('tts:downloadProgress', listener);
