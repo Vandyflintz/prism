@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePrismStore } from '../store/usePrismStore';
 import { PrismTrack } from '../../types/prism';
+import { generateId } from '../../lib/id';
 
 interface AutoCaptionsModalProps {
     onClose: () => void;
@@ -100,7 +101,7 @@ export const AutoCaptionsModal: React.FC<AutoCaptionsModalProps> = ({ onClose })
                 const durationInFrames = Math.max(1, endFrame - startFrame);
 
                 captionTracks.push({
-                    id: crypto.randomUUID(),
+                    id: generateId(),
                     type: 'text',
                     startFrame,
                     durationInFrames,

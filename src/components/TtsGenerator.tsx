@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePrismStore } from '../store/usePrismStore';
 import { PrismAsset } from '../../types/prism';
 import { AssetStorage } from '../lib/AssetStorage';
+import { generateId } from '../../lib/id';
 
 export const TtsGenerator: React.FC = () => {
     const {
@@ -139,7 +140,7 @@ export const TtsGenerator: React.FC = () => {
             const objectUrl = URL.createObjectURL(blob);
             
             // Add as persistent Asset
-            const assetId = crypto.randomUUID();
+            const assetId = generateId();
             const newAsset: PrismAsset = {
                 id: assetId,
                 type: 'audio',

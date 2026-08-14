@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import { AudioWaveform } from './AudioWaveform';
 import { VideoThumbnail } from './VideoThumbnail';
+import { usePrismStore } from '../store/usePrismStore';
 
 interface TimelineActionItemProps {
     action: Record<string, any>;
@@ -9,6 +10,7 @@ interface TimelineActionItemProps {
 
 export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }) => {
     const { label, type, src, color } = action.data || {};
+    const isPlaying = usePrismStore((state) => state.isPlaying);
 
     // Default Styles
     let baseClasses = "flex items-center px-3 h-[24px] my-auto rounded-md shadow-md border text-xs font-medium select-none overflow-hidden transition-all hover:brightness-110 ring-1 ring-white/10 relative";
@@ -59,12 +61,17 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-    useEffect(() => {
-        if (containerRef.current) {
-            const { width, height } = containerRef.current.getBoundingClientRect();
-            setDimensions({ width, height });
-        }
-    }, [action]);
+    useLayoutEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const { width, height } = el.getBoundingClientRect();
+        setDimensions((prev) => (
+            prev.width === width && prev.height === height
+                ? prev
+                : { width, height }
+        ));
+    }, []);
 
     // Helper: Determine if we should show waveform
     // Show for audio OR video if we have a valid src
@@ -77,7 +84,7 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
                 {src && type === 'image' && <div className="absolute inset-0 bg-black/40 pointer-events-none" />}
 
                 {/* Audio Waveform Background */}
-                {showWaveform && (
+                {showWaveform && !isPlaying && (
                     <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen">
                         {/* We pass dynamically measured width to canvas */}
                         {dimensions.width > 0 && (
@@ -92,7 +99,7 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
                 )}
 
                 {/* Video Thumbnail Background */}
-                {type === 'video' && src && dimensions.width > 0 && (
+                {type === 'video' && src && dimensions.width > 0 && !isPlaying && (
                     <VideoThumbnail
                         src={src}
                         width={dimensions.width}
@@ -101,6 +108,10 @@ export const TimelineActionItem: React.FC<TimelineActionItemProps> = ({ action }
                         duration={action.end - action.start}
                         className="absolute inset-0 z-0 opacity-50 contrast-125"
                     />
+                )}
+
+                {(isPlaying && (type === 'audio' || type === 'video')) && (
+                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-900/80 via-zinc-700/30 to-zinc-900/80 pointer-events-none" />
                 )}
 
                 <div className="relative flex items-center z-10 w-full pl-1">

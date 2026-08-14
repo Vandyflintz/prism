@@ -3,6 +3,7 @@ import { Timeline, TimelineState } from '@xzdarcy/react-timeline-editor';
 import '@xzdarcy/react-timeline-editor/dist/react-timeline-editor.css';
 import { useStore } from 'zustand';
 import { usePrismStore } from '../store/usePrismStore';
+import { generateId } from '../../lib/id';
 
 import { TimelineActionItem } from './TimelineActionItem';
 import { PrismProject } from '../../types/prism';
@@ -104,31 +105,6 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
             isInternalSync.current = true;
             timelineRef.current.setTime(time);
             
-            // AUTO-SCROLL LOGIC: Ensure playhead is visible
-            if (isTimelineFollowEnabled && isPlaying && !isUserInteracting.current) {
-                // Use the ref updated by onScroll
-                const scrollLeft = scrollLeftRef.current;
-                
-                // Use actual width of the container
-                const viewWidth = timelineContainerRef.current?.clientWidth || 1000; 
-                
-                // Calculate position of cursor in pixels
-                const cursorX = time * zoom;
-                
-                // FLUID SYNC: Keep the playhead around the 20% mark
-                const targetScrollLeft = Math.max(0, cursorX - (viewWidth * 0.2));
-                
-                // Always sync scroll if enabled and playing for "fluid" feel
-                if (timelineRef.current?.setScrollLeft) {
-                    // Only scroll if we are sufficiently far from target to avoid constant micro-shaking
-                    // but close enough to feel fluid.
-                    if (Math.abs(scrollLeft - targetScrollLeft) > 1) {
-                        timelineRef.current.setScrollLeft(targetScrollLeft);
-                    }
-                }
-            }
-
-            timelineRef.current.reRender();
             // Reset after a small delay to allow events to process
             setTimeout(() => { isInternalSync.current = false; }, 50);
         }
@@ -240,6 +216,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
     }, [setSelectedTrackId]);
 
     const handleTimelineScroll = React.useCallback(({ scrollTop, scrollLeft }: any) => {
+        if (isPlaying) return;
         scrollLeftRef.current = scrollLeft;
         if (isSyncingScroll.current) return;
         if (sidebarRef.current && sidebarRef.current.scrollTop !== scrollTop) {
@@ -515,7 +492,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
 
                     try {
                         const data = JSON.parse(dataStr);
-                        const id = crypto.randomUUID();
+                        const id = generateId();
                         const startFrame = currentTime || 0;
 
                         if (data.type === 'asset') {
@@ -523,7 +500,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
 
                             // If we have a src but no assetId (e.g. PSD Layer), create an asset now
                             if (!assetId && data.src) {
-                                assetId = crypto.randomUUID();
+                                assetId = generateId();
                                 addAsset({
                                     id: assetId,
                                     type: data.assetType, // 'image' or 'text' -> but likely 'image' here
@@ -560,7 +537,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
                                     // 2. Add Tracks (preserving relative order)
                                     if (psdProject.tracks) {
                                         psdProject.tracks.forEach(track => {
-                                            const newTrackId = crypto.randomUUID();
+                                            const newTrackId = generateId();
                                             addTrack({
                                                 ...track,
                                                 id: newTrackId,
@@ -584,7 +561,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
                                                 processPsdLayers(layer.children);
                                             } else {
                                                 // Leaf
-                                                const trackId = crypto.randomUUID();
+                                                const trackId = generateId();
                                                 const props: any = {
                                                     // asset.metadata.layers has coordinates relative to PSD canvas (0,0).
                                                     // We use absolute coordinates match PSD structure.
@@ -607,7 +584,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
                                                 } else {
                                                     // Image Layer
                                                     if (layer.src) {
-                                                        const newAssetId = crypto.randomUUID();
+                                                        const newAssetId = generateId();
                                                         addAsset({
                                                             id: newAssetId,
                                                             type: 'image',
@@ -733,6 +710,7 @@ export const PrismTimeline: React.FC<PrismTimelineProps> = ({ onOpenSettings, on
                     ref={sidebarRef}
                     className="w-28 shrink-0 bg-zinc-900 border-r border-zinc-800 overflow-hidden overflow-y-auto no-scrollbar"
                     onScroll={(e) => {
+                        if (isPlaying) return;
                         if (isSyncingScroll.current) return;
                         if (timelineRef.current) {
                             isSyncingScroll.current = true;

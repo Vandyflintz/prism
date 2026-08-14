@@ -4,6 +4,7 @@ import { PrismAsset, PsdLayerSummary } from '../../types/prism';
 import { getLayersFromPsd, getPsdPreview, parsePsd } from '../../lib/psd-to-json';
 import { getAvailableFonts } from '@remotion/google-fonts';
 import { AssetStorage } from '../lib/AssetStorage';
+import { generateId } from '../../lib/id';
 
 const SYSTEM_FONTS = [
     'Arial',
@@ -73,7 +74,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
             
             const wavBlob = audioBufferToWav(decodedBuffer);
             
-            const newAssetId = crypto.randomUUID();
+            const newAssetId = generateId();
             const originalNameParts = (asset.metadata?.originalName || 'video.mp4').split('.');
             originalNameParts.pop();
             const newName = `${originalNameParts.join('.')}_audio.wav`;
@@ -229,7 +230,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
             // Revoke the old webm URL since we no longer need it
             URL.revokeObjectURL(pendingRecording.objectUrl);
 
-            const assetId = crypto.randomUUID();
+            const assetId = generateId();
             const newAsset: PrismAsset = {
                 id: assetId,
                 type: 'audio',
@@ -274,7 +275,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
 
             if (!isImage && !isVideo && !isAudio && !isPsd) continue;
 
-            const assetId = crypto.randomUUID();
+            const assetId = generateId();
             let objectUrl = URL.createObjectURL(file);
 
             let type: any = 'image';
@@ -597,7 +598,7 @@ export const ResourcePanel: React.FC<{ isLoading?: boolean }> = ({ isLoading }) 
                                     }
                                 }
 
-                                const trackId = crypto.randomUUID();
+                                const trackId = generateId();
                                 const duration = asset.metadata?.duration || 150 ; // Default to 5s if unknown
                                 
                                 // Calculate centering if asset smaller than canvas

@@ -2,7 +2,7 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 768:
+/***/ 5772:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 
@@ -10,10 +10,147 @@
 var esm = __webpack_require__(3947);
 // EXTERNAL MODULE: ./node_modules/react/jsx-runtime.js
 var jsx_runtime = __webpack_require__(4848);
+// EXTERNAL MODULE: ./node_modules/react/index.js
+var react = __webpack_require__(6540);
+;// ./src/utils/audioManager.ts
+
+class AudioEffectManager {
+  constructor() {
+    this.context = null;
+    this.nodes = /* @__PURE__ */ new Map();
+  }
+  static getInstance() {
+    if (!AudioEffectManager.instance) {
+      AudioEffectManager.instance = new AudioEffectManager();
+    }
+    return AudioEffectManager.instance;
+  }
+  initContext() {
+    if (!this.context) {
+      this.context = new (window.AudioContext || window.webkitAudioContext)({
+        latencyHint: "playback"
+      });
+    }
+    if (this.context.state === "suspended") {
+      this.context.resume();
+    }
+    return this.context;
+  }
+  applyFilters(element, options) {
+    const { bass = 0, treble = 0, volume = 1, pan = 0 } = options;
+    if (bass === 0 && treble === 0 && volume === 1 && pan === 0 && !this.nodes.has(element)) {
+      return;
+    }
+    const ctx = this.initContext();
+    let chain = this.nodes.get(element);
+    if (!chain) {
+      try {
+        const source = ctx.createMediaElementSource(element);
+        const gainNode = ctx.createGain();
+        const bassNode = ctx.createBiquadFilter();
+        bassNode.type = "lowshelf";
+        bassNode.frequency.value = 200;
+        const trebleNode = ctx.createBiquadFilter();
+        trebleNode.type = "highshelf";
+        trebleNode.frequency.value = 3e3;
+        const panNode = ctx.createStereoPanner();
+        source.connect(gainNode);
+        gainNode.connect(bassNode);
+        bassNode.connect(trebleNode);
+        trebleNode.connect(panNode);
+        panNode.connect(ctx.destination);
+        chain = { source, bass: bassNode, treble: trebleNode, pan: panNode, gain: gainNode };
+        this.nodes.set(element, chain);
+      } catch (e) {
+        return;
+      }
+    }
+    if (chain) {
+      const now = ctx.currentTime;
+      const tc = 0.1;
+      chain.bass.gain.setTargetAtTime(bass, now, tc);
+      chain.treble.gain.setTargetAtTime(treble, now, tc);
+      chain.gain.gain.setTargetAtTime(volume, now, tc);
+      chain.pan.pan.setTargetAtTime(pan, now, tc);
+      if (volume !== 1) {
+        element.volume = 1;
+      }
+    }
+  }
+  // Call this if the element is removed from DOM permanently
+  releaseElement(element) {
+    const chain = this.nodes.get(element);
+    if (chain) {
+      try {
+        chain.source.disconnect();
+        chain.gain.disconnect();
+        chain.bass.disconnect();
+        chain.treble.disconnect();
+        chain.pan.disconnect();
+      } catch (e) {
+      }
+      this.nodes.delete(element);
+    }
+  }
+}
+const audioManager = AudioEffectManager.getInstance();
+
 ;// ./src/components/PrismComposition.tsx
 
 
 
+
+
+const MediaFilter = ({ trackId, bass, treble, volume, pan, fadeIn = 0, fadeOut = 0, duration }) => {
+  const elRef = react.useRef(null);
+  const frame = (0,esm.useCurrentFrame)();
+  const fps = 30;
+  const envelopeVolume = react.useMemo(() => {
+    if (fadeIn === 0 && fadeOut === 0) return 1;
+    let v = 1;
+    if (fadeIn > 0) {
+      const fadeInFrames = fadeIn * fps;
+      v *= (0,esm.interpolate)(frame, [0, fadeInFrames], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+    }
+    if (fadeOut > 0) {
+      const fadeOutFrames = fadeOut * fps;
+      v *= (0,esm.interpolate)(frame, [duration - fadeOutFrames, duration], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+    }
+    return v;
+  }, [frame, fadeIn, fadeOut, duration, fps]);
+  const lastApplied = react.useRef("");
+  react.useEffect(() => {
+    const update = () => {
+      const el = document.querySelector(`[data-track-id="${trackId}"] video, [data-track-id="${trackId}"] audio`);
+      if (el) {
+        const combinedVolume = (volume ?? 1) * envelopeVolume;
+        const stateKey = `${bass}-${treble}-${combinedVolume}-${pan}`;
+        if (stateKey === lastApplied.current && elRef.current === el) return;
+        if (elRef.current && elRef.current !== el) {
+          audioManager.releaseElement(elRef.current);
+        }
+        elRef.current = el;
+        lastApplied.current = stateKey;
+        audioManager.applyFilters(el, {
+          bass: bass || 0,
+          treble: treble || 0,
+          volume: combinedVolume,
+          pan: pan || 0
+        });
+      }
+    };
+    update();
+    const timer = setInterval(update, 500);
+    return () => {
+      clearInterval(timer);
+      if (elRef.current) {
+        audioManager.releaseElement(elRef.current);
+        elRef.current = null;
+      }
+    };
+  }, [trackId, bass, treble, volume, pan, envelopeVolume]);
+  return null;
+};
 const PrismComposition = ({ project, assets }) => {
   if (!project) return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: "red" }, children: "No Project Data" });
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: project.backgroundColor || "#ffffff" }, children: [...project.tracks].reverse().map((track) => {
@@ -206,10 +343,58 @@ const PrismLayer = ({
     if (!asset) return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { ...style, border: "2px dashed red" }, children: "Missing Video Asset" });
     const fitMode = props.objectFit || "cover";
     if (fitMode === "none") {
-      return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
         ...style,
         overflow: "hidden"
-      }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      }, "data-track-id": track.id, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          MediaFilter,
+          {
+            trackId: track.id,
+            bass: props.bass,
+            treble: props.treble,
+            volume: props.volume,
+            pan: props.pan,
+            fadeIn: props.fadeInDuration,
+            fadeOut: props.fadeOutDuration,
+            duration
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Video,
+          {
+            src: asset.src,
+            startFrom: props.mediaOffset || 0,
+            style: {
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              // Use contain so full video is available for transform
+              transformOrigin: "center center",
+              transform: `translate(${props.contentX || 0}px, ${props.contentY || 0}px) scale(${props.contentScale || 1})`
+            },
+            volume: Math.min(1, props.volume ?? 1),
+            playbackRate: props.playbackRate ?? 1,
+            "data-track-id": track.id
+          }
+        )
+      ] });
+    }
+    return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style, "data-track-id": track.id, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MediaFilter,
+        {
+          trackId: track.id,
+          bass: props.bass,
+          treble: props.treble,
+          volume: props.volume,
+          pan: props.pan,
+          fadeIn: props.fadeInDuration,
+          fadeOut: props.fadeOutDuration,
+          duration
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
         esm.Video,
         {
           src: asset.src,
@@ -217,28 +402,14 @@ const PrismLayer = ({
           style: {
             width: "100%",
             height: "100%",
-            objectFit: "contain",
-            // Use contain so full video is available for transform
-            transformOrigin: "center center",
-            transform: `translate(${props.contentX || 0}px, ${props.contentY || 0}px) scale(${props.contentScale || 1})`
+            objectFit: fitMode
           },
-          volume: props.volume ?? 1
+          volume: Math.min(1, props.volume ?? 1),
+          playbackRate: props.playbackRate ?? 1,
+          "data-track-id": track.id
         }
-      ) });
-    }
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Video,
-      {
-        src: asset.src,
-        startFrom: props.mediaOffset || 0,
-        style: {
-          width: "100%",
-          height: "100%",
-          objectFit: fitMode
-        },
-        volume: props.volume ?? 1
-      }
-    ) });
+      )
+    ] });
   }
   if (type === "image") {
     if (props.backgroundColor) {
@@ -326,7 +497,31 @@ const PrismLayer = ({
   if (type === "audio") {
     const asset = assetId ? assets[assetId] : null;
     if (!asset) return null;
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Audio, { src: asset.src, startFrom: props.mediaOffset || 0, volume: props.volume ?? 1 });
+    return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { "data-track-id": track.id, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MediaFilter,
+        {
+          trackId: track.id,
+          bass: props.bass,
+          treble: props.treble,
+          volume: props.volume,
+          pan: props.pan,
+          fadeIn: props.fadeInDuration,
+          fadeOut: props.fadeOutDuration,
+          duration
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        esm.Audio,
+        {
+          src: asset.src,
+          startFrom: props.mediaOffset || 0,
+          volume: Math.min(1, props.volume ?? 1),
+          playbackRate: props.playbackRate ?? 1,
+          "data-track-id": track.id
+        }
+      )
+    ] });
   }
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { ...style, backgroundColor: "rgba(255,0,0,0.3)" } });
 };
@@ -27713,7 +27908,7 @@ var NoReactInternals = {
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	__webpack_require__(6507);
-/******/ 	__webpack_require__(768);
+/******/ 	__webpack_require__(5772);
 /******/ 	__webpack_require__(3610);
 /******/ 	var __webpack_exports__ = __webpack_require__(3482);
 /******/ 	

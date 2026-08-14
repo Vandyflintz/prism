@@ -43,10 +43,11 @@
     "@typescript-eslint/eslint-plugin": "8.46.0",
     "@typescript-eslint/parser": "8.46.0",
     "autoprefixer": "^10.4.23",
+    "baseline-browser-mapping": "^2.11.13",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "dotenv": "16.0.3",
-    "electron": "^40.1.0",
+    "electron": "^40.10.6",
     "electron-builder": "^24.13.3",
     "eslint": "9.19.0",
     "eslint-config-next": "15.1.6",
@@ -67,8 +68,7 @@
     "deploy": "node deploy.mjs",
     "electron:build": "tsc -p tsconfig.electron.json",
     "e": "concurrently -k \"BROWSER=none npm run d\" \"wait-on tcp:3000 && npm run electron:build && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "bundle:remotion": "remotion bundle src/remotion/index.ts build --overwrite && mkdir -p resources/remotion-bundle && cp -R build/* resources/remotion-bundle/",
-    "dist": "npm run build && npm run bundle:remotion && npm run electron:build && electron-builder"
+    "bundle:remotion": "remotion bundle src/remotion/index.ts build --overwrite && node scripts/copy-remotion.js"
   },
   "build": {
     "appId": "com.saytoonz.prism",
@@ -80,7 +80,6 @@
       "dist-electron/**/*",
       "out/**/*",
       "package.json",
-      "node_modules/**/*",
       "resources/**/*",
       "!resources/remotion-bundle/**/*"
     ],
@@ -94,7 +93,8 @@
       "**/node_modules/@remotion/compositor-darwin-arm64/**",
       "**/node_modules/@remotion/compositor-darwin-x64/**",
       "**/node_modules/@remotion/compositor-linux-x64/**",
-      "**/node_modules/@remotion/compositor-win32-x64/**"
+      "**/node_modules/@remotion/compositor-win32-x64/**",
+      "**/node_modules/@remotion/compositor-win32-x64-msvc/**"
     ],
     "mac": {
       "target": [

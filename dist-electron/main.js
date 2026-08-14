@@ -43,7 +43,9 @@ const os = __importStar(require("os"));
 // import * as os from 'os';
 const electron_serve_1 = __importDefault(require("electron-serve"));
 const menu_1 = require("./menu");
-const loadURL = (0, electron_serve_1.default)({ directory: 'out' }); // 'out' is in project root, relative to app execution? 
+const loadURL = (0, electron_serve_1.default)({
+    directory: path.join(electron_1.app.getAppPath(), 'out'),
+}); // 'out' is in project root, relative to app execution? 
 // When packaged: 'out' is in Resources/app/out ? 
 // electron-serve handles relative paths from app root.
 // NOTE: We need to verify 'out' location in packaged app. 
@@ -60,7 +62,6 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            webSecurity: false // Allow loading local resources (file://)
         },
         titleBarStyle: 'hidden', // Mac style
         trafficLightPosition: { x: 16, y: 13 }, // Vertically center in 40px header

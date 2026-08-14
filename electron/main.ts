@@ -6,7 +6,9 @@ import * as os from 'os';
 import serve from 'electron-serve';
 import { createAppMenu } from './menu';
 
-const loadURL = serve({ directory: 'out' }); // 'out' is in project root, relative to app execution? 
+const loadURL = serve({
+    directory: path.join(app.getAppPath(), 'out'),
+});// 'out' is in project root, relative to app execution? 
 // When packaged: 'out' is in Resources/app/out ? 
 // electron-serve handles relative paths from app root.
 // NOTE: We need to verify 'out' location in packaged app. 
@@ -27,7 +29,6 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            webSecurity: false // Allow loading local resources (file://)
         },
         titleBarStyle: 'hidden', // Mac style
         trafficLightPosition: { x: 16, y: 13 }, // Vertically center in 40px header

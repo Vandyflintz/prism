@@ -36,16 +36,17 @@ export const renderComposition = async (
             if (platform === 'darwin' && arch === 'arm64') compositorPackage = '@remotion/compositor-darwin-arm64';
             else if (platform === 'darwin' && arch === 'x64') compositorPackage = '@remotion/compositor-darwin-x64';
             else if (platform === 'linux' && arch === 'x64') compositorPackage = '@remotion/compositor-linux-x64';
-            else if (platform === 'win32' && arch === 'x64') compositorPackage = '@remotion/compositor-win32-x64';
+            else if (platform === 'win32' && arch === 'x64') compositorPackage = '@remotion/compositor-win32-x64-msvc';
 
             if (compositorPackage) {
                 const base = path.join(unpackedNodeModules, compositorPackage);
                 binariesDirectory = base;
                 console.log(`[Render] Looking for binaries in: ${base}`);
 
-                const remotionBin = path.join(base, 'remotion');
-                const ffmpegBin = path.join(base, 'ffmpeg');
-                const ffprobeBin = path.join(base, 'ffprobe');
+                const executableExtension = platform === 'win32' ? '.exe' : '';
+                const remotionBin = path.join(base, `remotion${executableExtension}`);
+                const ffmpegBin = path.join(base, `ffmpeg${executableExtension}`);
+                const ffprobeBin = path.join(base, `ffprobe${executableExtension}`);
 
                 if (fs.existsSync(remotionBin)) {
                     fs.chmodSync(remotionBin, 0o755);
